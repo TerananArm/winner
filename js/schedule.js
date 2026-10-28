@@ -444,13 +444,12 @@ const SCHED = (() => {
 
     if (currentTargetSchedules.length === 0) {
       if (emptyPanel) emptyPanel.classList.remove('hidden');
-      if (tableEl) tableEl.classList.remove('hidden');
+      if (tableEl) tableEl.classList.add('hidden');
     } else {
       if (emptyPanel) emptyPanel.classList.add('hidden');
       if (tableEl) tableEl.classList.remove('hidden');
+      renderTimetable(currentTargetSchedules);
     }
-
-    renderTimetable(currentTargetSchedules);
     updatePrintHeader();
     calculateConflicts();
     updateKpiMetrics();
