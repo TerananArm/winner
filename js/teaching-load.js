@@ -67,7 +67,9 @@ const TL = (() => {
     }
 
     try {
-      const { error } = await db.from(TABLES.TEACHING_LOADS).insert([payload]);
+      const { error } = await db.from(TABLES.TEACHING_LOADS).upsert([payload], {
+        onConflict: 'teacher_id,subject_id,semester,academic_year'
+      });
       if (error) throw error;
       showToast('success', 'บันทึกสำเร็จ', 'มอบหมายภาระงานสอนเรียบร้อยแล้ว');
       clearForm();
@@ -213,14 +215,20 @@ const TL = (() => {
         const wb   = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
         const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
         if (!rows?.length) { showToast('warning', 'ไม่พบข้อมูลในไฟล์ Excel'); return; }
-        const batch = rows.flatMap(r => {
+        const map = new Map();
+        rows.forEach(r => {
           const tid = String(r['รหัสอาจารย์'] || r['teacher_id'] || '').trim();
           const sid = String(r['รหัสวิชา'] || r['subject_id'] || '').trim();
-          if (!tid || !sid) return [];
-          return [{ teacher_id: tid, subject_id: sid, hours_per_week: 0, semester: '1', academic_year: '2568' }];
+          if (tid && sid) {
+            const key = `${tid}_${sid}_1_2568`;
+            map.set(key, { teacher_id: tid, subject_id: sid, hours_per_week: 0, semester: '1', academic_year: '2568' });
+          }
         });
+        const batch = Array.from(map.values());
         if (batch.length) {
-          const { error } = await db.from(TABLES.TEACHING_LOADS).insert(batch);
+          const { error } = await db.from(TABLES.TEACHING_LOADS).upsert(batch, {
+            onConflict: 'teacher_id,subject_id,semester,academic_year'
+          });
           if (error) throw error;
           showToast('success', `นำเข้าภาระงานสอน ${batch.length} รายการเรียบร้อย`);
           await loadAll();

@@ -217,16 +217,26 @@ const REG = (() => {
         const wb   = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
         const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
         if (!rows?.length) { showToast('warning', 'ไม่พบข้อมูลในไฟล์ Excel'); return; }
-        const batch = rows.flatMap(r => {
+        const map = new Map();
+        rows.forEach(r => {
           const sid = String(r['รหัสวิชา'] || r['subject_id'] || '').trim();
           const gid = String(r['รหัสกลุ่มเรียน'] || r['group_id'] || '').trim();
-          if (!sid || !gid) return [];
-          const sType = String(r['ประเภทวิชา'] || r['subject_type'] || 'ปฏิบัติ').trim();
-          return [{ subject_id: sid, group_id: gid, subject_type: sType, semester: '1', academic_year: '2568' }];
+          if (sid && gid) {
+            const sType = String(r['ประเภทวิชา'] || r['subject_type'] || 'ปฏิบัติ').trim();
+            const key = `${sid}_${gid}_1_2568`;
+            map.set(key, { subject_id: sid, group_id: gid, subject_type: sType, semester: '1', academic_year: '2568' });
+          }
         });
+        const batch = Array.from(map.values());
         if (batch.length) {
-          const { error } = await db.from(TABLES.REGISTRATIONS).insert(batch);
-          if (error) throw error;
+          const { error } = await db.from(TABLES.REGISTRATIONS).upsert(batch, {
+            onConflict: 'subject_id,group_id,semester,academic_year'
+          });
+          if (error) {
+            // Fallback to normal insert if onConflict is different
+            const { error: insertErr } = await db.from(TABLES.REGISTRATIONS).insert(batch);
+            if (insertErr) throw insertErr;
+          }
           showToast('success', `นำเข้าข้อมูลลงทะเบียน ${batch.length} รายการเรียบร้อย`);
           await loadAll();
           switchTab('table');
