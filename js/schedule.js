@@ -575,37 +575,84 @@ const SCHED = (() => {
       return !(a.period_end < b.period_start || a.period_start > b.period_end);
     }
 
-    // 1. Pairwise check for teacher, room, and group collisions
-    for (let i = 0; i < _schedules.length; i++) {
-      for (let j = i + 1; j < _schedules.length; j++) {
-        const s1 = _schedules[i];
-        const s2 = _schedules[j];
+    // 1. Optimized Bucket-based check for teacher, room, and group collisions (O(N) instead of O(N^2))
+    const teacherMap = new Map();
+    const roomMap = new Map();
+    const groupMap = new Map();
 
-        if (!isOverlap(s1, s2)) continue;
+    _schedules.forEach(s => {
+      const pStart = s.period_start;
+      const pEnd = s.period_end;
+      for (let p = pStart; p <= pEnd; p++) {
+        const slotKey = `${s.day}_${p}`;
 
-        // Is this a parallel/combined class (same subject, room, teacher, and time)?
-        const isParallelPair = (s1.subject_id === s2.subject_id && s1.teacher_id === s2.teacher_id && s1.room_id === s2.room_id && s1.period_start === s2.period_start && s1.period_end === s2.period_end);
-
-        // Teacher clash
-        if (s1.teacher_id && s1.teacher_id === s2.teacher_id) {
-          if (!isParallelPair) {
-            teacherConflicts.push({ s1, s2, reason: `ครู ${s1.teacher_id} มีสอนซ้ำซ้อนใน ${s1.day} คาบ ${s1.period_start}-${s1.period_end}` });
-          }
+        // Teacher check
+        if (s.teacher_id) {
+          const tKey = `${slotKey}_${s.teacher_id}`;
+          if (!teacherMap.has(tKey)) teacherMap.set(tKey, []);
+          teacherMap.get(tKey).push(s);
         }
 
-        // Room clash
-        if (s1.room_id && s1.room_id === s2.room_id) {
-          if (!isParallelPair) {
-            roomConflicts.push({ s1, s2, reason: `ห้อง ${s1.room_id} ถูกใช้ซ้ำซ้อนใน ${s1.day} คาบ ${s1.period_start}-${s1.period_end}` });
-          }
+        // Room check
+        if (s.room_id) {
+          const rKey = `${slotKey}_${s.room_id}`;
+          if (!roomMap.has(rKey)) roomMap.set(rKey, []);
+          roomMap.get(rKey).push(s);
         }
 
-        // Group clash
-        if (s1.group_id && s1.group_id === s2.group_id) {
-          groupConflicts.push({ s1, s2, reason: `กลุ่ม ${s1.group_id} มีเรียนซ้ำซ้อนใน ${s1.day} คาบ ${s1.period_start}-${s1.period_end}` });
+        // Group check
+        if (s.group_id) {
+          const gKey = `${slotKey}_${s.group_id}`;
+          if (!groupMap.has(gKey)) groupMap.set(gKey, []);
+          groupMap.get(gKey).push(s);
         }
       }
-    }
+    });
+
+    // Check teacher clashes in buckets
+    teacherMap.forEach((list) => {
+      if (list.length > 1) {
+        for (let i = 0; i < list.length; i++) {
+          for (let j = i + 1; j < list.length; j++) {
+            const s1 = list[i];
+            const s2 = list[j];
+            const isParallelPair = (s1.subject_id === s2.subject_id && s1.teacher_id === s2.teacher_id && s1.room_id === s2.room_id && s1.period_start === s2.period_start && s1.period_end === s2.period_end);
+            if (!isParallelPair) {
+              teacherConflicts.push({ s1, s2, reason: `ครู ${s1.teacher_id} มีสอนซ้ำซ้อนใน ${s1.day} คาบ ${s1.period_start}-${s1.period_end}` });
+            }
+          }
+        }
+      }
+    });
+
+    // Check room clashes in buckets
+    roomMap.forEach((list) => {
+      if (list.length > 1) {
+        for (let i = 0; i < list.length; i++) {
+          for (let j = i + 1; j < list.length; j++) {
+            const s1 = list[i];
+            const s2 = list[j];
+            const isParallelPair = (s1.subject_id === s2.subject_id && s1.teacher_id === s2.teacher_id && s1.room_id === s2.room_id && s1.period_start === s2.period_start && s1.period_end === s2.period_end);
+            if (!isParallelPair) {
+              roomConflicts.push({ s1, s2, reason: `ห้อง ${s1.room_id} ถูกใช้ซ้ำซ้อนใน ${s1.day} คาบ ${s1.period_start}-${s1.period_end}` });
+            }
+          }
+        }
+      }
+    });
+
+    // Check group clashes in buckets
+    groupMap.forEach((list) => {
+      if (list.length > 1) {
+        for (let i = 0; i < list.length; i++) {
+          for (let j = i + 1; j < list.length; j++) {
+            const s1 = list[i];
+            const s2 = list[j];
+            groupConflicts.push({ s1, s2, reason: `กลุ่ม ${s1.group_id} มีเรียนซ้ำซ้อนใน ${s1.day} คาบ ${s1.period_start}-${s1.period_end}` });
+          }
+        }
+      }
+    });
 
     // 2. Teacher Max Teaching Hours Overload
     const teacherHours = {};
@@ -794,8 +841,8 @@ const SCHED = (() => {
     if (parallelEl) parallelEl.textContent = `${parallelCount} วิชา`;
   }
 
-  // ── AI Scheduling Core Engine (Constraint Satisfaction) ─────
-  async function runInternalSchedulingAlgorithm() {
+  // ── AI Scheduling Core Engine (Constraint Satisfaction - Optimized O(1) Engine) ─────
+  async function runInternalSchedulingAlgorithm(onProgress) {
     await loadAllData();
 
     if (_groups.length === 0) throw new Error('ไม่พบกลุ่มเรียนในระบบ');
@@ -808,19 +855,56 @@ const SCHED = (() => {
 
     const newSchedules = [];
 
-    // Conflict Free Check helper
-    function isSlotFree(day, start, end, teacherId, roomId, groupIds) {
-      for (const s of newSchedules) {
-        if (s.day !== day) continue;
-        const overlap = !(end < s.period_start || start > s.period_end);
-        if (!overlap) continue;
-        if (s.room_id === roomId) return false;
-        if (teacherId && s.teacher_id === teacherId) return false;
-        for (const gid of groupIds) {
-          if (s.group_id === gid) return false;
+    // Fast O(1) Collision Lookup Sets
+    const occupiedTeacherSlots = new Set(); // key: "Day_Period_teacherId"
+    const occupiedRoomSlots    = new Set(); // key: "Day_Period_roomId"
+    const occupiedGroupSlots   = new Set(); // key: "Day_Period_groupId"
+
+    // Parse Teacher Unavailable Constraints
+    const teacherUnavailableMap = new Map();
+    _teachers.forEach(t => {
+      let unavail = {};
+      if (t.unavailable_time && typeof t.unavailable_time === 'string' && t.unavailable_time !== 'ไม่มี') {
+        try { unavail = JSON.parse(t.unavailable_time); } catch (e) {}
+      } else if (typeof t.unavailable_time === 'object' && t.unavailable_time !== null) {
+        unavail = t.unavailable_time;
+      }
+      teacherUnavailableMap.set(t.teacher_id, unavail);
+    });
+
+    function isSlotFreeO1(day, start, end, teacherId, roomId, groupIds) {
+      // 1. Teacher Unavailable Constraints
+      if (teacherId && teacherUnavailableMap.has(teacherId)) {
+        const unavail = teacherUnavailableMap.get(teacherId);
+        // Map Thai Day e.g. 'วันจันทร์' -> 'จันทร์'
+        const shortDay = day.replace('วัน', '');
+        const unavailPeriods = unavail[shortDay] || unavail[day];
+        if (Array.isArray(unavailPeriods)) {
+          for (let p = start; p <= end; p++) {
+            if (unavailPeriods.includes(p)) return false;
+          }
+        }
+      }
+
+      // 2. Room, Teacher, and Group Slot Checks O(1)
+      for (let p = start; p <= end; p++) {
+        if (roomId && occupiedRoomSlots.has(`${day}_${p}_${roomId}`)) return false;
+        if (teacherId && occupiedTeacherSlots.has(`${day}_${p}_${teacherId}`)) return false;
+        for (let i = 0; i < groupIds.length; i++) {
+          if (occupiedGroupSlots.has(`${day}_${p}_${groupIds[i]}`)) return false;
         }
       }
       return true;
+    }
+
+    function recordOccupiedSlot(day, start, end, teacherId, roomId, groupIds) {
+      for (let p = start; p <= end; p++) {
+        if (roomId) occupiedRoomSlots.add(`${day}_${p}_${roomId}`);
+        if (teacherId) occupiedTeacherSlots.add(`${day}_${p}_${teacherId}`);
+        for (let i = 0; i < groupIds.length; i++) {
+          occupiedGroupSlots.add(`${day}_${p}_${groupIds[i]}`);
+        }
+      }
     }
 
     // 1. Homeroom Monday 08:00 - 09:00 (Period 1)
@@ -838,6 +922,7 @@ const SCHED = (() => {
         semester: '1',
         academic_year: '2568'
       });
+      recordOccupiedSlot('วันจันทร์', 1, 1, advisor, defaultRoom, [g.group_id]);
     });
 
     // 2. Prepare registration blocks
@@ -884,6 +969,7 @@ const SCHED = (() => {
       });
     }
 
+    // Sort: Longer duration blocks first (Heuristic: Most Constrained Variable First)
     blocksToSchedule.sort((a, b) => b.duration - a.duration);
 
     const allCandidateSlots = [];
@@ -892,8 +978,21 @@ const SCHED = (() => {
       [5, 6, 7, 8, 9, 10, 11].forEach(p => allCandidateSlots.push({ day, start: p, isMorning: false }));
     });
 
+    const totalBlocks = blocksToSchedule.length;
+    let blockCount = 0;
+
     for (const block of blocksToSchedule) {
       if (_cancelCalculationRequested) return;
+
+      blockCount++;
+      // Yield thread every 50 blocks to keep UI responsive and prevent browser freezing
+      if (blockCount % 50 === 0) {
+        if (typeof onProgress === 'function') {
+          const calcPct = 75 + Math.round((blockCount / totalBlocks) * 15);
+          onProgress(calcPct);
+        }
+        await new Promise(resolve => setTimeout(resolve, 0));
+      }
 
       const dur = block.duration;
       const shuffledSlots = [...allCandidateSlots].sort(() => rng() - 0.5);
@@ -908,7 +1007,7 @@ const SCHED = (() => {
         if (!slot.isMorning && end > 11) continue;
 
         for (const roomId of shuffledRooms) {
-          if (isSlotFree(slot.day, start, end, block.teacher_id, roomId, block.groupIds)) {
+          if (isSlotFreeO1(slot.day, start, end, block.teacher_id, roomId, block.groupIds)) {
             newSchedules.push({
               subject_id: block.subject_id,
               teacher_id: block.teacher_id,
@@ -935,6 +1034,7 @@ const SCHED = (() => {
               });
             }
 
+            recordOccupiedSlot(slot.day, start, end, block.teacher_id, roomId, block.groupIds);
             placed = true;
             break;
           }
@@ -943,7 +1043,7 @@ const SCHED = (() => {
       }
     }
 
-    // Save to database
+    // Save to database in chunks of 500 to prevent payload timeout on large datasets
     await db.from(TABLES.SCHEDULES).delete().neq('id', 0);
 
     const validSubjs = new Set(_subjects.map(s => s.subject_id).concat(['HOMEROOM']));
@@ -958,8 +1058,13 @@ const SCHED = (() => {
       validGroups.has(s.group_id)
     );
 
-    if (cleanBatch.length > 0) {
-      await db.from(TABLES.SCHEDULES).insert(cleanBatch);
+    const CHUNK_SIZE = 500;
+    for (let i = 0; i < cleanBatch.length; i += CHUNK_SIZE) {
+      if (_cancelCalculationRequested) return;
+      const slice = cleanBatch.slice(i, i + CHUNK_SIZE);
+      const { error: insertErr } = await db.from(TABLES.SCHEDULES).insert(slice);
+      if (insertErr) throw insertErr;
+      await new Promise(resolve => setTimeout(resolve, 10)); // gentle delay for database stability
     }
 
     await loadAllData();
@@ -1040,7 +1145,7 @@ const SCHED = (() => {
       setProgress(75);
       setStep(2, 'done');
       setStep(3, 'running');
-      await runInternalSchedulingAlgorithm();
+      await runInternalSchedulingAlgorithm((pct) => setProgress(pct));
       if (_cancelCalculationRequested) throw new Error('CANCELLED');
 
       // Step 4: Verification & Conflict Audit
