@@ -2,6 +2,17 @@
 //  MAIN UTILITIES & COMMON SCRIPTS
 // ============================================================
 
+/** Escape HTML special characters to prevent XSS */
+function escapeHtml(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function translateErrorMessage(msg) {
   if (!msg) return '';
   const text = String(msg);

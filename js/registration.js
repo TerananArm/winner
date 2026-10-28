@@ -208,6 +208,8 @@ const REG = (() => {
     showToast('success', 'ดาวน์โหลดแม่แบบสำเร็จ');
   }
 
+  let _pendingImportBatch = [];
+
   function importExcel(inputEl) {
     const file = inputEl.files[0];
     if (!file) return;
@@ -227,27 +229,64 @@ const REG = (() => {
             map.set(key, { subject_id: sid, group_id: gid, subject_type: sType, semester: '1', academic_year: '2568' });
           }
         });
-        const batch = Array.from(map.values());
-        if (batch.length) {
-          const { error } = await db.from(TABLES.REGISTRATIONS).upsert(batch, {
-            onConflict: 'subject_id,group_id,semester,academic_year'
-          });
-          if (error) {
-            // Fallback to normal insert if onConflict is different
-            const { error: insertErr } = await db.from(TABLES.REGISTRATIONS).insert(batch);
-            if (insertErr) throw insertErr;
-          }
-          showToast('success', `นำเข้าข้อมูลลงทะเบียน ${batch.length} รายการเรียบร้อย`);
-          await loadAll();
-          switchTab('table');
+        _pendingImportBatch = Array.from(map.values());
+        if (!_pendingImportBatch.length) {
+          showToast('warning', 'ไม่พบข้อมูลที่ถูกต้องในไฟล์', 'กรุณาตรวจสอบรหัสวิชาและรหัสกลุ่มเรียน');
+          return;
         }
+
+        // Render preview modal
+        const totalEl = document.getElementById('reg-preview-total');
+        const validEl = document.getElementById('reg-preview-valid');
+        const tbodyEl = document.getElementById('reg-preview-tbody');
+        if (totalEl) totalEl.textContent = rows.length;
+        if (validEl) validEl.textContent = _pendingImportBatch.length;
+        if (tbodyEl) {
+          tbodyEl.innerHTML = _pendingImportBatch.slice(0, 5).map((item, idx) => `
+            <tr>
+              <td style="padding:6px 10px;">${idx + 1}</td>
+              <td style="padding:6px 10px; font-weight:600; color:var(--primary-light);">${escapeHtml(item.subject_id)}</td>
+              <td style="padding:6px 10px;">${escapeHtml(item.group_id)}</td>
+              <td style="padding:6px 10px; color:var(--text-muted);">${escapeHtml(item.subject_type)}</td>
+            </tr>
+          `).join('');
+        }
+        document.getElementById('importPreviewModal')?.classList.remove('hidden');
       } catch (err) {
-        showToast('error', 'นำเข้าล้มเหลว', err.message);
+        showToast('error', 'อ่านไฟล์ล้มเหลว', err.message);
       } finally {
         inputEl.value = '';
       }
     };
     reader.readAsArrayBuffer(file);
+  }
+
+  function closeImportPreviewModal() {
+    document.getElementById('importPreviewModal')?.classList.add('hidden');
+    _pendingImportBatch = [];
+  }
+
+  async function confirmImport() {
+    if (!_pendingImportBatch.length) return;
+    const btn = document.getElementById('reg-btn-confirm-import');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังบันทึก...'; }
+    try {
+      const { error } = await db.from(TABLES.REGISTRATIONS).upsert(_pendingImportBatch, {
+        onConflict: 'subject_id,group_id,semester,academic_year'
+      });
+      if (error) {
+        const { error: insertErr } = await db.from(TABLES.REGISTRATIONS).insert(_pendingImportBatch);
+        if (insertErr) throw insertErr;
+      }
+      showToast('success', `นำเข้าข้อมูลลงทะเบียน ${_pendingImportBatch.length} รายการเรียบร้อย`);
+      closeImportPreviewModal();
+      await loadAll();
+      switchTab('table');
+    } catch (err) {
+      showToast('error', 'บันทึกข้อมูลล้มเหลว', err.message);
+    } finally {
+      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-floppy-disk"></i> ยืนยันบันทึกลงฐานข้อมูล'; }
+    }
   }
 
   return {
@@ -262,7 +301,9 @@ const REG = (() => {
     confirmDelete,
     exportExcel,
     downloadTemplate,
-    importExcel
+    importExcel,
+    closeImportPreviewModal,
+    confirmImport
   };
 })();
 

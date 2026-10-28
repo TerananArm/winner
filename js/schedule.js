@@ -2121,6 +2121,16 @@ const SCHED = (() => {
     if (modal) modal.classList.add('hidden');
   }
 
+  function openPriorityModal() {
+    const modal = document.getElementById('priorityModal');
+    if (modal) modal.classList.remove('hidden');
+  }
+
+  function closePriorityModal() {
+    const modal = document.getElementById('priorityModal');
+    if (modal) modal.classList.add('hidden');
+  }
+
   async function runNationalStressTest() {
     const btn = document.getElementById('btnRunStressTest');
     const timeVal = document.getElementById('stressTimeVal');
@@ -2304,6 +2314,8 @@ const SCHED = (() => {
     closeBenchmarkModal,
     openStressTestModal,
     closeStressTestModal,
+    openPriorityModal,
+    closePriorityModal,
     runNationalStressTest,
     openPresentationModal,
     closePresentationModal,

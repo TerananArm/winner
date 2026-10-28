@@ -194,6 +194,7 @@
           </summary>
           <div style="padding:12px 16px; border-top:1px solid rgba(255,255,255,0.05); display:flex; gap:8px; flex-wrap:wrap;">
             <button class="btn btn-ghost btn-sm" onclick="SCHED.validateBeforeSchedule()"><i class="fas fa-stethoscope"></i> ตรวจความพร้อม</button>
+            <button class="btn btn-ghost btn-sm" onclick="SCHED.openPriorityModal()"><i class="fas fa-list-ol" style="color:#38bdf8;"></i> ปัจจัย & ลำดับความสำคัญ</button>
             <button class="btn btn-ghost btn-sm" onclick="SCHED.openDatasetModal()"><i class="fas fa-database"></i> ชุดข้อมูลจำลอง</button>
             <button class="btn btn-ghost btn-sm" onclick="SCHED.openAiArchitectureModal()"><i class="fas fa-brain-circuit"></i> Multi-Agent Architecture</button>
             <button class="btn btn-ghost btn-sm" onclick="SCHED.openBenchmarkModal()"><i class="fas fa-chart-column"></i> Benchmark</button>
@@ -1228,6 +1229,186 @@
 
       <div class="modal-footer">
         <button class="btn btn-ghost" onclick="SCHED.closePresentationModal()">ปิด</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL: Constraint Priorities & Scheduling Factors (เกณฑ์ 3.5.3 A ข้อ 5: อธิบายปัจจัยและลำดับความสำคัญ) ── -->
+  <div class="modal-overlay hidden" id="priorityModal">
+    <div class="modal" style="max-width: 820px; text-align: left;">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title" style="color:#ffffff; display:flex; align-items:center; gap:8px;">
+            <i class="fas fa-list-ol" style="color:#38bdf8;"></i> ปัจจัยและลำดับความสำคัญของเงื่อนไข (Constraint Priority Hierarchy)
+          </div>
+          <div style="font-size:12px; color:#94a3b8; margin-top:3px;">
+            เกณฑ์ 3.5.3 A: คำอธิบายปัจจัยที่มีผลต่อการจัดตารางอย่างเป็นระบบ และแสดงลำดับความสำคัญของเงื่อนไข (Hard vs Soft Constraints)
+          </div>
+        </div>
+        <button class="modal-close" onclick="SCHED.closePriorityModal()"><i class="fas fa-xmark"></i></button>
+      </div>
+
+      <div style="margin: 16px 0; max-height: 520px; overflow-y: auto; padding-right: 4px;">
+        <!-- Flow Indicator -->
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:10px 14px; margin-bottom:16px; overflow-x:auto;">
+          <div style="display:flex; align-items:center; gap:6px; font-size:11.5px; font-weight:700; color:#ef4444; white-space:nowrap;">
+            <span style="background:rgba(239,68,68,0.2); border-radius:50%; width:22px; height:22px; display:inline-flex; align-items:center; justify-content:center;">1</span> ล็อกตายตัว
+          </div>
+          <i class="fas fa-chevron-right" style="color:#475569; font-size:11px;"></i>
+          <div style="display:flex; align-items:center; gap:6px; font-size:11.5px; font-weight:700; color:#f97316; white-space:nowrap;">
+            <span style="background:rgba(249,115,22,0.2); border-radius:50%; width:22px; height:22px; display:inline-flex; align-items:center; justify-content:center;">2</span> ข้อจำกัดครู
+          </div>
+          <i class="fas fa-chevron-right" style="color:#475569; font-size:11px;"></i>
+          <div style="display:flex; align-items:center; gap:6px; font-size:11.5px; font-weight:700; color:#eab308; white-space:nowrap;">
+            <span style="background:rgba(234,179,8,0.2); border-radius:50%; width:22px; height:22px; display:inline-flex; align-items:center; justify-content:center;">3</span> ห้อง & แล็บต่อเนื่อง
+          </div>
+          <i class="fas fa-chevron-right" style="color:#475569; font-size:11px;"></i>
+          <div style="display:flex; align-items:center; gap:6px; font-size:11.5px; font-weight:700; color:#3b82f6; white-space:nowrap;">
+            <span style="background:rgba(59,130,246,0.2); border-radius:50%; width:22px; height:22px; display:inline-flex; align-items:center; justify-content:center;">4</span> คู่ขนาน/เรียนร่วม
+          </div>
+          <i class="fas fa-chevron-right" style="color:#475569; font-size:11px;"></i>
+          <div style="display:flex; align-items:center; gap:6px; font-size:11.5px; font-weight:700; color:#10b981; white-space:nowrap;">
+            <span style="background:rgba(16,185,129,0.2); border-radius:50%; width:22px; height:22px; display:inline-flex; align-items:center; justify-content:center;">5</span> เกลี่ยสมดุล (Soft)
+          </div>
+        </div>
+
+        <!-- 5 Priority Hierarchy Cards -->
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <!-- Level 1 -->
+          <div style="background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.25); border-radius:10px; padding:12px 16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <span style="font-size:13px; font-weight:700; color:#fca5a5;">
+                <i class="fas fa-lock" style="margin-right:6px;"></i> Priority 1: กฎตายตัวระดับโครงสร้าง (Mandatory Fixed Blocks)
+              </span>
+              <span class="badge" style="background:rgba(239,68,68,0.2); color:#fca5a5; font-size:11px; border:1px solid rgba(239,68,68,0.4);">
+                Hard Constraint (ห้ามละเมิด 100%)
+              </span>
+            </div>
+            <ul style="font-size:12.5px; color:#cbd5e1; margin:0; padding-left:18px; line-height:1.6;">
+              <li><strong>กิจกรรมหน้าเสาธง/โฮมรูม:</strong> ล็อกอัตโนมัติทุกวันจันทร์ คาบ 0 (07:45 - 08:00) ห้ามจัดวิชาอื่นเด็ดขาด</li>
+              <li><strong>ช่วงเวลาพักกลางวัน:</strong> ล็อกคาบ 5 (12:00 - 13:00) ทุกวัน สำหรับนักเรียนและครูทุกคน เพื่อสุขภาพและโภชนาการ</li>
+            </ul>
+          </div>
+
+          <!-- Level 2 -->
+          <div style="background:rgba(249,115,22,0.06); border:1px solid rgba(249,115,22,0.25); border-radius:10px; padding:12px 16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <span style="font-size:13px; font-weight:700; color:#fdba74;">
+                <i class="fas fa-user-clock" style="margin-right:6px;"></i> Priority 2: ความพร้อมของบุคลากร (Teacher Availability Constraints)
+              </span>
+              <span class="badge" style="background:rgba(249,115,22,0.2); color:#fdba74; font-size:11px; border:1px solid rgba(249,115,22,0.4);">
+                Hard Constraint
+              </span>
+            </div>
+            <ul style="font-size:12.5px; color:#cbd5e1; margin:0; padding-left:18px; line-height:1.6;">
+              <li><strong>ช่วงเวลาที่ครูไม่สะดวกสอน (Unavailable Time Windows):</strong> เว้นคาบสอนตามตารางที่ครูระบุ (เช่น ติดภาระงานบริหาร หรือภารกิจราชการ)</li>
+              <li><strong>เพดานชั่วโมงสอนสูงสุด (Max Hours Cap):</strong> จำกัดไม่ให้ชั่วโมงสอนรวมต่อสัปดาห์ของครูเกินเกณฑ์ที่กำหนดไว้</li>
+            </ul>
+          </div>
+
+          <!-- Level 3 -->
+          <div style="background:rgba(234,179,8,0.06); border:1px solid rgba(234,179,8,0.25); border-radius:10px; padding:12px 16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <span style="font-size:13px; font-weight:700; color:#fde047;">
+                <i class="fas fa-flask-vial" style="margin-right:6px;"></i> Priority 3: ข้อกำหนดทางการสอนและกายภาพ (Pedagogical & Capacity Constraints)
+              </span>
+              <span class="badge" style="background:rgba(234,179,8,0.2); color:#fde047; font-size:11px; border:1px solid rgba(234,179,8,0.4);">
+                Hard Constraint
+              </span>
+            </div>
+            <ul style="font-size:12.5px; color:#cbd5e1; margin:0; padding-left:18px; line-height:1.6;">
+              <li><strong>วิชาปฏิบัติการต่อเนื่อง (Continuous Practical Blocks):</strong> วิชาปฏิบัติ 2–4 คาบ ต้องจัดติดกันเป็นบล็อกเดียว ไม่แยกคาบ เพื่อความต่อเนื่องของการฝึกทักษะ</li>
+              <li><strong>ขนาดความจุห้องเรียน (Room Capacity Match):</strong> ขนาดความจุของห้องเรียนต้อง $\ge$ จำนวนนักเรียนในกลุ่ม (`room.capacity >= group.student_count`)</li>
+              <li><strong>ประเภทห้องเรียนเฉพาะทาง (Room Type Matching):</strong> วิชาวิทยาการคอมพิวเตอร์หรือฝึกงานช่าง ต้องลงห้องปฏิบัติการเฉพาะทางเท่านั้น</li>
+            </ul>
+          </div>
+
+          <!-- Level 4 -->
+          <div style="background:rgba(59,130,246,0.06); border:1px solid rgba(59,130,246,0.25); border-radius:10px; padding:12px 16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <span style="font-size:13px; font-weight:700; color:#93c5fd;">
+                <i class="fas fa-people-arrows" style="margin-right:6px;"></i> Priority 4: วิชาเรียนร่วม/กลุ่มคู่ขนาน (Parallel & Coupled Group Constraints)
+              </span>
+              <span class="badge" style="background:rgba(59,130,246,0.2); color:#93c5fd; font-size:11px; border:1px solid rgba(59,130,246,0.4);">
+                Hard Constraint
+              </span>
+            </div>
+            <ul style="font-size:12.5px; color:#cbd5e1; margin:0; padding-left:18px; line-height:1.6;">
+              <li><strong>วิชาเรียนร่วม (Parallel Groups):</strong> รายวิชาสามัญที่ 2 กลุ่มเรียนพร้อมกัน ต้องจัดให้ลงในวัน เวลา คาบ และห้องเรียนบรรยายเดียวกัน</li>
+              <li><strong>ตรวจจับการชนของนักเรียนรายบุคคล (Zero Student Collision):</strong> ตรวจสอบย้อนกลับถึงรหัสนักเรียน เพื่อรับประกันว่าไม่มีนักเรียนคนใดมีคาบเรียนซ้อนทับกัน</li>
+            </ul>
+          </div>
+
+          <!-- Level 5 -->
+          <div style="background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.25); border-radius:10px; padding:12px 16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <span style="font-size:13px; font-weight:700; color:#6ee7b7;">
+                <i class="fas fa-scale-balanced" style="margin-right:6px;"></i> Priority 5: การเกลี่ยสมดุลและความเหมาะสม (Soft Optimization & Load Balancing)
+              </span>
+              <span class="badge" style="background:rgba(16,185,129,0.2); color:#6ee7b7; font-size:11px; border:1px solid rgba(16,185,129,0.4);">
+                Soft Constraint (Optimization)
+              </span>
+            </div>
+            <ul style="font-size:12.5px; color:#cbd5e1; margin:0; padding-left:18px; line-height:1.6;">
+              <li><strong>การกระจายรายวิชา (Day Distribution Balance):</strong> เกลี่ยวิชาไม่ให้กระจุกตัวในวันใดวันหนึ่ง เพื่อลดความเหนื่อยล้าของผู้เรียน</li>
+              <li><strong>การสลับวิชาหนัก-เบา (Cognitive Load Smoothing):</strong> สลับวิชาทฤษฎีเข้มข้นกับวิชาปฏิบัติหรือกิจกรรมพัฒนาผู้เรียน</li>
+              <li><strong>ความเท่าเทียมของภาระครู (Workload Fairness):</strong> ลดค่าเบี่ยงเบนมาตรฐาน (SD) ชั่วโมงสอนของอาจารย์ในแผนกให้อยู่ในระดับสมดุล</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Constraint Matrix Comparison Table -->
+        <div style="margin-top:16px;">
+          <h4 style="font-size:13px; color:#ffffff; margin-bottom:8px;">
+            <i class="fas fa-table-list" style="color:#38bdf8;"></i> สรุปกลไกการตัดสินใจของ AI Engine (CSP & Heuristic Policy)
+          </h4>
+          <table class="bench-table" style="font-size:12px;">
+            <thead>
+              <tr>
+                <th>ระดับเงื่อนไข</th>
+                <th>ประเภท</th>
+                <th>วิธีจัดการใน Engine</th>
+                <th>เกณฑ์ความสำเร็จ (Pass Criteria)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>1. Homeroom & พักเที่ยง</strong></td>
+                <td><span class="badge" style="background:#ef4444; color:#fff;">Hard Lock</span></td>
+                <td>Pre-allocation จองคาบไว้ก่อนล่วงหน้า</td>
+                <td><strong style="color:#34d399;">100% ปลอดข้อขัดแย้ง</strong></td>
+              </tr>
+              <tr>
+                <td><strong>2. ครูไม่สะดวกสอน & เพดาน</strong></td>
+                <td><span class="badge" style="background:#f97316; color:#fff;">Hard Lock</span></td>
+                <td>Bitmask Pruning ตัด Slot ในตารางค้นหา</td>
+                <td><strong style="color:#34d399;">ครูไม่ติดคาบห้ามเด็ดขาด</strong></td>
+              </tr>
+              <tr>
+                <td><strong>3. ปฏิบัติการ & ความจุห้อง</strong></td>
+                <td><span class="badge" style="background:#eab308; color:#000;">Hard Fit</span></td>
+                <td>Continuous Sliding Window + Capacity Filter</td>
+                <td><strong style="color:#34d399;">คาบติดกัน & จุพอ 100%</strong></td>
+              </tr>
+              <tr>
+                <td><strong>4. กลุ่มเรียนร่วม/คู่ขนาน</strong></td>
+                <td><span class="badge" style="background:#3b82f6; color:#fff;">Coupled Hard</span></td>
+                <td>Synchronized Multi-Target Slot Lock</td>
+                <td><strong style="color:#34d399;">เวลาและห้องเดียวกัน 100%</strong></td>
+              </tr>
+              <tr>
+                <td><strong>5. เกลี่ยวิชา & ภาระงาน</strong></td>
+                <td><span class="badge" style="background:#10b981; color:#fff;">Soft Goal</span></td>
+                <td>Heuristic Slot Scoring Function</td>
+                <td><strong style="color:#34d399;">SD ภาระงานต่ำสุด & ตารางโปร่ง</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="SCHED.closePriorityModal()">ปิด</button>
       </div>
     </div>
   </div>

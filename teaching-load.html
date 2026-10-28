@@ -171,6 +171,45 @@
   </div>
 
   <div class="toast-container" id="toastContainer"></div>
+  <!-- Import Preview Modal (เกณฑ์ 3.5.3 A: พรีวิวและสรุปผลก่อนบันทึก) -->
+  <div class="modal-overlay hidden" id="importPreviewModal">
+    <div class="modal" style="max-width:580px; text-align:left;">
+      <div class="modal-header">
+        <div class="modal-title" style="color:var(--primary-light); display:flex; align-items:center; gap:8px;">
+          <i class="fas fa-file-circle-check"></i> ตรวจสอบข้อมูลก่อนนำเข้า (Import Preview)
+        </div>
+        <button class="modal-close" onclick="TL.closeImportPreviewModal()"><i class="fas fa-xmark"></i></button>
+      </div>
+      <div style="margin: 16px 0;">
+        <div style="background:rgba(56,189,248,0.1); border:1px solid rgba(56,189,248,0.3); border-radius:8px; padding:12px; margin-bottom:14px; font-size:13px; color:#e0f2fe;">
+          <i class="fas fa-circle-info" style="color:#38bdf8; margin-right:6px;"></i>
+          ตรวจพบข้อมูลในไฟล์ Excel ทั้งหมด <strong id="tl-preview-total" style="color:#38bdf8;">0</strong> รายการ 
+          (สมบูรณ์พร้อมบันทึก: <strong id="tl-preview-valid" style="color:#34d399;">0</strong> รายการ)
+        </div>
+        <div style="font-size:12px; color:var(--text-muted); margin-bottom:6px;">ตัวอย่างข้อมูลที่จะบันทึก (5 แถวแรก):</div>
+        <div style="max-height:200px; overflow-y:auto; border:1px solid rgba(255,255,255,0.08); border-radius:8px;">
+          <table class="data-table" style="font-size:12px; width:100%;">
+            <thead>
+              <tr>
+                <th style="padding:6px 10px;">#</th>
+                <th style="padding:6px 10px;">รหัสอาจารย์</th>
+                <th style="padding:6px 10px;">รหัสวิชา</th>
+                <th style="padding:6px 10px;">ภาคเรียน/ปี</th>
+              </tr>
+            </thead>
+            <tbody id="tl-preview-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="TL.closeImportPreviewModal()">ยกเลิก</button>
+        <button class="btn btn-primary" id="tl-btn-confirm-import" onclick="TL.confirmImport()">
+          <i class="fas fa-floppy-disk"></i> ยืนยันบันทึกลงฐานข้อมูล
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-overlay hidden" id="deleteModal">
     <div class="modal" style="max-width:400px;">
       <div class="modal-header">
