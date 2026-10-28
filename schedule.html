@@ -140,16 +140,12 @@
             </div>
           </div>
 
-          <!-- Right: Action Buttons -->
+          <!-- Right: Clean & Organized Action Buttons -->
           <div class="sched-right-actions">
-            <!-- ตรวจความพร้อมก่อนจัดตาราง (Pre-validation) -->
-            <button class="sched-action-btn btn-sched-validate" onclick="SCHED.validateBeforeSchedule()" title="ตรวจความถูกต้องของข้อมูลนำเข้าก่อนจัดตาราง">
-              <i class="fas fa-stethoscope"></i> ตรวจความพร้อม
-            </button>
-
-            <!-- ชุดข้อมูลจำลอง / Benchmark -->
-            <button class="sched-action-btn btn-sched-dataset" onclick="SCHED.openDatasetModal()" title="ชุดข้อมูลตัวอย่าง เล็ก-กลาง-ใหญ่">
-              <i class="fas fa-database"></i> ชุดข้อมูลจำลอง
+            <!-- จัดตารางอัตโนมัติ (AI) - พระเอกหลัก -->
+            <button class="sched-action-btn btn-sched-ai" id="btn-auto-sched" onclick="SCHED.startAiScheduleWithProgress()"
+              title="ประมวลผลจัดตารางสอนอัตโนมัติตามข้อมูลจริง">
+              <i class="fas fa-wand-magic-sparkles"></i> จัดตารางอัตโนมัติ (AI)
             </button>
 
             <!-- + เพิ่มรายวิชา -->
@@ -157,51 +153,31 @@
               <i class="fas fa-plus"></i> เพิ่มรายวิชา
             </button>
 
-            <!-- Seed Stepper -->
+            <!-- Seed สุ่ม -->
             <div class="sched-seed-wrapper" title="Seed สุ่มรูปแบบการจัดตาราง">
               <span class="seed-title">Seed</span>
               <input type="number" id="sched-seed" value="1" min="1" max="99999" class="seed-num-input"
                 onchange="SCHED.onSeedChange()" />
             </div>
 
-            <!-- จัดตารางอัตโนมัติ (AI) -->
-            <button class="sched-action-btn btn-sched-ai" id="btn-auto-sched" onclick="SCHED.startAiScheduleWithProgress()"
-              title="ประมวลผลจัดตารางสอนอัตโนมัติตามข้อมูลจริง">
-              <i class="fas fa-wand-magic-sparkles"></i> จัดตารางอัตโนมัติ (AI)
+            <!-- พิมพ์ตาราง -->
+            <button class="sched-action-btn btn-sched-print" onclick="SCHED.printSchedule()" title="พิมพ์ตารางสอน">
+              <i class="fas fa-print"></i> พิมพ์
+            </button>
+
+            <!-- ส่งออก Excel -->
+            <button class="sched-action-btn btn-sched-export" onclick="SCHED.exportExcel()" title="ส่งออกตารางเป็น Excel">
+              <i class="fas fa-file-excel"></i> ส่งออก
+            </button>
+
+            <!-- นำเข้า Excel -->
+            <button class="sched-action-btn btn-sched-import" onclick="SCHED.openImportModal()" title="นำเข้าข้อมูลจาก Excel">
+              <i class="fas fa-file-import"></i> นำเข้า
             </button>
 
             <!-- ล้างตาราง -->
             <button class="sched-action-btn btn-sched-clear" onclick="SCHED.openClearModal()" title="ล้างตารางสอน">
               <i class="fas fa-trash-can"></i> ล้างตาราง
-            </button>
-
-            <!-- พิมพ์ตาราง -->
-            <button class="sched-action-btn btn-sched-print" onclick="SCHED.printSchedule()" title="พิมพ์ตารางสอน">
-              <i class="fas fa-print"></i> พิมพ์ตาราง (PDF)
-            </button>
-
-            <!-- ส่งออก Excel -->
-            <button class="sched-action-btn btn-sched-export" onclick="SCHED.exportExcel()"
-              title="ส่งออกตารางเป็น Excel">
-              <i class="fas fa-file-excel"></i> ส่งออก Excel
-            </button>
-
-            <!-- ส่งออก CSV -->
-            <button class="sched-action-btn btn-sched-export" onclick="SCHED.exportCSV()"
-              title="ส่งออกตารางเป็น CSV">
-              <i class="fas fa-file-csv"></i> CSV
-            </button>
-
-            <!-- นำเข้า Excel -->
-            <button class="sched-action-btn btn-sched-import" onclick="SCHED.openImportModal()"
-              title="นำเข้าข้อมูลจาก Excel (แม่แบบ)">
-              <i class="fas fa-file-import"></i> นำเข้า Excel
-            </button>
-
-            <!-- ดาวน์โหลดแม่แบบ -->
-            <button class="sched-action-btn btn-sched-template" onclick="SCHED.downloadTemplate()"
-              title="ดาวน์โหลดไฟล์แม่แบบ Excel (.xlsx แท้) สำหรับกรอกข้อมูล">
-              <i class="fas fa-file-excel"></i> แม่แบบ Excel (.xlsx)
             </button>
 
             <!-- Hidden file input for Excel import -->
@@ -210,27 +186,23 @@
           </div>
         </div>
 
-        <!-- ── AI Excellence & Competition Presentation Suite (เกณฑ์ 3.5.4 & 3.5.5) ── -->
-        <div class="ai-suite-bar">
-          <div class="ai-suite-title">
-            <i class="fas fa-microchip"></i>
-            <span>เกณฑ์ประเมินทักษะระดับชาติ (3.5.4 AI & 3.5.5 Presentation)</span>
+        <!-- ── Tool Menu & Utilities (ซ่อนแบบ Dropdown / เรียบร้อยขึ้น) ── -->
+        <details class="sched-tools-accordion" style="margin-bottom:16px; border:1px solid rgba(255,255,255,0.06); border-radius:12px; background:rgba(255,255,255,0.02); overflow:hidden;">
+          <summary style="padding:10px 16px; font-size:12.5px; font-weight:600; color:var(--text-secondary); cursor:pointer; display:flex; align-items:center; gap:8px;">
+            <i class="fas fa-sliders" style="color:var(--primary-light);"></i> เครื่องมือเพิ่มเติม & เกณฑ์การประเมิน (Multi-Agent / Benchmark / Stress Test)
+            <span style="margin-left:auto; font-size:11px; color:var(--text-muted);">คลิกเพื่อเปิด/ปิด</span>
+          </summary>
+          <div style="padding:12px 16px; border-top:1px solid rgba(255,255,255,0.05); display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn btn-ghost btn-sm" onclick="SCHED.validateBeforeSchedule()"><i class="fas fa-stethoscope"></i> ตรวจความพร้อม</button>
+            <button class="btn btn-ghost btn-sm" onclick="SCHED.openDatasetModal()"><i class="fas fa-database"></i> ชุดข้อมูลจำลอง</button>
+            <button class="btn btn-ghost btn-sm" onclick="SCHED.openAiArchitectureModal()"><i class="fas fa-brain-circuit"></i> Multi-Agent Architecture</button>
+            <button class="btn btn-ghost btn-sm" onclick="SCHED.openBenchmarkModal()"><i class="fas fa-chart-column"></i> Benchmark</button>
+            <button class="btn btn-ghost btn-sm" onclick="SCHED.openStressTestModal()"><i class="fas fa-bolt"></i> Stress Test</button>
+            <button class="btn btn-ghost btn-sm" onclick="SCHED.openPresentationModal()"><i class="fas fa-chalkboard-user"></i> โหมดนำเสนอ</button>
+            <button class="btn btn-ghost btn-sm" onclick="SCHED.exportCSV()"><i class="fas fa-file-csv"></i> CSV</button>
+            <button class="btn btn-ghost btn-sm" onclick="SCHED.downloadTemplate()"><i class="fas fa-file-excel"></i> แม่แบบ Excel</button>
           </div>
-          <div class="ai-suite-buttons">
-            <button class="suite-btn btn-ai-arch" onclick="SCHED.openAiArchitectureModal()" title="สถาปัตยกรรม AI แบบ Multi-Agent (Plan-Act-Check)">
-              <i class="fas fa-brain-circuit"></i> สถาปัตยกรรม Multi-Agent (3.5.4)
-            </button>
-            <button class="suite-btn btn-ai-bench" onclick="SCHED.openBenchmarkModal()" title="หลักฐานผลลัพธ์เปรียบเทียบ AI vs วิธีดั้งเดิม">
-              <i class="fas fa-chart-column"></i> Benchmark เปรียบเทียบ (3.5.4)
-            </button>
-            <button class="suite-btn btn-ai-stress" onclick="SCHED.openStressTestModal()" title="ทดสอบ Edge Cases และ Stress Test ระดับชาติ">
-              <i class="fas fa-bolt"></i> Stress Test & Edge Cases
-            </button>
-            <button class="suite-btn btn-ai-pitch" onclick="SCHED.openPresentationModal()" title="โหมดนำเสนอผลงาน 5-10 นาที พร้อมแนวทางการตอบ Q&A">
-              <i class="fas fa-chalkboard-user"></i> โหมดนำเสนอ 5-10 นาที (3.5.5)
-            </button>
-          </div>
-        </div>
+        </details>
 
         <!-- ── Student Profile Tag (Shown when student lookup is active) ── -->
         <div id="studentProfileBanner" class="student-profile-banner hidden">
