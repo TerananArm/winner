@@ -853,6 +853,29 @@ const SCHED = (() => {
     const seedVal = seedInput ? (parseInt(seedInput.value, 10) || 1) : 1;
     const rng = createPrng(seedVal);
 
+    // Auto-ensure HOMEROOM subject exists in database so foreign key never fails
+    const homeroomExists = _subjects.some(s => s.subject_id === 'HOMEROOM');
+    if (!homeroomExists) {
+      try {
+        await db.from(TABLES.SUBJECTS).upsert([{
+          subject_id: 'HOMEROOM',
+          subject_name: 'กิจกรรมโฮมรูม / เข้าแถว',
+          theory: 1,
+          practice: 0,
+          credit: 0
+        }], { onConflict: 'subject_id' });
+        _subjects.push({
+          subject_id: 'HOMEROOM',
+          subject_name: 'กิจกรรมโฮมรูม / เข้าแถว',
+          theory: 1,
+          practice: 0,
+          credit: 0
+        });
+      } catch (hrErr) {
+        console.warn('Could not ensure HOMEROOM subject:', hrErr);
+      }
+    }
+
     const newSchedules = [];
 
     // Fast O(1) Collision Lookup Sets
@@ -1046,7 +1069,7 @@ const SCHED = (() => {
     // Save to database in chunks of 500 to prevent payload timeout on large datasets
     await db.from(TABLES.SCHEDULES).delete().neq('id', 0);
 
-    const validSubjs = new Set(_subjects.map(s => s.subject_id).concat(['HOMEROOM']));
+    const validSubjs = new Set(_subjects.map(s => s.subject_id));
     const validTeachers = new Set(_teachers.map(t => t.teacher_id));
     const validRooms = new Set(_rooms.map(r => r.room_id));
     const validGroups = new Set(_groups.map(g => g.group_id));

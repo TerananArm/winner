@@ -34,11 +34,15 @@ function translateErrorMessage(msg) {
 
   // Foreign key violates foreign key constraint
   if (text.includes('violates foreign key constraint') || text.includes('23503')) {
-    if (text.includes('teacher_id')) return 'ไม่พบรหัสอาจารย์นี้ในระบบ (กรุณาเพิ่มข้อมูลอาจารย์ก่อน)';
-    if (text.includes('subject_id')) return 'ไม่พบรหัสวิชานี้ในระบบ (กรุณาเพิ่มข้อมูลรายวิชาก่อน)';
-    if (text.includes('group_id'))   return 'ไม่พบรหัสกลุ่มเรียนนี้ในระบบ (กรุณาเพิ่มข้อมูลกลุ่มเรียนก่อน)';
-    if (text.includes('room_id'))    return 'ไม่พบรหัสห้องเรียนนี้ในระบบ (กรุณาเพิ่มข้อมูลห้องเรียนก่อน)';
-    return 'ไม่พบข้อมูลที่เชื่อมโยงในระบบ หรือข้อมูลหลักถูกใช้งานอยู่จึงไม่สามารถลบได้';
+    // Extract key detail e.g. Key (subject_id)=(HOMEROOM) is not present in table "subjects".
+    const detailMatch = text.match(/Key \(([^)]+)\)=\(([^)]+)\)/i);
+    const detailStr = detailMatch ? ` (รหัส: "${detailMatch[2]}")` : '';
+
+    if (text.includes('teacher_id')) return `ไม่พบรหัสอาจารย์${detailStr} ในระบบ (กรุณาเพิ่มข้อมูลอาจารย์ก่อน)`;
+    if (text.includes('subject_id')) return `ไม่พบรหัสวิชา${detailStr} ในระบบ (กรุณาเพิ่มข้อมูลรายวิชาก่อน)`;
+    if (text.includes('group_id'))   return `ไม่พบรหัสกลุ่มเรียน${detailStr} ในระบบ (กรุณาเพิ่มข้อมูลกลุ่มเรียนก่อน)`;
+    if (text.includes('room_id'))    return `ไม่พบรหัสห้องเรียน${detailStr} ในระบบ (กรุณาเพิ่มข้อมูลห้องเรียนก่อน)`;
+    return `ไม่พบข้อมูลที่เชื่อมโยง${detailStr} ในระบบ หรือข้อมูลหลักถูกใช้งานอยู่จึงไม่สามารถลบได้`;
   }
 
   // Not null constraint
