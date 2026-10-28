@@ -2,6 +2,63 @@
 //  MAIN UTILITIES & COMMON SCRIPTS
 // ============================================================
 
+function translateErrorMessage(msg) {
+  if (!msg) return '';
+  const text = String(msg);
+
+  // Duplicate key violates unique constraint
+  if (text.includes('duplicate key value violates unique constraint') || text.includes('23505')) {
+    if (text.includes('teachers_teacher_id') || text.includes('teachers_pkey')) {
+      return 'รหัสอาจารย์นี้มีอยู่ในระบบแล้ว ไม่สามารถสร้างซ้ำได้';
+    }
+    if (text.includes('rooms_room_id') || text.includes('rooms_pkey')) {
+      return 'รหัสห้องเรียนนี้มีอยู่ในระบบแล้ว';
+    }
+    if (text.includes('subjects_subject_id') || text.includes('subjects_pkey')) {
+      return 'รหัสวิชานี้มีอยู่ในระบบแล้ว';
+    }
+    if (text.includes('student_groups_group_id') || text.includes('student_groups_pkey')) {
+      return 'รหัสกลุ่มเรียนนี้มีอยู่ในระบบแล้ว';
+    }
+    if (text.includes('students_student_code') || text.includes('students_pkey')) {
+      return 'รหัสนักเรียน/นักศึกษานี้มีอยู่ในระบบแล้ว';
+    }
+    if (text.includes('teaching_loads')) {
+      return 'มีข้อมูลภาระงานสอนของอาจารย์และวิชานี้ในภาคเรียนเดียวกันอยู่แล้ว';
+    }
+    if (text.includes('registrations')) {
+      return 'วิชานี้ถูกลงทะเบียนให้กลุ่มเรียนนี้ในภาคเรียนเดียวกันไปแล้ว';
+    }
+    return 'ข้อมูลนี้มีอยู่ในระบบแล้ว (พบข้อมูลซ้ำ)';
+  }
+
+  // Foreign key violates foreign key constraint
+  if (text.includes('violates foreign key constraint') || text.includes('23503')) {
+    if (text.includes('teacher_id')) return 'ไม่พบรหัสอาจารย์นี้ในระบบ (กรุณาเพิ่มข้อมูลอาจารย์ก่อน)';
+    if (text.includes('subject_id')) return 'ไม่พบรหัสวิชานี้ในระบบ (กรุณาเพิ่มข้อมูลรายวิชาก่อน)';
+    if (text.includes('group_id'))   return 'ไม่พบรหัสกลุ่มเรียนนี้ในระบบ (กรุณาเพิ่มข้อมูลกลุ่มเรียนก่อน)';
+    if (text.includes('room_id'))    return 'ไม่พบรหัสห้องเรียนนี้ในระบบ (กรุณาเพิ่มข้อมูลห้องเรียนก่อน)';
+    return 'ไม่พบข้อมูลที่เชื่อมโยงในระบบ หรือข้อมูลหลักถูกใช้งานอยู่จึงไม่สามารถลบได้';
+  }
+
+  // Not null constraint
+  if (text.includes('violates not-null constraint') || text.includes('23502')) {
+    return 'กรุณากรอกข้อมูลในช่องที่จำเป็นให้ครบถ้วน';
+  }
+
+  // Network / Connection
+  if (text.includes('Failed to fetch') || text.includes('NetworkError') || text.includes('connection')) {
+    return 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้ กรุณาตรวจสอบอินเทอร์เน็ต';
+  }
+
+  // JWT / Auth
+  if (text.includes('JWT') || text.includes('token') || text.includes('permission denied')) {
+    return 'ไม่มีสิทธิ์เข้าถึงข้อมูล หรือเซสชันหมดอายุ';
+  }
+
+  return text;
+}
+
 function showToast(type = 'info', title = '', message = '') {
   let container = document.getElementById('toastContainer');
   if (!container) {
@@ -16,6 +73,8 @@ function showToast(type = 'info', title = '', message = '') {
     info: 'fas fa-circle-info',
     warning: 'fas fa-triangle-exclamation'
   };
+
+  const finalMsg = (type === 'error' || type === 'warning') ? translateErrorMessage(message) : message;
   const toast = document.createElement('div');
   const toneClass = (type === 'warning' || type === 'error') ? 'toast-error' : (type === 'success' ? 'toast-success' : 'toast-info');
   toast.className = `toast ${toneClass}`;
@@ -23,15 +82,16 @@ function showToast(type = 'info', title = '', message = '') {
     <i class="toast-icon ${icons[type] || icons.info}"></i>
     <div class="toast-body">
       <div class="toast-title">${title}</div>
-      ${message ? `<div class="toast-msg">${message}</div>` : ''}
+      ${finalMsg ? `<div class="toast-msg">${finalMsg}</div>` : ''}
     </div>
   `;
   container.appendChild(toast);
   setTimeout(() => {
     toast.classList.add('out');
     setTimeout(() => toast.remove(), 350);
-  }, 3500);
+  }, 4500);
 }
+
 
 // Sidebar responsive toggle & mobile menu setup
 document.addEventListener('DOMContentLoaded', () => {
