@@ -442,14 +442,10 @@ const SCHED = (() => {
       return false;
     });
 
-    if (currentTargetSchedules.length === 0) {
-      if (emptyPanel) emptyPanel.classList.remove('hidden');
-      if (tableEl) tableEl.classList.add('hidden');
-    } else {
-      if (emptyPanel) emptyPanel.classList.add('hidden');
-      if (tableEl) tableEl.classList.remove('hidden');
-      renderTimetable(currentTargetSchedules);
-    }
+    // Always show timetable table when a target is selected
+    if (emptyPanel) emptyPanel.classList.add('hidden');
+    if (tableEl) tableEl.classList.remove('hidden');
+    renderTimetable(currentTargetSchedules);
     updatePrintHeader();
     calculateConflicts();
     updateKpiMetrics();
