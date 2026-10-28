@@ -1,0 +1,261 @@
+/* ============================================================
+   REGISTRATION - Page Specific Styles
+   ============================================================ */
+
+/* ── Legend Bar ───────────────────────────────────────────── */
+.reg-legend {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 18px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+}
+.legend-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 14px;
+  border-radius: var(--r);
+  font-size: 13px; flex: 1; min-width: 180px;
+}
+.legend-item i { font-size: 18px; }
+.legend-label  { font-size: 13px; font-weight: 700; }
+.legend-desc   { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+.legend-samarn {
+  background: rgba(99,102,241,0.10);
+  border: 1px solid rgba(99,102,241,0.25);
+  color: var(--primary-light);
+}
+.legend-samarn i { color: var(--primary-light); }
+
+.legend-practice {
+  background: rgba(245,158,11,0.10);
+  border: 1px solid rgba(245,158,11,0.25);
+  color: #fbbf24;
+}
+.legend-practice i { color: #fbbf24; }
+
+.legend-total {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; color: var(--text-muted);
+  margin-left: auto;
+}
+.legend-total strong { color: var(--text-primary); }
+
+/* ── Form Layout ──────────────────────────────────────────── */
+.reg-form-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+/* ── Form Card ────────────────────────────────────────────── */
+.reg-form-card { padding: 28px; }
+
+.reg-form-header {
+  display: flex; align-items: center; gap: 16px;
+  margin-bottom: 20px;
+}
+.reg-form-icon {
+  width: 52px; height: 52px;
+  border-radius: var(--r-lg);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; color: #fff; flex-shrink: 0;
+  background: linear-gradient(135deg, #6366f1, #22d3ee);
+  box-shadow: 0 4px 20px rgba(99,102,241,0.3);
+  transition: var(--t) var(--ease);
+}
+.reg-form-icon.samarn   { background: linear-gradient(135deg, #6366f1, #818cf8); box-shadow: 0 4px 20px var(--primary-glow); }
+.reg-form-icon.practice { background: linear-gradient(135deg, #d97706, #f59e0b); box-shadow: 0 4px 20px var(--warning-glow); }
+
+.reg-form-title { font-size: 17px; font-weight: 700; color: var(--text-primary); }
+.reg-form-sub   { font-size: 12.5px; color: var(--text-muted); margin-top: 3px; }
+
+/* ── Subject Type Banner ──────────────────────────────────── */
+.subject-type-banner {
+  border-radius: var(--r);
+  margin-bottom: 8px;
+  overflow: hidden;
+  animation: fadeSlideIn 0.3s ease;
+}
+.type-banner-inner {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 14px 16px;
+}
+.type-banner-inner i { font-size: 18px; margin-top: 1px; flex-shrink: 0; }
+.type-banner-text { font-size: 13px; font-weight: 600; line-height: 1.5; }
+
+.subject-type-banner.samarn {
+  background: rgba(99,102,241,0.12);
+  border: 1px solid rgba(99,102,241,0.35);
+}
+.subject-type-banner.samarn .type-banner-inner i,
+.subject-type-banner.samarn .type-banner-text { color: var(--primary-light); }
+
+.subject-type-banner.practice {
+  background: rgba(245,158,11,0.12);
+  border: 1px solid rgba(245,158,11,0.35);
+}
+.subject-type-banner.practice .type-banner-inner i,
+.subject-type-banner.practice .type-banner-text { color: #fbbf24; }
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Subject Detail Row ───────────────────────────────────── */
+.subject-detail-row {
+  display: flex; gap: 10px;
+  margin-bottom: 6px;
+  animation: fadeSlideIn 0.25s ease;
+}
+.subject-detail-item {
+  flex: 1;
+  padding: 8px 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+.subject-detail-item strong {
+  display: block;
+  font-size: 18px; font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+/* ── Group Label Badge ────────────────────────────────────── */
+.group-label-badge {
+  display: inline-flex; align-items: center;
+  padding: 2px 8px;
+  background: var(--primary-subtle);
+  border-radius: var(--r-full);
+  font-size: 10.5px; font-weight: 600;
+  color: var(--primary-light);
+  margin-left: 6px;
+}
+
+/* ── Group 2 Section ──────────────────────────────────────── */
+.group2-section { animation: fadeSlideIn 0.3s ease; }
+
+.group2-divider {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 10px;
+}
+.group2-divider span {
+  font-size: 11.5px; font-weight: 700;
+  color: var(--warning);
+  padding: 3px 10px;
+  background: rgba(245,158,11,0.10);
+  border: 1px solid rgba(245,158,11,0.30);
+  border-radius: var(--r-full);
+}
+
+/* ── Right Panel ──────────────────────────────────────────── */
+.reg-right-panel { display: flex; flex-direction: column; gap: 16px; }
+
+/* ── Type Summary Cards ───────────────────────────────────── */
+.reg-type-summary {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+.type-summary-card {
+  border-radius: var(--r-lg);
+  padding: 18px 14px;
+  text-align: center;
+  position: relative; overflow: hidden;
+  transition: var(--t) var(--ease);
+}
+.type-summary-card:hover { transform: translateY(-3px); }
+
+.type-summary-card.samarn {
+  background: linear-gradient(135deg, rgba(99,102,241,0.25), rgba(129,140,248,0.15));
+  border: 1px solid rgba(99,102,241,0.35);
+}
+.type-summary-card.practice {
+  background: linear-gradient(135deg, rgba(245,158,11,0.25), rgba(251,191,36,0.15));
+  border: 1px solid rgba(245,158,11,0.35);
+}
+
+.ts-icon { font-size: 24px; margin-bottom: 8px; }
+.type-summary-card.samarn .ts-icon   { color: var(--primary-light); }
+.type-summary-card.practice .ts-icon { color: #fbbf24; }
+
+.ts-count {
+  font-size: 32px; font-weight: 900;
+  line-height: 1; color: var(--text-primary);
+}
+.ts-label {
+  font-size: 11px; color: var(--text-muted);
+  margin-top: 4px; font-weight: 600;
+}
+
+/* ── Recent Registrations ─────────────────────────────────── */
+.reg-recent-card {
+  background: var(--bg-glass);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+.reg-recent-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px; font-weight: 700;
+  color: var(--text-secondary);
+}
+.reg-recent-header i { color: var(--primary-light); }
+
+.recent-reg-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  transition: var(--t) var(--ease);
+}
+.recent-reg-item:last-child { border-bottom: none; }
+.recent-reg-item:hover { background: var(--bg-glass-hover); }
+
+.rri-type-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%; flex-shrink: 0; margin-top: 5px;
+}
+.rri-type-dot.samarn   { background: var(--primary); box-shadow: 0 0 6px var(--primary-glow); }
+.rri-type-dot.practice { background: var(--warning);  box-shadow: 0 0 6px var(--warning-glow); }
+
+.rri-subject { font-size: 12.5px; font-weight: 600; color: var(--text-primary); }
+.rri-group   { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+/* ── Table Type Badge ─────────────────────────────────────── */
+.type-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px;
+  border-radius: var(--r-full);
+  font-size: 11.5px; font-weight: 700;
+  white-space: nowrap;
+}
+.type-badge.samarn {
+  background: rgba(99,102,241,0.15);
+  color: var(--primary-light);
+  border: 1px solid rgba(99,102,241,0.3);
+}
+.type-badge.practice {
+  background: rgba(245,158,11,0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245,158,11,0.3);
+}
+
+/* ── Responsive ───────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .reg-form-layout { grid-template-columns: 1fr; }
+  .reg-right-panel { order: -1; }
+  .reg-type-summary { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 600px) {
+  .reg-legend { flex-direction: column; }
+  .subject-detail-row { flex-direction: column; }
+  .reg-type-summary { grid-template-columns: 1fr 1fr; }
+}

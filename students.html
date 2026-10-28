@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ข้อมูลนักเรียน – EduSched AI</title>
+  <meta name="description" content="ระบบจัดการข้อมูลนักเรียนและเงื่อนไขพิเศษ EduSched AI" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+</head>
+
+<body>
+  <!-- Background Glow Orbs -->
+  <div class="bg-orbs">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <div class="app-wrapper">
+    <!-- ── Sidebar ── -->
+    <aside class="sidebar" id="sidebar">
+      <a href="index.html" class="sidebar-logo">
+        <div class="sidebar-logo-icon">🎓</div>
+        <div class="sidebar-logo-text">
+          <div class="brand">EduSched AI</div>
+          <div class="sub">ระบบจัดตารางสอน</div>
+        </div>
+      </a>
+
+      <nav class="sidebar-nav">
+        <span class="nav-section-label">เมนูหลัก</span>
+        <a href="index.html" class="nav-item">
+          <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>แดชบอร์ด
+        </a>
+        <a href="schedule.html" class="nav-item">
+          <span class="nav-icon"><i class="fas fa-calendar-days"></i></span>ตารางสอน
+        </a>
+
+        <span class="nav-section-label">ข้อมูลพื้นฐาน</span>
+        <a href="rooms.html" class="nav-item">
+          <span class="nav-icon"><i class="fas fa-door-open"></i></span>ห้องเรียน
+        </a>
+        <a href="groups.html" class="nav-item">
+          <span class="nav-icon"><i class="fas fa-users"></i></span>กลุ่มนักเรียน
+        </a>
+        <a href="students.html" class="nav-item active">
+          <span class="nav-icon"><i class="fas fa-user-graduate"></i></span>นักเรียน
+        </a>
+        <a href="teachers.html" class="nav-item">
+          <span class="nav-icon"><i class="fas fa-chalkboard-user"></i></span>อาจารย์
+        </a>
+        <a href="subjects.html" class="nav-item">
+          <span class="nav-icon"><i class="fas fa-book-open"></i></span>รายวิชา
+        </a>
+
+        <span class="nav-section-label">การจัดการ</span>
+        <a href="teaching-load.html" class="nav-item">
+          <span class="nav-icon"><i class="fas fa-person-chalkboard"></i></span>ภาระงานสอน
+        </a>
+        <a href="registration.html" class="nav-item">
+          <span class="nav-icon"><i class="fas fa-clipboard-list"></i></span>ข้อมูลการลงทะเบียน
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-card">
+          <div class="user-avatar">A</div>
+          <div class="user-info">
+            <div class="name">ผู้ดูแลระบบ</div>
+            <div class="role">Administrator</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ── Main Content Area ── -->
+    <div class="main-content">
+      <header class="top-header">
+        <div class="header-title" style="display:flex;align-items:center;gap:8px;">
+          <span style="display:inline-block;width:3px;height:16px;background:#3b82f6;border-radius:2px;"></span>
+          จัดการข้อมูลนักเรียน
+        </div>
+      </header>
+
+      <main class="page-content">
+        <!-- Header -->
+        <div class="page-header">
+          <div class="page-header-left">
+            <a href="index.html" class="back-btn" title="กลับหน้าแดชบอร์ด"><i class="fas fa-chevron-left"></i></a>
+            <div>
+              <h1 class="page-title">ข้อมูลนักเรียน</h1>
+              <p class="page-subtitle">จัดการรายชื่อ รหัสประจำตัว กลุ่มเรียน และเงื่อนไขพิเศษของนักเรียน</p>
+            </div>
+          </div>
+          <div class="page-actions">
+            <div class="tab-bar">
+              <div class="tab-item active" id="tab-form" onclick="STUDENTS.switchTab('form')">
+                <i class="fas fa-plus"></i> เพิ่มข้อมูล
+              </div>
+              <div class="tab-item" id="tab-table" onclick="STUDENTS.switchTab('table')">
+                <i class="fas fa-table"></i> ดูข้อมูล
+              </div>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="STUDENTS.downloadTemplate()" title="ดาวน์โหลดไฟล์แม่แบบ Excel สำหรับกรอกข้อมูลนักเรียน">
+              <i class="fas fa-file-arrow-down"></i> แม่แบบ Excel
+            </button>
+            <label class="btn btn-ghost btn-sm" style="cursor:pointer;" title="นำเข้าข้อมูลนักเรียนจากไฟล์ Excel">
+              <i class="fas fa-file-import"></i> นำเข้า Excel
+              <input type="file" accept=".xlsx,.xls" style="display:none" onchange="STUDENTS.importExcel(this)" />
+            </label>
+            <button class="btn btn-ghost btn-sm" onclick="STUDENTS.exportExcel()" title="ส่งออก Excel">
+              <i class="fas fa-file-excel"></i> ส่งออก Excel
+            </button>
+          </div>
+        </div>
+
+        <!-- ── TAB 1: FORM ── -->
+        <div id="section-form">
+          <div class="form-card" style="max-width:680px;margin:0 auto;">
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:22px;">
+              <div style="width:48px;height:48px;background:linear-gradient(135deg,#2563eb,#3b82f6);border-radius:var(--r-lg);display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;box-shadow:0 4px 20px rgba(59,130,246,0.35);">
+                <i class="fas fa-user-plus"></i>
+              </div>
+              <div>
+                <div style="font-size:16px;font-weight:700;">กรอกข้อมูลนักเรียน</div>
+                <div style="font-size:12px;color:var(--text-muted);">บันทึกข้อมูลนักเรียนรายบุคคลและกำหนดเงื่อนไขการเรียน</div>
+              </div>
+            </div>
+
+            <input type="hidden" id="student-db-id" />
+
+            <div class="form-grid" style="gap:18px;">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;" class="form-grid-2">
+                <div class="form-group">
+                  <label class="form-label" for="s-code">รหัสประจำตัวนักเรียน <span>*</span></label>
+                  <input class="form-input" id="s-code" placeholder="เช่น 67204010101" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="s-name">ชื่อ-นามสกุล <span>*</span></label>
+                  <input class="form-input" id="s-name" placeholder="เช่น นายสมชาย ตั้งใจเรียน" />
+                </div>
+              </div>
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;" class="form-grid-2">
+                <div class="form-group">
+                  <label class="form-label" for="s-group">กลุ่มเรียน (Group) <span>*</span></label>
+                  <div class="select-wrapper">
+                    <select class="form-select" id="s-group" onchange="STUDENTS.onGroupSelected()">
+                      <option value="">-- เลือกกลุ่มเรียน --</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="s-level">ระดับชั้น (Level)</label>
+                  <div class="select-wrapper">
+                    <select class="form-select" id="s-level">
+                      <option value="ปวช.1">ปวช.1</option>
+                      <option value="ปวช.2">ปวช.2</option>
+                      <option value="ปวช.3">ปวช.3</option>
+                      <option value="ปวส.1">ปวส.1</option>
+                      <option value="ปวส.2">ปวส.2</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div style="display:grid;grid-template-columns:1fr;gap:14px;" class="form-grid-2">
+
+                <div class="form-group">
+                  <label class="form-label" for="s-special">เงื่อนไขพิเศษ (โจทย์การจัดตาราง)</label>
+                  <div class="select-wrapper">
+                    <select class="form-select" id="s-special">
+                      <option value="ปกติ">ปกติ (ไม่มีเงื่อนไขพิเศษ)</option>
+                      <option value="กลุ่มเรียนคู่ขนาน">กลุ่มเรียนคู่ขนาน (เรียนร่วมกับกลุ่มอื่น)</option>
+                      <option value="ระบบทวิภาคี">ระบบทวิภาคี (ฝึกงานในสถานประกอบการ)</option>
+                      <option value="นักศึกษาวิชาทหาร (นศท.)">นักศึกษาวิชาทหาร (นศท. / วันพุธ)</option>
+                      <option value="เรียนร่วม">วิชาสามัญเรียนร่วม</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+            <div class="form-actions">
+              <button class="btn btn-primary" id="btn-save-student" onclick="STUDENTS.save()">
+                <i class="fas fa-floppy-disk"></i> บันทึกข้อมูล
+              </button>
+              <button class="btn btn-ghost" onclick="STUDENTS.clearForm()">
+                <i class="fas fa-rotate-left"></i> ล้างข้อมูล
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── TAB 2: TABLE ── -->
+        <div id="section-table" class="hidden">
+          <div class="table-card">
+            <div class="table-toolbar">
+              <span class="table-title">
+                <i class="fas fa-user-graduate" style="color:var(--primary-light);margin-right:8px;"></i>
+                รายชื่อนักเรียนทั้งหมด
+              </span>
+
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                <!-- Filter by Group -->
+                <div class="select-wrapper" style="min-width:180px;">
+                  <select class="form-select" id="filter-group" onchange="STUDENTS.applyFilters()" style="padding:6px 30px 6px 12px;font-size:12.5px;height:34px;">
+                    <option value="">ทุกกลุ่มเรียน</option>
+                  </select>
+                </div>
+
+                <!-- Filter by Condition -->
+                <div class="select-wrapper" style="min-width:160px;">
+                  <select class="form-select" id="filter-condition" onchange="STUDENTS.applyFilters()" style="padding:6px 30px 6px 12px;font-size:12.5px;height:34px;">
+                    <option value="">ทุกเงื่อนไข</option>
+                    <option value="ปกติ">ปกติ</option>
+                    <option value="กลุ่มเรียนคู่ขนาน">กลุ่มเรียนคู่ขนาน</option>
+                    <option value="ระบบทวิภาคี">ระบบทวิภาคี</option>
+                    <option value="นักศึกษาวิชาทหาร (นศท.)">นศท. / รด.</option>
+                    <option value="เรียนร่วม">เรียนร่วม</option>
+                  </select>
+                </div>
+
+                <div class="table-search">
+                  <i class="fas fa-search"></i>
+                  <input type="text" placeholder="ค้นหารหัส / ชื่อนักเรียน..." oninput="STUDENTS.onSearch(this.value)" />
+                </div>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th style="width:50px;">#</th>
+                    <th style="width:130px;">รหัสประจำตัว</th>
+                    <th>ชื่อ-นามสกุล</th>
+                    <th>กลุ่มเรียน</th>
+                    <th>ระดับชั้น</th>
+                    <th>เงื่อนไขพิเศษ</th>
+                    <th style="width:110px;text-align:center;">จัดการ</th>
+                  </tr>
+                </thead>
+                <tbody id="students-tbody">
+                  <tr>
+                    <td colspan="7" class="table-empty">
+                      <div class="spinner"></div> กำลังโหลดข้อมูล...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="js/supabase-config.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/students.js"></script>
+</body>
+
+</html>

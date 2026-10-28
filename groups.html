@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>กลุ่มนักเรียน – EduSched AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+</head>
+
+<body>
+  <div class="bg-orbs">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+  <div class="app-wrapper">
+    <aside class="sidebar">
+      <a href="index.html" class="sidebar-logo">
+        <div class="sidebar-logo-icon">🎓</div>
+        <div class="sidebar-logo-text">
+          <div class="brand">EduSched AI</div>
+          <div class="sub">ระบบจัดตารางสอน</div>
+        </div>
+      </a>
+      <nav class="sidebar-nav">
+        <span class="nav-section-label">เมนูหลัก</span>
+        <a href="index.html" class="nav-item"><span class="nav-icon"><i class="fas fa-chart-pie"></i></span>แดชบอร์ด</a>
+        <a href="schedule.html" class="nav-item"><span class="nav-icon"><i
+              class="fas fa-calendar-days"></i></span>ตารางสอน</a>
+        <span class="nav-section-label">ข้อมูลพื้นฐาน</span>
+        <a href="rooms.html" class="nav-item"><span class="nav-icon"><i
+              class="fas fa-door-open"></i></span>ห้องเรียน</a>
+        <a href="groups.html" class="nav-item active"><span class="nav-icon"><i
+              class="fas fa-users"></i></span>กลุ่มนักเรียน</a>
+        <a href="students.html" class="nav-item"><span class="nav-icon"><i
+              class="fas fa-user-graduate"></i></span>นักเรียน</a>
+        <a href="teachers.html" class="nav-item"><span class="nav-icon"><i
+              class="fas fa-chalkboard-user"></i></span>อาจารย์</a>
+        <a href="subjects.html" class="nav-item"><span class="nav-icon"><i
+              class="fas fa-book-open"></i></span>รายวิชา</a>
+        <span class="nav-section-label">การจัดการ</span>
+        <a href="teaching-load.html" class="nav-item"><span class="nav-icon"><i
+              class="fas fa-person-chalkboard"></i></span>ภาระงานสอน</a>
+        <a href="registration.html" class="nav-item"><span class="nav-icon"><i
+              class="fas fa-clipboard-list"></i></span>ข้อมูลการลงทะเบียน</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-card">
+          <div class="user-avatar">A</div>
+          <div class="user-info">
+            <div class="name">ผู้ดูแลระบบ</div>
+            <div class="role">Administrator</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+    <div class="main-content">
+      <header class="top-header">
+        <div class="header-title">กลุ่มนักเรียน</div>
+      </header>
+      <main class="page-content">
+        <div class="page-header">
+          <div class="page-header-left">
+            <a href="index.html" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+            <div>
+              <h1 class="page-title">กลุ่มนักเรียน</h1>
+              <p class="page-subtitle">จัดการ ข้อมูลกลุ่มนักเรียน</p>
+            </div>
+          </div>
+          <div class="page-actions">
+            <div class="tab-bar">
+              <div class="tab-item active" id="tab-form" onclick="GROUPS.switchTab('form')"><i class="fas fa-plus"></i>
+                เพิ่มข้อมูล</div>
+              <div class="tab-item" id="tab-table" onclick="GROUPS.switchTab('table')"><i class="fas fa-table"></i>
+                ดูข้อมูล</div>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="GROUPS.downloadTemplate()" title="ดาวน์โหลดไฟล์แม่แบบ Excel สำหรับกรอกกลุ่มเรียน">
+              <i class="fas fa-file-arrow-down"></i> แม่แบบ Excel
+            </button>
+            <label class="btn btn-ghost btn-sm" style="cursor:pointer;" title="นำเข้าข้อมูลกลุ่มเรียนจาก Excel">
+              <i class="fas fa-file-import"></i> นำเข้า Excel
+              <input type="file" accept=".xlsx,.xls" style="display:none" onchange="GROUPS.importExcel(this)" />
+            </label>
+            <button class="btn btn-ghost btn-sm" onclick="GROUPS.exportExcel()" title="ส่งออก Excel">
+              <i class="fas fa-file-excel"></i> ส่งออก Excel
+            </button>
+          </div>
+        </div>
+
+        <div id="section-form">
+          <div class="form-card" style="max-width:600px;margin:0 auto;">
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:22px;">
+              <div
+                style="width:48px;height:48px;background:linear-gradient(135deg,#059669,#10b981);border-radius:var(--r-lg);display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;box-shadow:0 4px 20px rgba(16,185,129,0.35);">
+                <i class="fas fa-users"></i>
+              </div>
+              <div>
+                <div style="font-size:16px;font-weight:700;">ข้อมูลกลุ่มนักเรียน</div>
+                <div style="font-size:12px;color:var(--text-muted);">กรอกข้อมูลกลุ่มนักเรียน</div>
+              </div>
+            </div>
+            <div class="form-grid" style="gap:18px;">
+              <div class="form-group">
+                <label class="form-label" for="g-id">รหัสกลุ่ม (group_id) <span>*</span></label>
+                <input class="form-input" id="g-id" placeholder="เช่น G1" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="g-name">ชื่อกลุ่ม (group_name) <span>*</span></label>
+                <input class="form-input" id="g-name" placeholder="เช่น สาขาวิชาเทคโนโลยีสารสนเทศ 1/1" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="g-count">จำนวนนักเรียน (student_count)</label>
+                <input type="number" class="form-input form-number" id="g-count" placeholder="เช่น 30" min="0" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="g-advisor">อาจารย์ที่ปรึกษา (advisor)</label>
+                <div class="select-wrapper">
+                  <select class="form-select" id="g-advisor">
+                    <option value="">-- เลือกอาจารย์ที่ปรึกษา --</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <div class="form-actions">
+              <button class="btn btn-primary" id="btn-save-group" onclick="GROUPS.save()"><i
+                  class="fas fa-floppy-disk"></i> บันทึกข้อมูล</button>
+              <button class="btn btn-ghost" onclick="GROUPS.clearForm()"><i class="fas fa-rotate-left"></i>
+                ล้างข้อมูล</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="section-table" class="hidden">
+          <div class="table-container">
+            <div class="table-header">
+              <span class="table-title"><i class="fas fa-users"
+                  style="color:var(--success);margin-right:8px;"></i>กลุ่มนักเรียนทั้งหมด</span>
+              <div class="table-search"><i class="fas fa-search"></i><input type="text" placeholder="ค้นหา..."
+                  oninput="GROUPS.filter(this.value)" /></div>
+            </div>
+            <div style="overflow-x:auto;">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>รหัสกลุ่ม</th>
+                    <th>ชื่อกลุ่ม</th>
+                    <th>นักเรียน</th>
+                    <th>อ.ที่ปรึกษา</th>
+                    <th>จัดการ</th>
+                  </tr>
+                </thead>
+                <tbody id="groups-tbody">
+                  <tr>
+                    <td colspan="6" class="table-empty">
+                      <div class="spinner"></div> กำลังโหลด...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <div class="toast-container" id="toastContainer"></div>
+  <div class="modal-overlay hidden" id="deleteModal">
+    <div class="modal" style="max-width:400px;">
+      <div class="modal-header">
+        <div class="modal-title" style="color:var(--danger);"><i class="fas fa-triangle-exclamation"></i> ยืนยันการลบ
+        </div><button class="modal-close" onclick="GROUPS.closeModal()"><i class="fas fa-xmark"></i></button>
+      </div>
+      <p style="color:var(--text-secondary);font-size:14px;">คุณต้องการลบกลุ่มนักเรียนนี้ใช่หรือไม่?</p>
+      <div class="modal-footer"><button class="btn btn-ghost" onclick="GROUPS.closeModal()">ยกเลิก</button><button
+          class="btn btn-danger" id="btn-del-group" onclick="GROUPS.confirmDelete()"><i class="fas fa-trash"></i>
+          ลบ</button></div>
+    </div>
+  </div>
+  <script src="js/supabase-config.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/groups.js"></script>
+</body>
+
+</html>

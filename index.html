@@ -1,0 +1,162 @@
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>แดชบอร์ด – EduSched AI</title>
+  <meta name="description" content="ระบบบริหารจัดการวิทยาลัย จัดตารางสอนอัตโนมัติ" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/dashboard.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div class="bg-orbs"><div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div></div>
+<div class="app-wrapper">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <a href="index.html" class="sidebar-logo">
+      <div class="sidebar-logo-icon">🎓</div>
+      <div class="sidebar-logo-text"><div class="brand">EduSched AI</div><div class="sub">ระบบจัดตารางสอน</div></div>
+    </a>
+    <nav class="sidebar-nav">
+      <span class="nav-section-label">เมนูหลัก</span>
+      <a href="index.html" class="nav-item active"><span class="nav-icon"><i class="fas fa-chart-pie"></i></span>แดชบอร์ด</a>
+      <a href="schedule.html" class="nav-item"><span class="nav-icon"><i class="fas fa-calendar-days"></i></span>ตารางสอน</a>
+      <span class="nav-section-label">ข้อมูลพื้นฐาน</span>
+      <a href="rooms.html" class="nav-item"><span class="nav-icon"><i class="fas fa-door-open"></i></span>ห้องเรียน</a>
+      <a href="groups.html" class="nav-item"><span class="nav-icon"><i class="fas fa-users"></i></span>กลุ่มนักเรียน</a>
+      <a href="students.html" class="nav-item"><span class="nav-icon"><i class="fas fa-user-graduate"></i></span>นักเรียน</a>
+      <a href="teachers.html" class="nav-item"><span class="nav-icon"><i class="fas fa-chalkboard-user"></i></span>อาจารย์</a>
+      <a href="subjects.html" class="nav-item"><span class="nav-icon"><i class="fas fa-book-open"></i></span>รายวิชา</a>
+      <span class="nav-section-label">การจัดการ</span>
+      <a href="teaching-load.html" class="nav-item"><span class="nav-icon"><i class="fas fa-person-chalkboard"></i></span>ภาระงานสอน</a>
+      <a href="registration.html" class="nav-item"><span class="nav-icon"><i class="fas fa-clipboard-list"></i></span>ข้อมูลการลงทะเบียน</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar">A</div>
+        <div class="user-info"><div class="name">ผู้ดูแลระบบ</div><div class="role">Administrator</div></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main-content">
+    <header class="top-header">
+      <div class="header-title">แดชบอร์ด</div>
+    </header>
+
+    <main class="page-content">
+      <!-- Welcome Banner -->
+      <div class="welcome-banner">
+        <div class="welcome-text">
+          <div class="greeting">อินดีต้อนรับ, ผู้ดูแลระบบ 👋</div>
+          <div class="sub">ระบบบริหารจัดการการวิทยาลัย · EduSched AI</div>
+        </div>
+        <div class="welcome-icon">🏫</div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="stats-grid">
+        <div class="stat-card" style="background:var(--card-teal);" onclick="location.href='rooms.html'">
+          <div class="stat-card-icon"><i class="fas fa-door-open"></i></div>
+          <div class="stat-card-value" id="stat-rooms">–</div>
+          <div class="stat-card-label">ห้องเรียนทั้งหมด</div>
+          <div class="stat-card-sub">(ห้อง)</div>
+        </div>
+        <div class="stat-card" style="background:var(--card-green);" onclick="location.href='groups.html'">
+          <div class="stat-card-icon"><i class="fas fa-users-rectangle"></i></div>
+          <div class="stat-card-value" id="stat-groups">–</div>
+          <div class="stat-card-label">กลุ่มเรียนทั้งหมด</div>
+          <div class="stat-card-sub">(กลุ่ม)</div>
+        </div>
+        <div class="stat-card" style="background:var(--card-gold);" onclick="location.href='subjects.html'">
+          <div class="stat-card-icon"><i class="fas fa-book-bookmark"></i></div>
+          <div class="stat-card-value" id="stat-subjects">–</div>
+          <div class="stat-card-label">รายวิชาทั้งหมด</div>
+          <div class="stat-card-sub">(วิชา)</div>
+        </div>
+        <div class="stat-card" style="background:var(--card-orange);" onclick="location.href='teaching-load.html'">
+          <div class="stat-card-icon"><i class="fas fa-clock-rotate-left"></i></div>
+          <div class="stat-card-value" id="stat-loads">–</div>
+          <div class="stat-card-label">ภาระงานสอน</div>
+          <div class="stat-card-sub">(คาบ)</div>
+        </div>
+        <div class="stat-card" style="background:var(--card-blue);" onclick="location.href='teachers.html'">
+          <div class="stat-card-icon"><i class="fas fa-chalkboard-user"></i></div>
+          <div class="stat-card-value" id="stat-teachers">–</div>
+          <div class="stat-card-label">ครูผู้สอนทั้งหมด</div>
+          <div class="stat-card-sub">(คน)</div>
+        </div>
+        <div class="stat-card" style="background:var(--card-emerald);" onclick="location.href='registration.html'">
+          <div class="stat-card-icon"><i class="fas fa-clipboard-check"></i></div>
+          <div class="stat-card-value" id="stat-regs">–</div>
+          <div class="stat-card-label">รายวิชาที่ลงทะเบียน</div>
+          <div class="stat-card-sub">(วิชา)</div>
+        </div>
+        <div class="stat-card" style="background:linear-gradient(135deg,rgba(99,102,241,0.18),rgba(139,92,246,0.12));border:1px solid rgba(99,102,241,0.25);" onclick="location.href='students.html'">
+          <div class="stat-card-icon"><i class="fas fa-user-graduate"></i></div>
+          <div class="stat-card-value" id="stat-students">–</div>
+          <div class="stat-card-label">นักเรียนทั้งหมด</div>
+          <div class="stat-card-sub">(คน)</div>
+        </div>
+      </div>
+
+      <!-- Quick Actions + Recent -->
+      <div class="dash-bottom-grid">
+        <!-- Quick Actions -->
+        <div class="card">
+          <div style="font-size:15px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+            <i class="fas fa-bolt" style="color:var(--warning)"></i> Quick Actions
+          </div>
+          <div class="quick-actions-grid">
+            <a href="rooms.html" class="quick-action-btn qa-teal">
+              <i class="fas fa-door-open"></i><span>เพิ่มห้องเรียน</span>
+            </a>
+            <a href="groups.html" class="quick-action-btn qa-green">
+              <i class="fas fa-users"></i><span>เพิ่มกลุ่มนักเรียน</span>
+            </a>
+            <a href="teachers.html" class="quick-action-btn qa-blue">
+              <i class="fas fa-chalkboard-user"></i><span>เพิ่มอาจารย์</span>
+            </a>
+            <a href="subjects.html" class="quick-action-btn qa-gold">
+              <i class="fas fa-book-open"></i><span>เพิ่มรายวิชา</span>
+            </a>
+            <a href="teaching-load.html" class="quick-action-btn qa-purple">
+              <i class="fas fa-person-chalkboard"></i><span>ภาระงานสอน</span>
+            </a>
+            <a href="registration.html" class="quick-action-btn qa-orange">
+              <i class="fas fa-clipboard-list"></i><span>ลงทะเบียน</span>
+            </a>
+            <a href="students.html" class="quick-action-btn qa-purple" style="background:rgba(99,102,241,0.12);border-color:rgba(99,102,241,0.25);">
+              <i class="fas fa-user-graduate"></i><span>จัดการนักเรียน</span>
+            </a>
+            <a href="schedule.html" class="quick-action-btn qa-cyan" style="grid-column:span 2;">
+              <i class="fas fa-calendar-days"></i><span>จัดตารางสอนอัตโนมัติ</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- System Status -->
+        <div class="card">
+          <div style="font-size:15px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+            <i class="fas fa-chart-pie" style="color:var(--primary-light)"></i> สถานะระบบ
+          </div>
+          <div id="system-status-list">
+            <div class="page-loader" style="padding:30px;"><div class="spinner"></div></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<div class="toast-container" id="toastContainer"></div>
+<script src="js/supabase-config.js"></script>
+<script src="js/main.js"></script>
+<script src="js/dashboard.js"></script>
+</body>
+</html>

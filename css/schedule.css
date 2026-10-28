@@ -1,0 +1,1842 @@
+/* ============================================================
+   EDUSCHED AI - SCHEDULE MANAGEMENT (ตารางสอน)
+   Pixel-accurate dark timetable layout matching official screenshot
+   ============================================================ */
+
+/* ── Page Layout & Spacing ─────────────────────────────────── */
+.sched-page-container {
+  padding: 10px 0 40px;
+}
+
+/* ── Page Header matching screenshot ──────────────────────── */
+.sched-header-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.sched-back-btn {
+  width: 44px;
+  height: 44px;
+  background: #ffffff;
+  color: #1e293b;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  transition: all var(--t) var(--ease);
+  flex-shrink: 0;
+}
+
+.sched-back-btn:hover {
+  transform: translateX(-3px);
+  background: #f1f5f9;
+}
+
+.sched-header-titles {
+  display: flex;
+  flex-direction: column;
+}
+
+.sched-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.3px;
+  line-height: 1.25;
+}
+
+.sched-subtitle {
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 3px;
+}
+
+/* ── Top Controls Bar (Matching Screenshot Row) ───────────── */
+.sched-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.sched-left-filters {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.sched-filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.sched-filter-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+.sched-select-input {
+  background: #111827;
+  border: 1px solid #1f293d;
+  color: #f1f5f9;
+  border-radius: 10px;
+  padding: 8px 36px 8px 14px;
+  font-size: 13.5px;
+  font-weight: 500;
+  height: 38px;
+  min-width: 170px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color var(--t) var(--ease);
+}
+
+.sched-select-input:focus {
+  border-color: #6366f1;
+}
+
+/* ── Action Buttons Row ───────────────────────────────────── */
+.sched-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sched-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--t) var(--ease);
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+/* + เพิ่มรายวิชา */
+.btn-sched-add {
+  background: #111827;
+  border: 1px solid #1f293d;
+  color: #f1f5f9;
+}
+
+.btn-sched-add:hover {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+/* Seed Stepper */
+.sched-seed-wrapper {
+  display: inline-flex;
+  align-items: center;
+  background: #111827;
+  border: 1px solid #1f293d;
+  border-radius: 10px;
+  height: 38px;
+  padding: 0 8px 0 12px;
+  gap: 6px;
+}
+
+.seed-title {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+.seed-num-input {
+  width: 48px;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 13.5px;
+  text-align: center;
+  outline: none;
+}
+
+/* จัดตารางอัตโนมัติ (AI) */
+.btn-sched-ai {
+  background: #00c48c;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.btn-sched-ai:hover {
+  background: #00b07d;
+  box-shadow: 0 4px 14px rgba(0, 196, 140, 0.35);
+  transform: translateY(-1px);
+}
+
+/* ล้างตาราง */
+.btn-sched-clear {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.btn-sched-clear:hover {
+  background: #dc2626;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+  transform: translateY(-1px);
+}
+
+/* พิมพ์ตาราง */
+.btn-sched-print {
+  background: #8b5cf6;
+  color: #ffffff;
+}
+
+.btn-sched-print:hover {
+  background: #7c3aed;
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.35);
+  transform: translateY(-1px);
+}
+
+/* ส่งออก Excel */
+.btn-sched-export {
+  background: #111827;
+  border: 1px solid #1f293d;
+  color: #f1f5f9;
+}
+
+.btn-sched-export:hover {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+/* ตรวจความพร้อม & Dataset buttons */
+.btn-sched-validate {
+  background: rgba(34, 211, 238, 0.12);
+  border: 1px solid rgba(34, 211, 238, 0.35);
+  color: #38bdf8;
+}
+.btn-sched-validate:hover {
+  background: rgba(34, 211, 238, 0.22);
+  border-color: #38bdf8;
+}
+
+.btn-sched-dataset {
+  background: rgba(139, 92, 246, 0.12);
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  color: #a78bfa;
+}
+.btn-sched-dataset:hover {
+  background: rgba(139, 92, 246, 0.22);
+  border-color: #a78bfa;
+}
+
+/* ── Student Profile Banner ── */
+.student-profile-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(17, 24, 39, 0.85);
+  border: 1px solid #1f293d;
+  border-left: 4px solid #38bdf8;
+  border-radius: 12px;
+  padding: 12px 18px;
+  margin-bottom: 18px;
+}
+.sp-avatar {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #38bdf8, #6366f1);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.sp-name { font-size: 14px; font-weight: 700; color: #fff; }
+.sp-meta { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+.sp-badge {
+  margin-left: auto;
+  font-size: 11px; font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+}
+
+/* Student search results dropdown */
+.student-search-results {
+  position: absolute;
+  top: 100%; left: 0; right: 0;
+  background: #111827;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 50;
+  margin-top: 4px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+.student-search-item {
+  padding: 8px 12px;
+  font-size: 12.5px;
+  color: #f1f5f9;
+  cursor: pointer;
+  border-bottom: 1px solid #1e293b;
+  display: flex;
+  justify-content: space-between;
+}
+.student-search-item:hover {
+  background: #1e293b;
+  color: #38bdf8;
+}
+
+/* ── Decision-Making KPIs (เกณฑ์ 3.5.3 C) ── */
+.sched-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.kpi-card {
+  background: #0d1424;
+  border: 1px solid #1c2638;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.kpi-card:hover {
+  transform: translateY(-2px);
+  border-color: #2e3e5c;
+}
+.kpi-icon {
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+}
+.icon-teal   { background: rgba(20, 184, 166, 0.15); color: #2dd4bf; }
+.icon-blue   { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+.icon-purple { background: rgba(168, 85, 247, 0.15); color: #c084fc; }
+.icon-amber  { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+
+.kpi-val { font-size: 17px; font-weight: 800; color: #ffffff; line-height: 1.1; }
+.kpi-lbl { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+
+/* ── Conflict Validation Evidence Badge (เกณฑ์ 3.5.1 ก) ── */
+.conflict-summary-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 12px;
+  padding: 10px 18px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.conflict-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+.conflict-status-badge.success {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+.conflict-status-badge.warning {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+.conflict-metrics-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  font-size: 12px;
+  color: #cbd5e1;
+  flex-wrap: wrap;
+}
+.conflict-metrics-row .metric-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.conflict-metrics-row .metric-item strong {
+  color: #34d399;
+}
+
+/* ── AI Progress Modal (เกณฑ์ 3.5.2 ก) ── */
+.ai-progress-bar-wrap {
+  width: 100%;
+  height: 8px;
+  background: #1e293b;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+.ai-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6366f1, #22d3ee, #10b981);
+  transition: width 0.35s ease;
+  border-radius: 4px;
+}
+.ai-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ai-step-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #64748b;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  transition: all 0.25s ease;
+}
+.ai-step-item.active {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.08);
+  border-left: 3px solid #38bdf8;
+}
+.ai-step-item.done {
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.06);
+}
+.ai-step-item .step-icon {
+  font-size: 14px;
+  width: 18px;
+  text-align: center;
+}
+
+/* ── Dataset Simulation List (เกณฑ์ 3.5.3 A) ── */
+.dataset-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.dataset-opt-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #111827;
+  border: 1px solid #1f293d;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.dataset-opt-card:hover {
+  background: #1e293b;
+  border-color: #38bdf8;
+  transform: translateY(-1px);
+}
+.dataset-opt-card .d-icon {
+  font-size: 24px;
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.dataset-opt-card .d-info { flex: 1; }
+.dataset-opt-card .d-title { font-size: 13.5px; font-weight: 700; color: #fff; }
+.dataset-opt-card .d-desc { font-size: 11.5px; color: #94a3b8; margin-top: 2px; }
+
+/* ── Timetable Card Container (Matching screenshot dark box) ─ */
+.timetable-main-card {
+  background: #0c111d;
+  border: 1px solid #1c2638;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  overflow-x: auto;
+  margin-bottom: 30px;
+}
+
+/* ── The Timetable Table ───────────────────────────────────── */
+.timetable-grid {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  min-width: 1200px;
+  border: 1px solid #232d42;
+}
+
+/* All Table Headers & Cells */
+.timetable-grid th,
+.timetable-grid td {
+  border: 1px solid #232d42;
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Header Row 1 (เวลา) */
+.timetable-grid thead tr:first-child th {
+  background: #0f172a;
+  color: #94a3b8;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 12px 4px;
+  height: 44px;
+}
+
+/* Col 0 width */
+.timetable-grid th.col-time-day,
+.timetable-grid td.col-day-name {
+  width: 110px;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  padding: 12px 6px;
+}
+
+/* Header Row 2 (วัน/คาบ, 1, 2, 3, 4, [พัก], 5, 6, 7, 8, 9, 10, 11) */
+.timetable-grid thead tr:nth-child(2) th {
+  background: #0f172a;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 4px;
+  height: 38px;
+}
+
+/* Lunch break vertical column */
+.timetable-grid .lunch-column {
+  width: 48px;
+  background: #0e1422 !important;
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 11px;
+  padding: 0 !important;
+  user-select: none;
+  vertical-align: middle;
+}
+
+.lunch-vertical-text {
+  writing-mode: vertical-rl;
+  letter-spacing: 4px;
+  margin: 0 auto;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+/* ── Day Rows & Grid Cells ─────────────────────────────────── */
+.timetable-grid tbody td {
+  height: 72px;
+  padding: 6px 4px;
+  position: relative;
+  background: #0c111d;
+  transition: background 0.15s ease;
+}
+
+/* Hover on empty cell */
+.timetable-grid tbody td.empty-slot {
+  cursor: pointer;
+}
+
+.timetable-grid tbody td.empty-slot:hover {
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.empty-add-hint {
+  opacity: 0;
+  color: #6366f1;
+  font-size: 12px;
+  transition: opacity 0.15s ease;
+}
+
+.timetable-grid tbody td.empty-slot:hover .empty-add-hint {
+  opacity: 0.6;
+}
+
+/* ── Content inside class cell (Matching Screenshot Exact Look) */
+.timetable-grid tbody td.occupied-slot {
+  cursor: pointer;
+  background: #0d1424;
+}
+
+.timetable-grid tbody td.occupied-slot:hover {
+  background: rgba(99, 102, 241, 0.08);
+}
+
+.slot-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 2px;
+  width: 100%;
+  height: 100%;
+}
+
+.slot-course-code {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #f8fafc;
+  letter-spacing: 0.2px;
+  line-height: 1.25;
+}
+
+.slot-room-code {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.slot-teacher-code {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+/* Homeroom special text */
+.slot-homeroom-text {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #fcd34d;
+  line-height: 1.25;
+}
+
+/* ── Empty State Card ─────────────────────────────────────── */
+.sched-empty-panel {
+  text-align: center;
+  padding: 60px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.sched-empty-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  margin-bottom: 18px;
+}
+
+.sched-empty-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 6px;
+}
+
+.sched-empty-desc {
+  font-size: 13px;
+  color: #64748b;
+  margin-bottom: 20px;
+}
+
+/* ── Print Header & Footer on Screen (Hidden) ─────────────── */
+.print-doc-header,
+.print-doc-footer {
+  display: none;
+}
+
+.mobile-scroll-hint {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #94a3b8;
+  background: rgba(17, 24, 39, 0.7);
+  border: 1px dashed rgba(148, 163, 184, 0.25);
+  border-radius: 8px;
+  padding: 8px 14px;
+  margin-bottom: 12px;
+}
+
+/* ── Screen Responsive Styles ─────────────────────────────── */
+@media screen and (max-width: 1024px) {
+  .sched-page-container {
+    padding: 10px 0 30px;
+  }
+
+  .mobile-scroll-hint {
+    display: flex;
+  }
+
+  .timetable-main-card {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  /* Sticky Day column so user can comfortably scroll horizontally */
+  .timetable-grid th.col-time-day,
+  .timetable-grid td.col-day-name {
+    position: sticky;
+    left: 0;
+    z-index: 5;
+    background: #0f172a !important;
+    box-shadow: 4px 0 12px rgba(0, 0, 0, 0.5);
+  }
+}
+
+@media screen and (max-width: 860px) {
+  .sched-controls-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .sched-left-filters {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .sched-filter-item {
+    width: 100%;
+  }
+
+  .sched-select-input {
+    width: 100%;
+    min-width: 0 !important;
+  }
+
+  .sched-right-actions {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .sched-action-btn {
+    flex: 1 1 calc(33.333% - 6px);
+    justify-content: center;
+  }
+
+  .sched-seed-wrapper {
+    flex: 1 1 calc(33.333% - 6px);
+    justify-content: center;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .sched-header-section {
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .sched-back-btn {
+    width: 38px;
+    height: 38px;
+    font-size: 13px;
+  }
+
+  .sched-title {
+    font-size: 19px;
+  }
+
+  .sched-subtitle {
+    font-size: 12px;
+  }
+
+  .sched-left-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .sched-action-btn {
+    flex: 1 1 calc(50% - 4px);
+    padding: 0 10px;
+    font-size: 12px;
+    height: 40px;
+  }
+
+  .sched-seed-wrapper {
+    flex: 1 1 calc(50% - 4px);
+    height: 40px;
+  }
+
+  .timetable-main-card {
+    padding: 12px 8px;
+  }
+}
+
+/* ── AI Suite Navigation Bar (Rubric 3.5.4 & 3.5.5) ──────── */
+.ai-suite-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  background: linear-gradient(90deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  border-radius: 12px;
+  padding: 10px 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.ai-suite-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #c7d2fe;
+}
+
+.ai-suite-title i {
+  color: #818cf8;
+  font-size: 16px;
+}
+
+.ai-suite-buttons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.suite-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.btn-ai-arch {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.4);
+  color: #c7d2fe;
+}
+.btn-ai-arch:hover {
+  background: rgba(99, 102, 241, 0.3);
+  border-color: #818cf8;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.btn-ai-bench {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #a7f3d0;
+}
+.btn-ai-bench:hover {
+  background: rgba(16, 185, 129, 0.3);
+  border-color: #34d399;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.btn-ai-stress {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.4);
+  color: #fde68a;
+}
+.btn-ai-stress:hover {
+  background: rgba(245, 158, 11, 0.3);
+  border-color: #fbbf24;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.btn-ai-pitch {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  border-color: #6366f1;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+.btn-ai-pitch:hover {
+  background: linear-gradient(135deg, #4338ca 0%, #6d28d9 100%);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.5);
+  transform: translateY(-1px);
+}
+
+/* ── Multi-Agent Architecture Modal Styles ───────────────── */
+.agentic-flow-diagram {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+}
+
+.flow-step-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 90px;
+  text-align: center;
+}
+
+.flow-step-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  background: #1e293b;
+  border: 2px solid #334155;
+  color: #94a3b8;
+  transition: all 0.2s ease;
+}
+
+.flow-step-node.active .flow-step-icon {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: #6366f1;
+  color: #818cf8;
+}
+
+.flow-step-node.success .flow-step-icon {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10b981;
+  color: #34d399;
+}
+
+.flow-step-title {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.flow-arrow {
+  color: #475569;
+  font-size: 14px;
+}
+
+.agent-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.agent-card {
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.agent-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+.agent-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.agent-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.agent-avatar.plan { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
+.agent-avatar.act { background: rgba(99, 102, 241, 0.15); color: #818cf8; }
+.agent-avatar.check { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+.agent-avatar.explain { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+
+.agent-info {
+  flex: 1;
+}
+
+.agent-name {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.agent-role-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  margin-top: 2px;
+}
+
+.badge-plan { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+.badge-act { background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); }
+.badge-check { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+.badge-explain { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+
+.agent-desc {
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.45;
+}
+
+.agent-tools-list {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  color: #cbd5e1;
+}
+
+.agent-tool-tag {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 10.5px;
+  color: #94a3b8;
+}
+
+/* ── Benchmark Comparison Table ───────────────────────────── */
+.bench-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  margin-bottom: 20px;
+}
+
+.bench-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: left;
+}
+
+.bench-table th {
+  background: #1e293b;
+  color: #94a3b8;
+  padding: 10px 14px;
+  font-size: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.bench-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: #e2e8f0;
+}
+
+.bench-table tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.bench-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 11.5px;
+}
+.pill-danger { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+.pill-success { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+
+/* ── Stress Test Profiler Console ────────────────────────── */
+.stress-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.stress-card {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+}
+
+.stress-val {
+  font-size: 20px;
+  font-weight: 700;
+  color: #38bdf8;
+  font-family: monospace;
+}
+
+.stress-lbl {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 4px;
+}
+
+/* ── Pitch Deck & Q&A Modal ───────────────────────────────── */
+.pitch-container {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.pitch-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 10px 16px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.pitch-timer-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pitch-clock {
+  font-family: monospace;
+  font-size: 22px;
+  font-weight: 700;
+  color: #34d399;
+}
+
+.pitch-slides-slider {
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 24px;
+  min-height: 320px;
+  position: relative;
+}
+
+.slide-content {
+  display: none;
+}
+.slide-content.active {
+  display: block;
+  animation: fadeIn 0.3s ease;
+}
+
+.slide-badge {
+  display: inline-block;
+  background: rgba(99, 102, 241, 0.2);
+  color: #818cf8;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  margin-bottom: 12px;
+}
+
+.slide-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 10px;
+}
+
+.slide-body {
+  font-size: 13.5px;
+  color: #cbd5e1;
+  line-height: 1.65;
+}
+
+.slide-bullet {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.slide-bullet i {
+  color: #34d399;
+  margin-top: 4px;
+}
+
+.pitch-slide-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+}
+
+/* FAQ / Q&A Accordion */
+.faq-box {
+  margin-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 14px;
+}
+
+.faq-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.faq-q {
+  padding: 10px 14px;
+  font-weight: 600;
+  font-size: 13px;
+  color: #f1f5f9;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.faq-a {
+  padding: 0 14px 10px;
+  font-size: 12.5px;
+  color: #94a3b8;
+  line-height: 1.5;
+  display: none;
+}
+.faq-item.open .faq-a {
+  display: block;
+}
+
+/* ============================================================
+   A4 LANDSCAPE PRINT PERFECTION
+   Guarantees 100% width fit, NO overflow, NO clipping, NO stretch
+   ============================================================ */
+@page {
+  size: A4 landscape;
+  margin: 6mm 8mm;
+}
+
+@media print {
+  *,
+  *::before,
+  *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    box-sizing: border-box !important;
+  }
+
+  html, body {
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Sarabun", "Segoe UI", sans-serif !important;
+  }
+
+  /* Hide all UI Chrome */
+  .sidebar,
+  .sidebar-backdrop,
+  .top-header,
+  .bg-orbs,
+  .sched-controls-row,
+  .sched-header-section,
+  .toast-container,
+  .modal-overlay,
+  .empty-add-hint,
+  .mobile-menu-btn,
+  .mobile-scroll-hint,
+  .sched-empty-panel {
+    display: none !important;
+  }
+
+  .app-wrapper,
+  .main-content,
+  .sched-page-container {
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 0 !important;
+    border: none !important;
+  }
+
+  /* ── Official Print Header ── */
+  .print-doc-header {
+    display: block !important;
+    margin-bottom: 8px !important;
+    padding-bottom: 6px !important;
+    border-bottom: 1.5px solid #0f172a !important;
+  }
+
+  .print-header-top {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin-bottom: 6px !important;
+  }
+
+  .print-logo-box {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+
+  .print-logo-badge {
+    width: 32px !important;
+    height: 32px !important;
+    background: #0f172a !important;
+    color: #ffffff !important;
+    border-radius: 6px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 16px !important;
+  }
+
+  .print-school-titles {
+    line-height: 1.2 !important;
+  }
+
+  .print-school-name {
+    font-size: 10px !important;
+    font-weight: 600 !important;
+    color: #475569 !important;
+    text-transform: uppercase !important;
+  }
+
+  .print-doc-title {
+    font-size: 14px !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+    margin: 1px 0 0 0 !important;
+  }
+
+  .print-doc-meta-badge {
+    font-size: 9.5px !important;
+    color: #475569 !important;
+    font-weight: 500 !important;
+  }
+
+  .print-info-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 6px !important;
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 4px !important;
+    padding: 5px 10px !important;
+  }
+
+  .print-info-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    font-size: 9.5px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .print-info-item .info-k {
+    color: #475569 !important;
+    font-weight: 600 !important;
+  }
+
+  .print-info-item .info-v {
+    color: #0f172a !important;
+    font-weight: 700 !important;
+  }
+
+  /* ── Timetable Card Container in Print ── */
+  .timetable-main-card {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* ── The Timetable Table Grid in Print ── */
+  .timetable-grid {
+    display: table !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    table-layout: fixed !important;
+    border-collapse: collapse !important;
+    border: 1.5px solid #0f172a !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    margin: 0 !important;
+  }
+
+  /* Exact Column Width Percentages totaling 100% */
+  .timetable-grid th.col-time-day,
+  .timetable-grid td.col-day-name {
+    width: 7.2% !important;
+    max-width: 7.2% !important;
+    background: #f1f5f9 !important;
+    color: #0f172a !important;
+    font-weight: 700 !important;
+    font-size: 10px !important;
+    padding: 3px 2px !important;
+    text-align: center !important;
+    border: 1px solid #475569 !important;
+    box-shadow: none !important;
+  }
+
+  .timetable-grid th.col-period-0,
+  .timetable-grid td.col-period-0 {
+    width: 6.8% !important;
+    max-width: 6.8% !important;
+  }
+
+  .timetable-grid th.col-lunch,
+  .timetable-grid .lunch-column {
+    width: 3.5% !important;
+    max-width: 3.5% !important;
+    background: #f8fafc !important;
+    color: #334155 !important;
+    border: 1px solid #475569 !important;
+    padding: 0 !important;
+  }
+
+  .lunch-vertical-text {
+    writing-mode: vertical-rl !important;
+    font-size: 9.5px !important;
+    font-weight: 700 !important;
+    letter-spacing: 2px !important;
+    color: #334155 !important;
+    margin: 0 auto !important;
+  }
+
+  /* The 11 Period Columns: (100% - 7.2% - 6.8% - 3.5%) / 11 = 82.5% / 11 = 7.5% */
+  .timetable-grid th.col-period {
+    width: 7.5% !important;
+    max-width: 7.5% !important;
+  }
+
+  /* All headers */
+  .timetable-grid th {
+    background: #f1f5f9 !important;
+    color: #0f172a !important;
+    border: 1px solid #475569 !important;
+    padding: 3px 1px !important;
+    font-size: 8.5px !important;
+    font-weight: 700 !important;
+    line-height: 1.15 !important;
+    height: auto !important;
+    vertical-align: middle !important;
+  }
+
+  .timetable-grid thead tr:first-child th {
+    height: 22px !important;
+    font-size: 8px !important;
+    color: #334155 !important;
+  }
+
+  .timetable-grid thead tr:nth-child(2) th {
+    height: 20px !important;
+    font-size: 9.5px !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+  }
+
+  /* Body Cells */
+  .timetable-grid tbody td {
+    height: 52px !important;
+    max-height: 52px !important;
+    padding: 2px 2px !important;
+    border: 1px solid #64748b !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    vertical-align: middle !important;
+    text-align: center !important;
+  }
+
+  .timetable-grid tbody td.occupied-slot {
+    background: #ffffff !important;
+    cursor: default !important;
+  }
+
+  .timetable-grid tbody td.empty-slot {
+    background: #ffffff !important;
+    cursor: default !important;
+  }
+
+  .slot-inner {
+    padding: 1px !important;
+    gap: 1.5px !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .slot-course-code {
+    font-size: 9.5px !important;
+    font-weight: 800 !important;
+    color: #000000 !important;
+    line-height: 1.15 !important;
+    letter-spacing: -0.2px !important;
+  }
+
+  .slot-room-code,
+  .slot-teacher-code {
+    font-size: 8px !important;
+    font-weight: 600 !important;
+    color: #334155 !important;
+    line-height: 1.1 !important;
+  }
+
+  .slot-homeroom-text {
+    font-size: 9px !important;
+    font-weight: 800 !important;
+    color: #000000 !important;
+  }
+
+  /* ── Official Print Footer ── */
+  .print-doc-footer {
+    display: block !important;
+    margin-top: 10px !important;
+    padding-top: 8px !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .print-signatures {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 16px !important;
+    text-align: center !important;
+    margin-bottom: 8px !important;
+  }
+
+  .print-sign-col {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 3px !important;
+  }
+
+  .sign-line {
+    font-size: 9px !important;
+    color: #334155 !important;
+    letter-spacing: 0.5px !important;
+  }
+
+  .sign-name {
+    font-size: 9px !important;
+    font-weight: 600 !important;
+    color: #0f172a !important;
+    margin-top: 2px !important;
+  }
+
+  .sign-role {
+    font-size: 8.5px !important;
+    color: #475569 !important;
+  }
+
+  .print-footer-sub {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    font-size: 8px !important;
+    color: #64748b !important;
+    border-top: 1px dashed #cbd5e1 !important;
+    padding-top: 4px !important;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   IMPORT / TEMPLATE BUTTONS
+════════════════════════════════════════════════════════════════ */
+.btn-sched-import {
+  background: linear-gradient(135deg, #059669, #10b981) !important;
+  color: #fff !important;
+  border: none !important;
+}
+.btn-sched-import:hover {
+  background: linear-gradient(135deg, #047857, #059669) !important;
+  box-shadow: 0 4px 16px rgba(16,185,129,.35) !important;
+  transform: translateY(-1px);
+}
+.btn-sched-template {
+  background: rgba(16,185,129,.12) !important;
+  color: #34d399 !important;
+  border: 1px solid rgba(52,211,153,.3) !important;
+}
+.btn-sched-template:hover {
+  background: rgba(16,185,129,.22) !important;
+  border-color: #34d399 !important;
+  transform: translateY(-1px);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   IMPORT EXCEL MODAL – Full UI
+════════════════════════════════════════════════════════════════ */
+
+/* ── Drag & Drop Upload Zone ── */
+.import-upload-zone {
+  border: 2px dashed rgba(52,211,153,.45);
+  border-radius: 16px;
+  background: rgba(16,185,129,.05);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 36px 24px;
+  margin: 16px 0 8px;
+  cursor: pointer;
+  transition: all .25s;
+  text-align: center;
+}
+.import-upload-zone:hover,
+.import-upload-zone.drag-over {
+  border-color: #34d399;
+  background: rgba(16,185,129,.12);
+  transform: scale(1.01);
+}
+.import-drop-icon {
+  font-size: 40px;
+  color: #34d399;
+  opacity: .85;
+  margin-bottom: 4px;
+}
+.import-drop-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.import-drop-sub {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* ── Sheet Tabs ── */
+.import-sheet-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 12px 0 6px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  margin-bottom: 10px;
+}
+.import-tab-btn {
+  background: rgba(255,255,255,.06);
+  color: var(--text-secondary);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all .2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.import-tab-btn:hover {
+  background: rgba(255,255,255,.1);
+  color: var(--text-primary);
+}
+.import-tab-btn.active {
+  background: rgba(52,211,153,.18);
+  color: #34d399;
+  border-color: rgba(52,211,153,.4);
+  font-weight: 600;
+}
+.import-tab-unknown {
+  opacity: .5;
+}
+.tab-check {
+  color: #34d399;
+  font-weight: 700;
+}
+
+/* ── Preview Wrapper ── */
+.import-preview-wrap {
+  margin-top: 6px;
+}
+.import-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.import-preview-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.preview-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.badge-success {
+  background: rgba(52,211,153,.15);
+  color: #34d399;
+  border: 1px solid rgba(52,211,153,.3);
+}
+.badge-warn {
+  background: rgba(245,158,11,.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245,158,11,.3);
+}
+.preview-row-count {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.import-preview-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ── Preview Table ── */
+.import-table-scroll {
+  overflow-x: auto;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.08);
+  max-height: 280px;
+  overflow-y: auto;
+}
+.import-preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.ipt-th {
+  background: rgba(255,255,255,.07);
+  color: #94a3b8;
+  font-weight: 700;
+  padding: 8px 12px;
+  border: 1px solid rgba(255,255,255,.07);
+  text-align: left;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.ipt-td {
+  padding: 7px 12px;
+  border: 1px solid rgba(255,255,255,.05);
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+.import-preview-table tbody tr:hover .ipt-td {
+  background: rgba(255,255,255,.04);
+}
+.ipt-more {
+  text-align: center;
+  color: var(--text-secondary);
+  font-style: italic;
+  padding: 8px;
+}
+
+/* ── Validation Box ── */
+.import-validation-box {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.val-success {
+  background: rgba(52,211,153,.1);
+  border: 1px solid rgba(52,211,153,.3);
+  color: #34d399;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.val-warn {
+  background: rgba(245,158,11,.1);
+  border: 1px solid rgba(245,158,11,.3);
+  color: #fbbf24;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.val-error {
+  background: rgba(239,68,68,.1);
+  border: 1px solid rgba(239,68,68,.3);
+  color: #f87171;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.val-info {
+  background: rgba(56,189,248,.1);
+  border: 1px solid rgba(56,189,248,.3);
+  color: #38bdf8;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.val-success code, .val-warn code, .val-error code {
+  background: rgba(255,255,255,.1);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-family: monospace;
+  font-size: 11px;
+}
