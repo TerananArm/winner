@@ -96,17 +96,85 @@ const SCHED = (() => {
       // Load students from database with localStorage fallback
       try {
         const stRes = await db.from(TABLES.STUDENTS).select('*');
-        _students = (stRes.data && stRes.data.length > 0) ? stRes.data : JSON.parse(localStorage.getItem('edusched_students') || '[]');
+        const rawStudents = (stRes.data && stRes.data.length > 0) ? stRes.data : JSON.parse(localStorage.getItem('edusched_students') || '[]');
+        _students = (rawStudents || []).map(s => ({
+          student_id: s.student_code || s.student_id || '',
+          student_code: s.student_code || s.student_id || '',
+          name: s.name || '',
+          group_id: s.group_id || '',
+          group_name: s.group_name || s.department || s.group_id || '',
+          condition: s.special_condition || s.condition || 'ปกติ'
+        }));
       } catch (stErr) {
-        _students = JSON.parse(localStorage.getItem('edusched_students') || '[]');
+        const rawStudents = JSON.parse(localStorage.getItem('edusched_students') || '[]');
+        _students = (rawStudents || []).map(s => ({
+          student_id: s.student_code || s.student_id || '',
+          student_code: s.student_code || s.student_id || '',
+          name: s.name || '',
+          group_id: s.group_id || '',
+          group_name: s.group_name || s.department || s.group_id || '',
+          condition: s.special_condition || s.condition || 'ปกติ'
+        }));
       }
 
       if (!_students || _students.length === 0) {
         _students = [
-          { student_id: '67219010201', name: 'นายกิตติศักดิ์ พรหมดี', group_id: '672190102', group_name: '2 ทส 2', condition: 'ปกติ' },
-          { student_id: '67219010202', name: 'น.ส.ชลธิชา สุขเกษม', group_id: '672190102', group_name: '2 ทส 2', condition: 'ปกติ' },
-          { student_id: '67219010101', name: 'นายกานต์ ดนตรี', group_id: '672190101', group_name: '2 ทส 1', condition: 'ปกติ' },
-          { student_id: '67204010101', name: 'นายวรเมธ วิทยากร', group_id: '672040101', group_name: '1 คอม 1', condition: 'โควตาพิเศษ' }
+          { student_id: '67204010101', name: 'นายกิตติกร มั่นคง', group_id: '672040101', group_name: '1 คอม 1', condition: 'ปกติ' },
+          { student_id: '67204010102', name: 'นางสาวจิราภรณ์ วงศ์สว่าง', group_id: '672040101', group_name: '1 คอม 1', condition: 'ปกติ' },
+          { student_id: '67204010103', name: 'นายณัฐดนัย สมบูรณ์', group_id: '672040101', group_name: '1 คอม 1', condition: 'กลุ่มเรียนคู่ขนาน' },
+          { student_id: '67204010104', name: 'นางสาวปาลิตา เจริญศรี', group_id: '672040101', group_name: '1 คอม 1', condition: 'ปกติ' },
+          { student_id: '67204010105', name: 'นายภูริทัต รุ่งเรือง', group_id: '672040101', group_name: '1 คอม 1', condition: 'ปกติ' },
+          { student_id: '67204010201', name: 'นายวัชรพงศ์ ทรงธรรม', group_id: '672040102', group_name: '1 คอม 2', condition: 'ปกติ' },
+          { student_id: '67204010202', name: 'นางสาวศิริรัตน์ พลอยงาม', group_id: '672040102', group_name: '1 คอม 2', condition: 'ปกติ' },
+          { student_id: '67204010203', name: 'นายสรวิชญ์ ตั้งใจ', group_id: '672040102', group_name: '1 คอม 2', condition: 'ระบบทวิภาคี' },
+          { student_id: '67204010204', name: 'นางสาวอรพิน สุขสวัสดิ์', group_id: '672040102', group_name: '1 คอม 2', condition: 'ปกติ' },
+          { student_id: '67204010205', name: 'นายอานนท์ ดีงาม', group_id: '672040102', group_name: '1 คอม 2', condition: 'ปกติ' },
+          { student_id: '67219010101', name: 'นายธนกฤต ศรีสุข', group_id: '672190101', group_name: '2 ทส 1', condition: 'ปกติ' },
+          { student_id: '67219010102', name: 'นายธีรภัทร ใจกล้า', group_id: '672190101', group_name: '2 ทส 1', condition: 'นักศึกษาวิชาทหาร (นศท.)' },
+          { student_id: '67219010103', name: 'นายบุญมี แก้วใส', group_id: '672190101', group_name: '2 ทส 1', condition: 'ปกติ' },
+          { student_id: '67219010104', name: 'นายปรีชา เจริญผล', group_id: '672190101', group_name: '2 ทส 1', condition: 'ปกติ' },
+          { student_id: '67219010105', name: 'นายพัฒนพงศ์ ก้าวไกล', group_id: '672190101', group_name: '2 ทส 1', condition: 'ปกติ' },
+          { student_id: '67219010201', name: 'นายปฏิภาณ เจริญผล', group_id: '672190102', group_name: '2 ทส 2', condition: 'กลุ่มเรียนคู่ขนาน' },
+          { student_id: '67219010202', name: 'นายภานุวัฒน์ สุขใจ', group_id: '672190102', group_name: '2 ทส 2', condition: 'ปกติ' },
+          { student_id: '67219010203', name: 'นายมนัส ขยันดี', group_id: '672190102', group_name: '2 ทส 2', condition: 'ปกติ' },
+          { student_id: '67219010204', name: 'นายรณชัย วีรชัย', group_id: '672190102', group_name: '2 ทส 2', condition: 'ปกติ' },
+          { student_id: '67219010205', name: 'นายวีรชาติ เด็ดเดี่ยว', group_id: '672190102', group_name: '2 ทส 2', condition: 'นักศึกษาวิชาทหาร (นศท.)' },
+          { student_id: '67210510101', name: 'นายกมล พลังไฟ', group_id: '672105101', group_name: 'ปวช.1 ไฟฟ้า 1', condition: 'ปกติ' },
+          { student_id: '67210510102', name: 'นายเจษฎา แสงสว่าง', group_id: '672105101', group_name: 'ปวช.1 ไฟฟ้า 1', condition: 'ปกติ' },
+          { student_id: '67210510103', name: 'นายชัชชัย ไฟแรง', group_id: '672105101', group_name: 'ปวช.1 ไฟฟ้า 1', condition: 'ปกติ' },
+          { student_id: '67210510104', name: 'นายณัฐวุฒิ กระแสไฟ', group_id: '672105101', group_name: 'ปวช.1 ไฟฟ้า 1', condition: 'ปกติ' },
+          { student_id: '67210510105', name: 'นางสาวทิพย์สุดา วงจรสวย', group_id: '672105101', group_name: 'ปวช.1 ไฟฟ้า 1', condition: 'ปกติ' },
+          { student_id: '66204010101', name: 'นายวรเมธ เกียรติศักดิ์', group_id: '662040101', group_name: 'ปวช.2 คอม 1', condition: 'ระบบทวิภาคี' },
+          { student_id: '66204010102', name: 'นางสาวนันทนา ก้าวหน้า', group_id: '662040101', group_name: 'ปวช.2 คอม 1', condition: 'ปกติ' },
+          { student_id: '66204010103', name: 'นายปัณณธร สร้างสรรค์', group_id: '662040101', group_name: 'ปวช.2 คอม 1', condition: 'ปกติ' },
+          { student_id: '66204010104', name: 'นางสาวพิมลพรรณ สดใส', group_id: '662040101', group_name: 'ปวช.2 คอม 1', condition: 'ปกติ' },
+          { student_id: '66204010105', name: 'นายภูมิปัญญา มุ่งมั่น', group_id: '662040101', group_name: 'ปวช.2 คอม 1', condition: 'ปกติ' },
+          { student_id: '66204010201', name: 'นายรัฐศาสตร์ พัฒนา', group_id: '662040102', group_name: 'ปวช.2 คอม 2', condition: 'ปกติ' },
+          { student_id: '66204010202', name: 'นางสาวลัดดาวัลย์ ใสสะอาด', group_id: '662040102', group_name: 'ปวช.2 คอม 2', condition: 'ปกติ' },
+          { student_id: '66204010203', name: 'นายวิชาญ เชี่ยวชาญ', group_id: '662040102', group_name: 'ปวช.2 คอม 2', condition: 'กลุ่มเรียนคู่ขนาน' },
+          { student_id: '66204010204', name: 'นางสาวศิวพร รุ่งโรจน์', group_id: '662040102', group_name: 'ปวช.2 คอม 2', condition: 'ปกติ' },
+          { student_id: '66204010205', name: 'นายสิทธิศักดิ์ เจริญรุ่ง', group_id: '662040102', group_name: 'ปวช.2 คอม 2', condition: 'ปกติ' },
+          { student_id: '66219010101', name: 'นายสุรชัย วันดี', group_id: '662190101', group_name: 'ปวช.2 ช่างยนต์ 1', condition: 'ปกติ' },
+          { student_id: '66219010102', name: 'นายอธิป เก่งกล้า', group_id: '662190101', group_name: 'ปวช.2 ช่างยนต์ 1', condition: 'ปกติ' },
+          { student_id: '66219010103', name: 'นายอนุรักษ์ ช่างยนต์ดี', group_id: '662190101', group_name: 'ปวช.2 ช่างยนต์ 1', condition: 'นักศึกษาวิชาทหาร (นศท.)' },
+          { student_id: '66219010104', name: 'นายอัครพล ฝีมือดี', group_id: '662190101', group_name: 'ปวช.2 ช่างยนต์ 1', condition: 'ปกติ' },
+          { student_id: '66219010105', name: 'นายอิทธิพล กล้าแกร่ง', group_id: '662190101', group_name: 'ปวช.2 ช่างยนต์ 1', condition: 'ปกติ' },
+          { student_id: '66210510101', name: 'นายเอกพงศ์ สว่างไฟ', group_id: '662105101', group_name: 'ปวช.2 ช่างไฟฟ้า 1', condition: 'ปกติ' },
+          { student_id: '66210510102', name: 'นายเอกภพ แรงดัน', group_id: '662105101', group_name: 'ปวช.2 ช่างไฟฟ้า 1', condition: 'ปกติ' },
+          { student_id: '66210510103', name: 'นางสาวโอปอ ตัวนำไฟ', group_id: '662105101', group_name: 'ปวช.2 ช่างไฟฟ้า 1', condition: 'ปกติ' },
+          { student_id: '66210510104', name: 'นายกฤษฎา ไฟฟ้าดี', group_id: '662105101', group_name: 'ปวช.2 ช่างไฟฟ้า 1', condition: 'ระบบทวิภาคี' },
+          { student_id: '66210510105', name: 'นายการัณย์ สว่างทาง', group_id: '662105101', group_name: 'ปวช.2 ช่างไฟฟ้า 1', condition: 'ปกติ' },
+          { student_id: '65204010101', name: 'นายกันต์ธีร์ ผลิตผล', group_id: '652040101', group_name: 'ปวช.3 คอม 1', condition: 'ปกติ' },
+          { student_id: '65204010102', name: 'นางสาวขวัญฤดี บุญมา', group_id: '652040101', group_name: 'ปวช.3 คอม 1', condition: 'ปกติ' },
+          { student_id: '65204010103', name: 'นายคณาธิป พัฒนา', group_id: '652040101', group_name: 'ปวช.3 คอม 1', condition: 'ปกติ' },
+          { student_id: '65219010101', name: 'นายจตุรงค์ ยานยนต์', group_id: '652190101', group_name: 'ปวช.3 ช่างยนต์ 1', condition: 'ปกติ' },
+          { student_id: '65219010102', name: 'นายจักรพล เครื่องยนต์', group_id: '652190101', group_name: 'ปวช.3 ช่างยนต์ 1', condition: 'ปกติ' },
+          { student_id: '65219010103', name: 'นายจิตรภณ ไอเสีย', group_id: '652190101', group_name: 'ปวช.3 ช่างยนต์ 1', condition: 'ระบบทวิภาคี' },
+          { student_id: '67299010101', name: 'นายชนาธิป นวัตกรรม', group_id: '672990101', group_name: 'ปวส.1 IT', condition: 'ปกติ' },
+          { student_id: '67299010102', name: 'นางสาวชนิดา เทคโนโลยี', group_id: '672990101', group_name: 'ปวส.1 IT', condition: 'ปกติ' },
+          { student_id: '67299010103', name: 'นายชัยชนะ ดิจิทัล', group_id: '672990101', group_name: 'ปวส.1 IT', condition: 'ปกติ' },
+          { student_id: '67299010104', name: 'นางสาวชุติมา ข้อมูล', group_id: '672990101', group_name: 'ปวส.1 IT', condition: 'ปกติ' },
+          { student_id: '67299010105', name: 'นายณภัทร โปรแกรมเมอร์', group_id: '672990101', group_name: 'ปวส.1 IT', condition: 'ปกติ' }
         ];
       }
     } catch (err) {
@@ -464,12 +532,13 @@ const SCHED = (() => {
       html += `<tr>`;
       html += `<td class="col-day-name">${day}</td>`;
 
-      // Col 1: 07:45 - 08:00 (Activity or empty)
-      const slot0 = schedules.find(s => (s.day === day || s.day === dayShort) && s.period_start === 0 && s.period_end === 0);
-      if (slot0) {
-        html += renderSlotCell(slot0, 1);
-      } else {
-        html += `<td class="empty-slot" onclick="SCHED.quickAdd('${day}', 0)"><span class="empty-add-hint"><i class="fas fa-plus"></i></span></td>`;
+      // Col 1: 07:45 - 08:00 (เข้าแถว/กิจกรรมหน้าเสาธง - แนวยาวแบบพัก)
+      if (day === DAYS[0]) {
+        html += `
+          <td rowspan="${DAYS.length}" class="assembly-column col-period-0 col-assembly">
+            <div class="assembly-vertical-text">เข้าแถว</div>
+          </td>
+        `;
       }
 
       // Periods 1 to 4 (Morning: 08:00 - 12:00)
@@ -1527,12 +1596,12 @@ const SCHED = (() => {
 
     DAYS.forEach(day => {
       const dayShort = day.replace('วัน', '');
-      const row = [day, '', '', '', '', '', 'พักกลางวัน', '', '', '', '', '', '', ''];
+      const row = [day, 'เข้าแถว', '', '', '', '', 'พักกลางวัน', '', '', '', '', '', '', ''];
 
       currentTargetSchedules.filter(s => s.day === day || s.day === dayShort).forEach(s => {
         const text = `${s.subject_id} (${s.room_id || ''} ${s.teacher_id || ''})`;
         if (s.period_start === 0) {
-          row[1] = text;
+          // handled by assembly column
         } else {
           for (let p = s.period_start; p <= s.period_end; p++) {
             const colIdx = p <= 4 ? p + 1 : p + 2;
