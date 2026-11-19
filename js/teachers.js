@@ -406,11 +406,20 @@ const TEACHERS = (() => {
           }];
         });
         if (batch.length) {
-          const { error } = await db.from(TABLES.TEACHERS).upsert(batch, { onConflict: 'teacher_id' });
-          if (error) throw error;
-          showToast('success', `นำเข้าข้อมูลอาจารย์ ${batch.length} ท่านเรียบร้อย`);
-          await loadAll();
-          switchTab('table');
+          showImportPreview({
+            title: 'พรีวิวข้อมูลอาจารย์ก่อนบันทึก',
+            summary: `พบ ${rows.length} แถวในไฟล์ • ข้อมูลถูกต้อง ${batch.length} ท่าน`,
+            headers: ['รหัสอาจารย์', 'ชื่อ-นามสกุล', 'ตำแหน่ง', 'ชั่วโมงสอนสูงสุด/สัปดาห์'],
+            rows: batch.map(t => [t.teacher_id, t.teacher_name, t.role, t.max_hours]),
+            note: 'ชั่วโมงสอนสูงสุดถูกใช้เป็นเงื่อนไขไม่ให้ครูสอนเกินกำหนดตอนจัดตารางอัตโนมัติ',
+            onConfirm: async () => {
+              const { error } = await db.from(TABLES.TEACHERS).upsert(batch, { onConflict: 'teacher_id' });
+              if (error) { showToast('error', 'บันทึกข้อมูลล้มเหลว', error.message); return; }
+              showToast('success', `นำเข้าข้อมูลอาจารย์ ${batch.length} ท่านเรียบร้อย`);
+              await loadAll();
+              switchTab('table');
+            }
+          });
         }
       } catch (err) {
         showToast('error', 'นำเข้าล้มเหลว', err.message);

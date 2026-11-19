@@ -231,3 +231,64 @@ function saveXlsx(wb, filename) {
   }
 }
 window.saveXlsx = saveXlsx;
+
+// ============================================================
+//  Shared Import Preview Modal
+//  พรีวิว/สรุปก่อนบันทึก ใช้ร่วมทุกหน้าข้อมูล (เกณฑ์ 3.5.3 A)
+// ============================================================
+function showImportPreview(opts) {
+  const o = opts || {};
+  const headers = o.headers || [];
+  const rows = o.rows || [];
+  const previewRows = rows.slice(0, 10);
+
+  const existing = document.getElementById('sharedImportPreview');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'sharedImportPreview';
+  overlay.className = 'modal-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(2,6,23,.78);padding:20px;';
+
+  const headHtml = headers.map(h => `<th style="padding:8px 10px;text-align:left;font-size:12px;color:#94a3b8;border-bottom:1px solid rgba(255,255,255,.12);white-space:nowrap;">${escapeHtml(String(h))}</th>`).join('');
+  const bodyHtml = previewRows.map(r => `<tr>${r.map(c => `<td style="padding:7px 10px;font-size:12.5px;color:#e2e8f0;border-bottom:1px solid rgba(255,255,255,.06);white-space:nowrap;">${escapeHtml(String(c === undefined || c === null ? '' : c))}</td>`).join('')}</tr>`).join('');
+
+  overlay.innerHTML = `
+    <div class="modal" style="max-width:860px;width:100%;background:#0f172a;border:1px solid rgba(255,255,255,.12);border-radius:16px;overflow:hidden;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.08);gap:12px;">
+        <div>
+          <div style="font-size:15px;font-weight:700;color:#f1f5f9;"><i class="fas fa-eye" style="color:#818cf8;margin-right:8px;"></i>${escapeHtml(o.title || 'พรีวิวข้อมูลก่อนบันทึก')}</div>
+          <div style="font-size:12px;color:#94a3b8;margin-top:4px;">${escapeHtml(o.summary || '')}</div>
+        </div>
+        <button type="button" data-act="cancel" style="background:none;border:none;color:#94a3b8;font-size:20px;line-height:1;cursor:pointer;">&times;</button>
+      </div>
+      <div style="padding:14px 20px;max-height:46vh;overflow:auto;">
+        <table style="width:100%;border-collapse:collapse;background:#0b1220;border-radius:10px;overflow:hidden;">
+          <thead><tr style="background:rgba(255,255,255,.04);">${headHtml}</tr></thead>
+          <tbody>${bodyHtml}</tbody>
+        </table>
+        ${rows.length > previewRows.length ? `<div style="font-size:12px;color:#94a3b8;margin-top:8px;">... และอีก ${rows.length - previewRows.length} รายการ</div>` : ''}
+        ${o.note ? `<div style="margin-top:12px;font-size:12px;color:#fbbf24;display:flex;gap:8px;"><i class="fas fa-circle-info" style="margin-top:2px;"></i><span>${escapeHtml(o.note)}</span></div>` : ''}
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;border-top:1px solid rgba(255,255,255,.08);">
+        <button type="button" data-act="cancel" style="background:rgba(255,255,255,.06);color:#e2e8f0;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:9px 18px;font-size:13px;cursor:pointer;">ยกเลิก</button>
+        <button type="button" data-act="confirm" style="background:linear-gradient(135deg,#6366f1,#818cf8);color:#fff;border:none;border-radius:10px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;"><i class="fas fa-floppy-disk" style="margin-right:6px;"></i>ยืนยันบันทึก ${rows.length} รายการ</button>
+      </div>
+    </div>`;
+
+  function onKey(e) { if (e.key === 'Escape') close(); }
+  function close() {
+    overlay.remove();
+    document.removeEventListener('keydown', onKey);
+  }
+
+  document.addEventListener('keydown', onKey);
+  overlay.addEventListener('click', (e) => {
+    const act = e.target.closest('[data-act]')?.dataset.act;
+    if (e.target === overlay || act === 'cancel') { close(); return; }
+    if (act === 'confirm') { close(); if (typeof o.onConfirm === 'function') o.onConfirm(); }
+  });
+
+  document.body.appendChild(overlay);
+}
+window.showImportPreview = showImportPreview;

@@ -219,11 +219,20 @@ const ROOMS = (() => {
           }
         });
         if (batch.length > 0) {
-          const { error } = await db.from(TABLES.ROOMS).upsert(batch, { onConflict: 'room_id' });
-          if (error) throw error;
-          showToast('success', `นำเข้าข้อมูลห้องเรียน ${batch.length} ห้องเรียบร้อย`);
-          await loadAll();
-          switchTab('table');
+          showImportPreview({
+            title: 'พรีวิวข้อมูลห้องเรียนก่อนบันทึก',
+            summary: `พบ ${rows.length} แถวในไฟล์ • ข้อมูลถูกต้อง ${batch.length} รายการ`,
+            headers: ['รหัสห้อง', 'ชื่อห้อง', 'ประเภทห้อง', 'ความจุ (ที่นั่ง)'],
+            rows: batch.map(b => [b.room_id, b.room_name, b.room_type, b.capacity]),
+            note: 'ตรวจสอบข้อมูลก่อนกดยืนยัน ระบบจะบันทึกทับรหัสห้องเดิม (upsert) — ความจุห้องถูกใช้เป็นเงื่อนไขตอนจัดตารางอัตโนมัติ',
+            onConfirm: async () => {
+              const { error } = await db.from(TABLES.ROOMS).upsert(batch, { onConflict: 'room_id' });
+              if (error) { showToast('error', 'บันทึกข้อมูลล้มเหลว', error.message); return; }
+              showToast('success', `นำเข้าข้อมูลห้องเรียน ${batch.length} ห้องเรียบร้อย`);
+              await loadAll();
+              switchTab('table');
+            }
+          });
         }
       } catch (err) {
         showToast('error', 'นำเข้าล้มเหลว', err.message);

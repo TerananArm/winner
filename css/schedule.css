@@ -1299,9 +1299,14 @@
   .empty-add-hint,
   .mobile-menu-btn,
   .mobile-scroll-hint,
-  .sched-empty-panel {
+  .sched-empty-panel,
+  .sched-tools-accordion,
+  .sched-kpi-grid,
+  .conflict-summary-card,
+  .student-profile-banner {
     display: none !important;
   }
+
 
   .app-wrapper,
   .main-content,
@@ -1315,12 +1320,9 @@
     border: none !important;
   }
 
-  /* ── Official Print Header ── */
+  /* ── Official Print Header (ซ่อน: พิมพ์เฉพาะตาราง) ── */
   .print-doc-header {
-    display: block !important;
-    margin-bottom: 8px !important;
-    padding-bottom: 6px !important;
-    border-bottom: 1.5px solid #0f172a !important;
+    display: none !important;
   }
 
   .print-header-top {
@@ -1422,7 +1424,8 @@
     max-width: 100% !important;
     table-layout: fixed !important;
     border-collapse: collapse !important;
-    border: 1.5px solid #0f172a !important;
+    height: 190mm !important;
+    border: 3px solid #000000 !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
     margin: 0 !important;
@@ -1436,10 +1439,10 @@
     background: #f1f5f9 !important;
     color: #0f172a !important;
     font-weight: 700 !important;
-    font-size: 10px !important;
+    font-size: 12px !important;
     padding: 3px 2px !important;
     text-align: center !important;
-    border: 1px solid #475569 !important;
+    border: 2px solid #000000 !important;
     box-shadow: none !important;
   }
 
@@ -1450,14 +1453,14 @@
     max-width: 3.5% !important;
     background: #f8fafc !important;
     color: #334155 !important;
-    border: 1px solid #475569 !important;
+    border: 2px solid #000000 !important;
     padding: 0 !important;
   }
 
   .assembly-vertical-text,
   .lunch-vertical-text {
     writing-mode: vertical-rl !important;
-    font-size: 9.5px !important;
+    font-size: 11px !important;
     font-weight: 700 !important;
     letter-spacing: 2px !important;
     color: #334155 !important;
@@ -1470,7 +1473,7 @@
     max-width: 3.5% !important;
     background: #f8fafc !important;
     color: #334155 !important;
-    border: 1px solid #475569 !important;
+    border: 2px solid #000000 !important;
     padding: 0 !important;
   }
 
@@ -1484,9 +1487,9 @@
   .timetable-grid th {
     background: #f1f5f9 !important;
     color: #0f172a !important;
-    border: 1px solid #475569 !important;
-    padding: 3px 1px !important;
-    font-size: 8.5px !important;
+    border: 2px solid #000000 !important;
+    padding: 4px 2px !important;
+    font-size: 10px !important;
     font-weight: 700 !important;
     line-height: 1.15 !important;
     height: auto !important;
@@ -1494,24 +1497,24 @@
   }
 
   .timetable-grid thead tr:first-child th {
-    height: 22px !important;
-    font-size: 8px !important;
+    height: 26px !important;
+    font-size: 9.5px !important;
     color: #334155 !important;
   }
 
   .timetable-grid thead tr:nth-child(2) th {
-    height: 20px !important;
-    font-size: 9.5px !important;
+    height: 26px !important;
+    font-size: 11.5px !important;
     font-weight: 800 !important;
     color: #0f172a !important;
   }
 
   /* Body Cells */
   .timetable-grid tbody td {
-    height: 52px !important;
-    max-height: 52px !important;
-    padding: 2px 2px !important;
-    border: 1px solid #64748b !important;
+    height: auto !important;
+    max-height: none !important;
+    padding: 4px 3px !important;
+    border: 2px solid #000000 !important;
     background: #ffffff !important;
     color: #000000 !important;
     vertical-align: middle !important;
@@ -1530,7 +1533,7 @@
 
   .slot-inner {
     padding: 1px !important;
-    gap: 1.5px !important;
+    gap: 3px !important;
     height: 100% !important;
     display: flex !important;
     flex-direction: column !important;
@@ -1539,34 +1542,32 @@
   }
 
   .slot-course-code {
-    font-size: 9.5px !important;
+    font-size: 12px !important;
     font-weight: 800 !important;
     color: #000000 !important;
     line-height: 1.15 !important;
     letter-spacing: -0.2px !important;
+    white-space: nowrap !important;
   }
 
   .slot-room-code,
   .slot-teacher-code {
-    font-size: 8px !important;
+    font-size: 10px !important;
     font-weight: 600 !important;
     color: #334155 !important;
     line-height: 1.1 !important;
+    white-space: nowrap !important;
   }
 
   .slot-homeroom-text {
-    font-size: 9px !important;
+    font-size: 12.5px !important;
     font-weight: 800 !important;
     color: #000000 !important;
   }
 
-  /* ── Official Print Footer ── */
+  /* ── Official Print Footer (ซ่อน: พิมพ์เฉพาะตาราง) ── */
   .print-doc-footer {
-    display: block !important;
-    margin-top: 10px !important;
-    padding-top: 8px !important;
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
+    display: none !important;
   }
 
   .print-signatures {

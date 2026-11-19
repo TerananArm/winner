@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>คู่มือการใช้งาน – EduSched AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/main.css" />
+</head>
+
+<body>
+  <div class="bg-orbs">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+  <div class="app-wrapper">
+    <aside class="sidebar">
+      <a href="index.html" class="sidebar-logo">
+        <div class="sidebar-logo-icon">🎓</div>
+        <div class="sidebar-logo-text">
+          <div class="brand">EduSched AI</div>
+          <div class="sub">ระบบจัดตารางสอน</div>
+        </div>
+      </a>
+      <nav class="sidebar-nav">
+        <span class="nav-section-label">เมนูหลัก</span>
+        <a href="index.html" class="nav-item"><span class="nav-icon"><i class="fas fa-chart-pie"></i></span>แดชบอร์ด</a>
+        <a href="schedule.html" class="nav-item"><span class="nav-icon"><i
+              class="fas fa-calendar-days"></i></span>ตารางสอน</a>
+        <span class="nav-section-label">ข้อมูลพื้นฐาน</span>
+        <a href="rooms.html" class="nav-item"><span class="nav-icon"><i
+              class="fas fa-door-open"></i></span>ห้องเรียน</a>
+        <a href="groups.html" class="nav-item"><span class="nav-icon"><i
+              class="fas fa-users"></i></span>กลุ่มนักเรียน</a>
+        <a href="students.html" class="nav-item"><span class="nav-icon"><i
+              class="fas fa-user-graduate"></i></span>นักเรียน</a>
+        <a href="teachers.html" class="nav-item"><span class="nav-icon"><i
+              class="fas fa-chalkboard-user"></i></span>อาจารย์</a>
+        <a href="subjects.html" class="nav-item"><span class="nav-icon"><i
+              class="fas fa-book-open"></i></span>รายวิชา</a>
+        <span class="nav-section-label">การจัดการ</span>
+        <a href="teaching-load.html" class="nav-item"><span class="nav-icon"><i
+              class="fas fa-person-chalkboard"></i></span>ภาระงานสอน</a>
+        <a href="registration.html" class="nav-item"><span class="nav-icon"><i
+              class="fas fa-clipboard-list"></i></span>ข้อมูลการลงทะเบียน</a>
+        <a href="help.html" class="nav-item active"><span class="nav-icon"><i
+              class="fas fa-circle-question"></i></span>คู่มือการใช้งาน</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-card">
+          <div class="user-avatar">A</div>
+          <div class="user-info">
+            <div class="name">ผู้ดูแลระบบ</div>
+            <div class="role">Administrator</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="main-content">
+      <header class="top-header">
+        <div class="header-title">คู่มือการใช้งาน</div>
+      </header>
+
+      <main class="page-content">
+        <div class="page-header">
+          <div class="page-header-left">
+            <a href="index.html" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+            <div>
+              <h1 class="page-title">คู่มือการใช้งาน</h1>
+              <p class="page-subtitle">แนวคิด หลักการทำงาน และขั้นตอนใช้งานระบบ EduSched AI</p>
+            </div>
+          </div>
+        </div>
+
+        <section style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:18px 20px;margin-bottom:16px;">
+          <h2 style="font-size:16px;font-weight:700;color:#f1f5f9;margin-bottom:8px;">
+            <i class="fas fa-lightbulb" style="color:#fbbf24;margin-right:8px;"></i>แนวคิดของระบบ
+          </h2>
+          <p style="font-size:13px;line-height:1.8;color:#cbd5e1;margin:0;">
+            EduSched AI จัดตารางสอนด้วยแนวทาง <strong>Agentic AI (Plan – Act – Check – Explain)</strong>
+            โดยแปลงข้อมูลของสถานศึกษาเป็นข้อจำกัดเชิงตรรกะ (Constraints) แล้วแก้ปัญหาด้วย
+            <strong>CSP + Heuristic Search (Most-Constrained-First + Mulberry32 Seed)</strong>
+            จากนั้นตรวจสอบซ้ำแบบ <strong>Zero-Collision Audit</strong> และสรุปเหตุผลเป็นตัวชี้วัด KPI
+            เพื่อให้ผู้ใช้ตรวจสอบย้อนกลับได้ทุกคาบ
+          </p>
+        </section>
+
+        <section style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:18px 20px;margin-bottom:16px;">
+          <h2 style="font-size:16px;font-weight:700;color:#f1f5f9;margin-bottom:10px;">
+            <i class="fas fa-list-check" style="color:#34d399;margin-right:8px;"></i>ขั้นตอนใช้งาน (End-to-End)
+          </h2>
+          <ol style="font-size:13px;line-height:1.9;color:#cbd5e1;margin:0;padding-left:20px;">
+            <li>นำเข้าข้อมูลพื้นฐาน: <strong>ห้องเรียน / กลุ่มนักเรียน / นักเรียน / อาจารย์ / รายวิชา</strong>
+              (รองรับ Excel–CSV พร้อมแม่แบบ และมีหน้าต่างพรีวิวก่อนบันทึกทุกหน้า)</li>
+            <li>กำหนด <strong>ภาระงานสอน</strong> และ <strong>ข้อมูลการลงทะเบียน</strong> (วิชาที่แต่ละกลุ่มเรียน)</li>
+            <li>ไปที่เมนู <strong>ตารางสอน</strong> → กด <em>ตรวจความพร้อม</em> เพื่อตรวจข้อมูลและข้อจำกัดก่อนคำนวณ</li>
+            <li>กด <em>จัดตารางอัตโนมัติ (AI)</em> ระบบจะแสดงความคืบหน้า 4 ขั้น และยกเลิกได้ระหว่างประมวลผล</li>
+            <li>ตรวจผลด้วย <strong>KPI</strong>, ปุ่ม <em>รายละเอียดการตรวจสอบ (Audit)</em> และข้อความแจ้งปัญหาที่เข้าใจง่าย</li>
+            <li>ส่งออก: <strong>Excel (.xlsx) / CSV / ปฏิทิน (.ics) / ส่งออก PDF โดยตรง และ สั่งพิมพ์ A4 แนวนอน</strong></li>
+          </ol>
+        </section>
+
+        <section style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:18px 20px;margin-bottom:16px;">
+          <h2 style="font-size:16px;font-weight:700;color:#f1f5f9;margin-bottom:10px;">
+            <i class="fas fa-shield-halved" style="color:#818cf8;margin-right:8px;"></i>ข้อจำกัดที่ระบบบังคับใช้จริง
+          </h2>
+          <ul style="font-size:13px;line-height:1.9;color:#cbd5e1;margin:0;padding-left:20px;">
+            <li>ครูหนึ่งท่านสอนได้ครั้งละหนึ่งคาบ (ไม่ชนคาบ) และไม่เกิน <code>max_hours</code> ชั่วโมง/สัปดาห์</li>
+            <li>ห้องเรียนหนึ่งห้องรับได้ครั้งละหนึ่งกลุ่ม และต้องมี <strong>ความจุ ≥ จำนวนนักเรียน</strong> ของกลุ่ม (หรือผลรวมกลุ่มที่เรียนร่วม)</li>
+            <li>กลุ่มเรียนหนึ่งกลุ่มเรียนได้ครั้งละหนึ่งวิชา (ไม่ชนเวลา) และวิชาปฏิบัติต่อเนื่องถูกจัดเป็นบล็อกติดกัน</li>
+            <li>คาบกิจกรรมหน้าเสาธง/โฮมรูม (จันทร์ คาบ 1) และช่วงพักเที่ยง (12:00–13:00) ถูกกันไว้ตายตัว</li>
+            <li><strong>เวลาไม่สะดวกสอนของครู</strong> ถูกอ่านจากข้อมูลอาจารย์และตัดช่วงเวลานั้นออกก่อนจัด</li>
+            <li><strong>เงื่อนไขพิเศษของนักเรียน</strong> ถูกแปลงเป็นกฎระดับกลุ่มเรียน:
+              <em>กลุ่มเรียนคู่ขนาน/เรียนร่วม</em> → จัดวิชาร่วมพร้อมกลุ่มคู่;
+              <em>ระบบทวิภาคี</em> → เว้นวันศุกร์สำหรับการฝึกงาน;
+              <em>นศท.</em> → ไม่จัดคาบพุธ 13:00–16:00
+            </li>
+          </ul>
+        </section>
+
+        <section style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:18px 20px;margin-bottom:16px;">
+          <h2 style="font-size:16px;font-weight:700;color:#f1f5f9;margin-bottom:10px;">
+            <i class="fas fa-sliders" style="color:#38bdf8;margin-right:8px;"></i>การทำซ้ำและความโปร่งใส
+          </h2>
+          <ul style="font-size:13px;line-height:1.9;color:#cbd5e1;margin:0;padding-left:20px;">
+            <li>ช่อง <strong>Seed</strong> ควบคุมความสุ่ม: Seed เดิม + ข้อมูลเดิม = ผลลัพธ์เดิมเสมอ (ทำซ้ำได้ 100%)</li>
+            <li><strong>Audit Hash</strong> คำนวณจากเนื้อหาตารางจริง (กลุ่มเรียน–วัน–คาบ–วิชา–ครู–ห้อง) จึงใช้ยืนยันว่าผลลัพธ์ไม่ถูกแก้ภายหลัง</li>
+            <li><strong>Stress Test</strong> วัดเวลาประมวลผลจริงในเบราว์เซอร์ พร้อมนับกฎที่วางได้/ถูกปฏิเสธ และตรวจข้อขัดแย้งคงเหลือ</li>
+          </ul>
+        </section>
+
+        <section style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:18px 20px;">
+          <h2 style="font-size:16px;font-weight:700;color:#f1f5f9;margin-bottom:10px;">
+            <i class="fas fa-circle-question" style="color:#f472b6;margin-right:8px;"></i>คำถามที่พบบ่อย
+          </h2>
+          <p style="font-size:13px;line-height:1.8;color:#cbd5e1;margin:0 0 8px;">
+            <strong>จัดตารางแล้วมีบางวิชาไม่ถูกจัด?</strong> ระบบจะแจ้งจำนวนบล็อกที่จัดไม่ได้ —
+            เปิด <em>ตรวจความพร้อม</em> เพื่อดูสาเหตุ (ห้องไม่พอ / ครูเต็มชั่วโมง / เงื่อนไขเวลา) พร้อมคำแนะนำ
+          </p>
+          <p style="font-size:13px;line-height:1.8;color:#cbd5e1;margin:0 0 8px;">
+            <strong>ต้องการตารางพิมพ์ที่สะอาด?</strong> กดปุ่ม <em>พิมพ์</em> ในหน้าตารางสอน ระบบจะพิมพ์เฉพาะตาราง
+            (ไม่มีหัว/ท้ายเอกสาร) บนกระดาษ A4 แนวนอน
+          </p>
+          <p style="font-size:13px;line-height:1.8;color:#cbd5e1;margin:0;">
+            <strong>ต้องการตารางทั้งโรงเรียน?</strong> ใช้ปุ่ม <em>ตารางสรุปรวม</em> ในเครื่องมือเพิ่มเติม
+            หรือส่งออกปฏิทิน .ics ไปใช้กับ Google Calendar / Microsoft Outlook
+          </p>
+        </section>
+      </main>
+    </div>
+  </div>
+</body>
+
+</html>

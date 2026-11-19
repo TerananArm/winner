@@ -134,11 +134,20 @@ const GROUPS = (() => {
           return;
         }
 
-        const { error } = await db.from(TABLES.GROUPS).upsert(batch, { onConflict: 'group_id' });
-        if (error) throw error;
-        showToast('success', 'นำเข้าข้อมูลสำเร็จ', `นำเข้ากลุ่มเรียนทั้งหมด ${batch.length} รายการ`);
-        await loadAll();
-        switchTab('table');
+        showImportPreview({
+          title: 'พรีวิวข้อมูลกลุ่มเรียนก่อนบันทึก',
+          summary: `พบ ${rows.length} แถวในไฟล์ • ข้อมูลถูกต้อง ${batch.length} กลุ่มเรียน`,
+          headers: ['รหัสกลุ่มเรียน', 'ชื่อกลุ่มเรียน', 'อาจารย์ที่ปรึกษา', 'จำนวนนักเรียน'],
+          rows: batch.map(g => [g.group_id, g.group_name, g.advisor || '-', g.student_count]),
+          note: 'จำนวนนักเรียนถูกใช้ตรวจความจุห้องเรียนตอนจัดตารางอัตโนมัติ',
+          onConfirm: async () => {
+            const { error } = await db.from(TABLES.GROUPS).upsert(batch, { onConflict: 'group_id' });
+            if (error) { showToast('error', 'บันทึกข้อมูลล้มเหลว', error.message); return; }
+            showToast('success', 'นำเข้าข้อมูลสำเร็จ', `นำเข้ากลุ่มเรียนทั้งหมด ${batch.length} รายการ`);
+            await loadAll();
+            switchTab('table');
+          }
+        });
       } catch (err) {
         showToast('error', 'นำเข้าข้อมูลล้มเหลว', err.message);
       } finally {

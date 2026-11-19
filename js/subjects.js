@@ -158,11 +158,20 @@ const SUBJECTS = (() => {
           return;
         }
 
-        const { error } = await db.from(TABLES.SUBJECTS).upsert(batch, { onConflict: 'subject_id' });
-        if (error) throw error;
-        showToast('success', 'นำเข้าข้อมูลสำเร็จ', `นำเข้ารายวิชาทั้งหมด ${batch.length} รายการ`);
-        await loadAll();
-        switchTab('table');
+        showImportPreview({
+          title: 'พรีวิวข้อมูลรายวิชาก่อนบันทึก',
+          summary: `พบ ${rows.length} แถวในไฟล์ • ข้อมูลถูกต้อง ${batch.length} รายวิชา`,
+          headers: ['รหัสวิชา', 'ชื่อวิชา', 'ทฤษฎี (ชม.)', 'ปฏิบัติ (ชม.)', 'หน่วยกิต'],
+          rows: batch.map(s => [s.subject_id, s.subject_name, s.theory, s.practice, s.credit]),
+          note: 'ชั่วโมงทฤษฎี/ปฏิบัติถูกใช้คำนวณจำนวนคาบและขนาดบล็อกตอนจัดตารางอัตโนมัติ',
+          onConfirm: async () => {
+            const { error } = await db.from(TABLES.SUBJECTS).upsert(batch, { onConflict: 'subject_id' });
+            if (error) { showToast('error', 'บันทึกข้อมูลล้มเหลว', error.message); return; }
+            showToast('success', 'นำเข้าข้อมูลสำเร็จ', `นำเข้ารายวิชาทั้งหมด ${batch.length} รายการ`);
+            await loadAll();
+            switchTab('table');
+          }
+        });
       } catch (err) {
         showToast('error', 'นำเข้าข้อมูลล้มเหลว', err.message);
       } finally {

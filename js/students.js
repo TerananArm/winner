@@ -189,6 +189,9 @@ const STUDENTS = (() => {
           <td><span class="badge ${badgeClass}">${s.special_condition || 'ปกติ'}</span></td>
           <td style="text-align:center;">
             <div style="display:inline-flex;gap:6px;">
+              <a href="schedule.html?student=${encodeURIComponent(s.student_code)}" class="icon-btn" title="ดูตารางเรียนของนักเรียนคนนี้" style="width:30px;height:30px;font-size:12px;color:#38bdf8;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;">
+                <i class="fas fa-calendar-days"></i>
+              </a>
               <button class="icon-btn" title="แก้ไข" onclick="STUDENTS.edit('${s.student_code}')" style="width:30px;height:30px;font-size:12px;">
                 <i class="fas fa-pen-to-square"></i>
               </button>
@@ -407,7 +410,6 @@ const STUDENTS = (() => {
           return;
         }
 
-        let importedCount = 0;
         const dbBatch = [];
         rows.forEach(r => {
           const code = String(r['รหัสประจำตัว'] || r['student_code'] || r['รหัสนักเรียน'] || '').trim();
@@ -418,34 +420,52 @@ const STUDENTS = (() => {
             const dept = String(r['แผนกวิชา'] || r['department'] || 'เทคโนโลยีสารสนเทศ').trim();
             const cond = String(r['เงื่อนไขพิเศษ'] || r['special_condition'] || 'ปกติ').trim();
 
-            const existingIdx = _students.findIndex(s => s.student_code === code);
-            const item = { student_code: code, name, group_id: group || null, level, department: dept, special_condition: cond };
-
-            if (existingIdx >= 0) {
-              _students[existingIdx] = { ..._students[existingIdx], ...item };
-            } else {
-              _students.push({ id: Date.now() + Math.random(), ...item });
-            }
-            dbBatch.push(item);
-            importedCount++;
+            dbBatch.push({
+              student_code: code,
+              name,
+              group_id: group || null,
+              level,
+              department: dept,
+              special_condition: cond
+            });
           }
         });
 
-        // Upsert to Supabase
-        if (dbBatch.length > 0) {
-          try {
-            await db.from(TABLES.STUDENTS).upsert(dbBatch, { onConflict: 'student_code' });
-          } catch (supErr) {
-            console.warn('Supabase students upsert fallback:', supErr.message);
-          }
+        if (dbBatch.length === 0) {
+          showToast('warning', 'ไม่พบข้อมูลที่ถูกต้อง', 'ต้องมีคอลัมน์ รหัสประจำตัว และ ชื่อ-นามสกุล');
+          return;
         }
 
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(_students));
-        showToast('success', 'นำเข้าสำเร็จ', `นำเข้าข้อมูลนักเรียน ${importedCount} คนเรียบร้อยแล้ว`);
+        showImportPreview({
+          title: 'พรีวิวข้อมูลนักเรียนก่อนบันทึก',
+          summary: `พบ ${rows.length} แถวในไฟล์ • ข้อมูลถูกต้อง ${dbBatch.length} คน`,
+          headers: ['รหัสประจำตัว', 'ชื่อ-นามสกุล', 'กลุ่มเรียน', 'ระดับชั้น', 'เงื่อนไขพิเศษ'],
+          rows: dbBatch.map(s => [s.student_code, s.name, s.group_id || '-', s.level, s.special_condition]),
+          note: 'เงื่อนไขพิเศษ (ปกติ / กลุ่มเรียนคู่ขนาน / ระบบทวิภาคี / นศท.) จะถูกใช้เป็นข้อจำกัดตอนจัดตารางอัตโนมัติ',
+          onConfirm: async () => {
+            dbBatch.forEach(item => {
+              const existingIdx = _students.findIndex(s => s.student_code === item.student_code);
+              if (existingIdx >= 0) {
+                _students[existingIdx] = { ..._students[existingIdx], ...item };
+              } else {
+                _students.push({ id: Date.now() + Math.random(), ...item });
+              }
+            });
 
-        renderStats();
-        applyFilters();
-        switchTab('table');
+            try {
+              await db.from(TABLES.STUDENTS).upsert(dbBatch, { onConflict: 'student_code' });
+            } catch (supErr) {
+              console.warn('Supabase students upsert fallback:', supErr.message);
+            }
+
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(_students));
+            showToast('success', 'นำเข้าสำเร็จ', `นำเข้าข้อมูลนักเรียน ${dbBatch.length} คนเรียบร้อยแล้ว`);
+
+            renderStats();
+            applyFilters();
+            switchTab('table');
+          }
+        });
       } catch (err) {
         showToast('error', 'นำเข้าไฟล์ไม่สำเร็จ', err.message);
       } finally {
