@@ -781,51 +781,87 @@ const SCHED = (() => {
       }
     });
 
-    // Check teacher clashes in buckets
+    // ── ตรวจสอบเงื่อนไขวิชาเรียนร่วม/คู่ขนาน (Shared / Parallel Sections) ──
+    function isSharedOrParallel(s1, s2) {
+      if (s1.day !== s2.day) return false;
+      const overlap = Math.max(s1.period_start, s2.period_start) <= Math.min(s1.period_end, s2.period_end);
+      if (!overlap) return false;
+
+      // 1. วิชาเดียวกัน ห้องเดียวกัน และเวลาเดียวกัน (วิชาเรียนร่วม/คู่ขนาน)
+      if (s1.subject_id === s2.subject_id && s1.room_id === s2.room_id) {
+        return true;
+      }
+
+      // 2. วิชาเดียวกัน ครูคนเดียวกัน และเวลาเดียวกัน (วิชาเรียนร่วม 2 กลุ่มในห้องรวม)
+      if (s1.subject_id === s2.subject_id && s1.teacher_id === s2.teacher_id) {
+        return true;
+      }
+
+      // 3. ตรวจสอบจากฐานข้อมูล registrations (group_id_2)
+      if (_registrations && _registrations.length > 0) {
+        const isRegShared = _registrations.some(r => 
+          r.subject_id === s1.subject_id &&
+          ((r.group_id === s1.group_id && r.group_id_2 === s2.group_id) || (r.group_id === s2.group_id && r.group_id_2 === s1.group_id))
+        );
+        if (isRegShared) return true;
+      }
+
+      return false;
+    }
+
+    // Check teacher clashes in buckets (พร้อม Deduplicate)
+    const seenTeacherPairs = new Set();
     teacherMap.forEach((list) => {
       if (list.length > 1) {
         for (let i = 0; i < list.length; i++) {
           for (let j = i + 1; j < list.length; j++) {
             const s1 = list[i];
             const s2 = list[j];
-            const isParallelPair = (s1.subject_id === s2.subject_id && s1.teacher_id === s2.teacher_id && s1.room_id === s2.room_id && s1.period_start === s2.period_start && s1.period_end === s2.period_end);
-            if (!isParallelPair) {
-              const s1Subj = _subjects.find(s => s.subject_id === s1.subject_id);
-              const s2Subj = _subjects.find(s => s.subject_id === s2.subject_id);
-              const tObj = _teachers.find(t => t.teacher_id === s1.teacher_id);
-              const tName = tObj ? tObj.teacher_name : s1.teacher_id;
-              teacherConflicts.push({
-                s1, s2,
-                reason: `ครู ${tName} (${s1.teacher_id}) มีคาบสอนซ้ำซ้อนใน ${s1.day} คาบ ${s1.period_start}-${s1.period_end}`,
-                cause: `วิชา "${s1Subj?.subject_name || s1.subject_id}" และวิชา "${s2Subj?.subject_name || s2.subject_id}" ถูกจัดลงในคาบเวลาเดียวกัน`,
-                suggestion: `แนะนำให้ย้ายวิชาใดวิชาหนึ่งไปลงในช่วงเวลาที่ครูว่าง (เช่น คาบ 1-4 หรือ 5-8) หรือโอนรายวิชาให้ครูในหมวดเดียวกันช่วยสอนแทน`
-              });
-            }
+            if (isSharedOrParallel(s1, s2)) continue;
+
+            const pairKey = [s1.id || `${s1.group_id}_${s1.subject_id}_${s1.day}`, s2.id || `${s2.group_id}_${s2.subject_id}_${s2.day}`].sort().join('_vs_');
+            if (seenTeacherPairs.has(pairKey)) continue;
+            seenTeacherPairs.add(pairKey);
+
+            const s1Subj = _subjects.find(s => s.subject_id === s1.subject_id);
+            const s2Subj = _subjects.find(s => s.subject_id === s2.subject_id);
+            const tObj = _teachers.find(t => t.teacher_id === s1.teacher_id);
+            const tName = tObj ? tObj.teacher_name : s1.teacher_id;
+            teacherConflicts.push({
+              s1, s2,
+              reason: `ครู ${tName} (${s1.teacher_id}) มีคาบสอนซ้ำซ้อนใน ${s1.day} คาบ ${s1.period_start}-${s1.period_end}`,
+              cause: `วิชา "${s1Subj?.subject_name || s1.subject_id}" และวิชา "${s2Subj?.subject_name || s2.subject_id}" ถูกจัดลงในคาบเวลาเดียวกัน`,
+              suggestion: `แนะนำให้ย้ายวิชาใดวิชาหนึ่งไปลงในช่วงเวลาที่ครูว่าง หรือโอนรายวิชาให้ครูในหมวดเดียวกันช่วยสอนแทน`
+            });
           }
         }
       }
     });
 
-    // Check room clashes in buckets
+    // Check room clashes in buckets (พร้อม Deduplicate และยกเว้นวิชาเรียนร่วม/คู่ขนาน)
+    const seenRoomPairs = new Set();
     roomMap.forEach((list) => {
       if (list.length > 1) {
         for (let i = 0; i < list.length; i++) {
           for (let j = i + 1; j < list.length; j++) {
             const s1 = list[i];
             const s2 = list[j];
-            const isParallelPair = (s1.subject_id === s2.subject_id && s1.teacher_id === s2.teacher_id && s1.room_id === s2.room_id && s1.period_start === s2.period_start && s1.period_end === s2.period_end);
-            if (!isParallelPair) {
-              const rObj = _rooms.find(r => r.room_id === s1.room_id);
-              const rName = rObj ? rObj.room_name : s1.room_id;
-              const g1Obj = _groups.find(g => g.group_id === s1.group_id);
-              const g2Obj = _groups.find(g => g.group_id === s2.group_id);
-              roomConflicts.push({
-                s1, s2,
-                reason: `ห้อง ${rName} (${s1.room_id}) ถูกใช้ซ้ำซ้อนใน ${s1.day} คาบ ${s1.period_start}-${s1.period_end}`,
-                cause: `กลุ่มเรียน "${g1Obj?.group_name || s1.group_id}" และ "${g2Obj?.group_name || s2.group_id}" เข้าใช้ห้องพร้อมกันในคาบเวลาเดียวกัน`,
-                suggestion: `แนะนำให้สลับกลุ่มเรียนไปใช้ห้องว่างอื่นในกลุ่มสาขาวิชาเดียวกัน หรือหากเป็นวิชาเรียนร่วม ให้กำหนดเป็นกลุ่มเรียนคู่ขนาน (Parallel Group)`
-              });
-            }
+            if (isSharedOrParallel(s1, s2)) continue;
+
+            const pairKey = [s1.id || `${s1.group_id}_${s1.subject_id}_${s1.day}`, s2.id || `${s2.group_id}_${s2.subject_id}_${s2.day}`].sort().join('_vs_');
+            if (seenRoomPairs.has(pairKey)) continue;
+            seenRoomPairs.add(pairKey);
+
+            const rObj = _rooms.find(r => r.room_id === s1.room_id);
+            const rName = rObj ? rObj.room_name : s1.room_id;
+            const g1Obj = _groups.find(g => g.group_id === s1.group_id);
+            const g2Obj = _groups.find(g => g.group_id === s2.group_id);
+            roomConflicts.push({
+              s1, s2,
+              reason: `ห้อง ${rName} (${s1.room_id}) ถูกใช้ซ้ำซ้อนใน ${s1.day} คาบ ${s1.period_start}-${s1.period_end}`,
+              cause: `กลุ่มเรียน "${g1Obj?.group_name || s1.group_id}" และ "${g2Obj?.group_name || s2.group_id}" เข้าใช้ห้องพร้อมกันในคาบเวลาเดียวกัน`,
+              suggestion: `แนะนำให้สลับกลุ่มเรียนไปใช้ห้องว่างอื่นในกลุ่มสาขาวิชาเดียวกัน หรือหากเป็นวิชาเรียนร่วม ให้กำหนดเป็นกลุ่มเรียนคู่ขนาน (Parallel Group)`
+            });
           }
         }
       }
@@ -1315,38 +1351,40 @@ const SCHED = (() => {
       const sId = String(subjectId || '').trim();
       if (!sId || !_teachers || _teachers.length === 0) return _teachers || [];
 
-      // 1. ครูที่ได้รับมอบหมายรายวิชานี้โดยตรงใน _teachingLoads
+      // 1. ครูที่ได้รับมอบหมายรายวิชานี้โดยตรงใน _teachingLoads (Priority 1)
       const directTeachers = (_teachingLoads || [])
         .filter(tl => tl.subject_id === sId && tl.teacher_id)
         .map(tl => teacherById.get(tl.teacher_id))
         .filter(Boolean);
 
-      // 2. ครูในหมวดวิชา/แผนกเดียวกัน (Department / Major Matching)
+      // 2. ครูในหมวดวิชา/แผนกเดียวกันเท่านั้น (Strict Department / Major Matching)
+      // ห้ามข้ามแผนก เช่น ห้ามครูคอมพิวเตอร์สอนช่างยนต์เด็ดขาด
       const targetDept = getSubjectDepartment(sId);
       const sameDeptTeachers = _teachers.filter(t => {
         if (targetDept === 'other') return false;
         return getTeacherDepartments(t).has(targetDept);
       });
 
-      // 3. ครูในกลุ่มวิชาชีพช่างอุตสาหกรรมร่วม (ช่างยนต์ และ ไฟฟ้า ช่วยสนับสนุนพื้นฐานวิชาช่างได้)
-      let clusterTeachers = [];
-      if (targetDept === 'auto' || targetDept === 'elec') {
-        clusterTeachers = _teachers.filter(t => {
-          const d = getTeacherDepartments(t);
-          return d.has('auto') || d.has('elec');
-        });
-      }
-
       const seen = new Set();
       const result = [];
-      [...directTeachers, ...sameDeptTeachers, ...clusterTeachers, ..._teachers].forEach(t => {
+      [...directTeachers, ...sameDeptTeachers].forEach(t => {
         if (t && !seen.has(t.teacher_id)) {
           seen.add(t.teacher_id);
           result.push(t);
         }
       });
 
-      return result.length > 0 ? result : _teachers;
+      // ถ้าเป็นวิชาหมวดสามัญ/ทั่วไป (general) หรือ other ที่หาครูเฉพาะทางไม่เจอ
+      if (result.length === 0 && targetDept === 'other') {
+        _teachers.filter(t => getTeacherDepartments(t).has('general')).forEach(t => {
+          if (!seen.has(t.teacher_id)) {
+            seen.add(t.teacher_id);
+            result.push(t);
+          }
+        });
+      }
+
+      return result.length > 0 ? result : (directTeachers.length > 0 ? directTeachers : _teachers);
     }
 
   // ── Candidate Daytime-Focused Slots (ห้ามมีคาบค่ำ 9-11 เด็ดขาดสำหรับภาคปกติ) ──
@@ -1421,11 +1459,17 @@ const SCHED = (() => {
 
     const placedSchedules = [];
 
-    // 1. วาง Homeroom จันทร์ คาบ 1
+    // 1. วาง Homeroom จันทร์ คาบ 1 (รับประกันห้องไม่ซ้ำกัน 100% ทุกกลุ่มเรียน)
     _groups.forEach((g, idx) => {
       const seats = seatsRequired([g.group_id]);
       const capableRooms = _rooms.filter(r => roomCapacityOf(r) >= seats);
-      const defaultRoom = (capableRooms[idx % capableRooms.length] || _rooms[0])?.room_id || 'R101';
+      
+      // เลือกห้องที่ยังไม่ถูกใช้ในวันจันทร์ คาบ 1 โดยเด็ดขาด
+      let chosenRoom = capableRooms.find(r => !occupiedRoom.has(`วันจันทร์_1_${r.room_id}`));
+      if (!chosenRoom) {
+        chosenRoom = _rooms.find(r => !occupiedRoom.has(`วันจันทร์_1_${r.room_id}`));
+      }
+      const defaultRoom = chosenRoom ? chosenRoom.room_id : ((capableRooms[idx % capableRooms.length] || _rooms[0])?.room_id || 'R101');
       const advisor = g.advisor || _teachers[0]?.teacher_id || 'T01';
       placedSchedules.push({
         subject_id: 'HOMEROOM',
@@ -1696,8 +1740,8 @@ const SCHED = (() => {
           const candidateSlots = [...primaryDaytimeSlots].sort(() => rng() - 0.5);
           const validRooms = getStrictCandidateRooms(item.subject_id, item.isLab, seatsRequired(item.groupIds || [item.group_id]));
 
-          const qTeachers = getQualifiedTeachers(item.subject_id);
-          const tchList = [item.teacher_id, ...qTeachers.map(t => t.teacher_id).filter(tid => tid !== item.teacher_id)];
+          // รักษาครูผู้สอนเดิมไว้เสมอเพื่อป้องกันการแยกครูสอนคนละบล็อก (Single Teacher per Subject-Group)
+          const tchList = [item.teacher_id];
 
           for (const cTid of tchList) {
             for (const slot of candidateSlots) {
@@ -1796,15 +1840,10 @@ const SCHED = (() => {
               if (repaired) break;
             }
 
-            // หากยังไม่เจอ ให้ขยายหาครูท่านอื่นที่ชั่วโมงว่างมากที่สุด
-            if (!repaired) {
-              const anyFreeTeachers = [..._teachers].sort((a, b) => {
-                const remA = (parseInt(a.max_hours, 10) || 20) - (teacherHours.get(a.teacher_id) || 0);
-                const remB = (parseInt(b.max_hours, 10) || 20) - (teacherHours.get(b.teacher_id) || 0);
-                return remB - remA;
-              }).map(t => t.teacher_id);
-
-              for (const cTid of anyFreeTeachers) {
+            // หากยังไม่เจอ ให้ค้นหาเฉพาะครูในหมวด/แผนกเดียวกันเท่านั้น (ห้ามข้ามแผนกเด็ดขาด)
+            if (!repaired && qTeachers.length > 0) {
+              for (const cand of qTeachers) {
+                if (cand.teacher_id === s2.teacher_id) continue;
                 for (const slot of shuffledSlots) {
                   const start = slot.start;
                   const end = start + dur - 1;
@@ -1812,13 +1851,13 @@ const SCHED = (() => {
                   if (!slot.isMorning && end > 8) continue;
 
                   for (const rId of allCandidateRooms) {
-                    if (checkSlotFeasible(slot.day, start, end, cTid, rId, s2.groupIds || [s2.group_id], true)) {
+                    if (checkSlotFeasible(slot.day, start, end, cand.teacher_id, rId, s2.groupIds || [s2.group_id], false)) {
                       s2.day = slot.day;
                       s2.period_start = start;
                       s2.period_end = end;
                       s2.room_id = rId;
-                      s2.teacher_id = cTid;
-                      commitPlacement(s2.day, start, end, cTid, rId, s2.groupIds || [s2.group_id]);
+                      s2.teacher_id = cand.teacher_id;
+                      commitPlacement(s2.day, start, end, cand.teacher_id, rId, s2.groupIds || [s2.group_id]);
                       repaired = true;
                       break;
                     }
@@ -1839,24 +1878,34 @@ const SCHED = (() => {
       if (conflictCount === 0) break;
     }
 
-    // ── Phase 4: Final Overload Rebalance (เกลี่ยชั่วโมงครูให้เหลือเกิน 0 คน 100%) ──
-    // ไม่มีการ Hardcode รหัสครู คัดกรองจาก Department/Major และ max_hours จริงในฐานข้อมูล
-    for (let pass = 0; pass < 6; pass++) {
+    // ── Phase 4: Final Overload Rebalance (Single Teacher per Subject-Group 100%) ──
+    // โอนย้าย "ทั้งรายวิชาของกลุ่มเรียนนั้น" ไปให้ครูคนใหม่พร้อมกัน ห้ามแบ่งครึ่งรายวิชาเด็ดขาด
+    // และล็อกให้เลือกเฉพาะครูในสาขาวิชา/แผนกเดียวกันเท่านั้น
+    for (let pass = 0; pass < 8; pass++) {
       let anyRebalanced = false;
       _teachers.forEach(t => {
         const maxH = parseInt(t.max_hours, 10) || 20;
         let curH = teacherHours.get(t.teacher_id) || 0;
 
         if (curH > maxH) {
-          for (let i = placedSchedules.length - 1; i >= 0; i--) {
+          // รวมกลุ่มคาบเรียนตามคู่ (group_id, subject_id) ที่ครูท่านนี้สอน
+          const courseOfferings = new Map();
+          placedSchedules.forEach(s => {
+            if (s.teacher_id !== t.teacher_id || s.subject_id === 'HOMEROOM') return;
+            const courseKey = `${s.group_id}___${s.subject_id}`;
+            if (!courseOfferings.has(courseKey)) {
+              courseOfferings.set(courseKey, []);
+            }
+            courseOfferings.get(courseKey).push(s);
+          });
+
+          for (const [courseKey, courseSlots] of courseOfferings.entries()) {
             if (curH <= maxH) break;
-            const sched = placedSchedules[i];
-            if (sched.teacher_id !== t.teacher_id || sched.subject_id === 'HOMEROOM') continue;
+            const targetSubject = courseSlots[0].subject_id;
+            const totalCourseHours = courseSlots.reduce((sum, s) => sum + (s.period_end - s.period_start + 1), 0);
 
-            const dur = sched.period_end - sched.period_start + 1;
-            const qTeachers = getQualifiedTeachers(sched.subject_id);
-
-            // คัดกรองและจัดเรียงครูที่มีคุณสมบัติตามโควต้าชั่วโมงสอนคงเหลือจริง (max_hours - curH) มากที่สุด
+            // ค้นหาเฉพาะครูที่มีคุณสมบัติตรงตามแผนกเดียวกันเท่านั้น
+            const qTeachers = getQualifiedTeachers(targetSubject);
             const sortedCandidates = qTeachers
               .filter(cand => cand.teacher_id !== t.teacher_id)
               .map(cand => {
@@ -1864,39 +1913,51 @@ const SCHED = (() => {
                 const candCur = teacherHours.get(cand.teacher_id) || 0;
                 return { cand, candMax, candCur, remaining: candMax - candCur };
               })
-              .filter(c => c.remaining >= dur)
+              .filter(c => c.remaining >= totalCourseHours)
               .sort((a, b) => b.remaining - a.remaining);
 
             for (const { cand, candCur } of sortedCandidates) {
-              let free = true;
-              if (teacherUnavailableMap.has(cand.teacher_id)) {
-                const unavail = teacherUnavailableMap.get(cand.teacher_id);
-                const shortDay = sched.day.replace('วัน', '');
-                const unavailPeriods = unavail[shortDay] || unavail[sched.day];
-                if (Array.isArray(unavailPeriods)) {
-                  for (let p = sched.period_start; p <= sched.period_end; p++) {
-                    if (unavailPeriods.includes(p)) { free = false; break; }
+              // ตรวจสอบว่าครูผู้สมัครว่างครบ "ทุกบล็อกของรายวิชานี้"
+              let canTakeAll = true;
+
+              for (const sched of courseSlots) {
+                // ตรวจสอบช่วงเวลาไม่สะดวกของครู
+                if (teacherUnavailableMap.has(cand.teacher_id)) {
+                  const unavail = teacherUnavailableMap.get(cand.teacher_id);
+                  const shortDay = sched.day.replace('วัน', '');
+                  const unavailPeriods = unavail[shortDay] || unavail[sched.day];
+                  if (Array.isArray(unavailPeriods)) {
+                    for (let p = sched.period_start; p <= sched.period_end; p++) {
+                      if (unavailPeriods.includes(p)) { canTakeAll = false; break; }
+                    }
                   }
                 }
-              }
-              if (!free) continue;
+                if (!canTakeAll) break;
 
-              for (let p = sched.period_start; p <= sched.period_end; p++) {
-                if (occupiedTeacher.has(`${sched.day}_${p}_${cand.teacher_id}`)) {
-                  free = false;
-                  break;
-                }
-              }
-
-              if (free) {
+                // ตรวจสอบว่าครูว่างในคาบนี้ (ไม่ติดสอนวิชาอื่น)
                 for (let p = sched.period_start; p <= sched.period_end; p++) {
-                  occupiedTeacher.delete(`${sched.day}_${p}_${t.teacher_id}`);
-                  occupiedTeacher.add(`${sched.day}_${p}_${cand.teacher_id}`);
+                  if (occupiedTeacher.has(`${sched.day}_${p}_${cand.teacher_id}`)) {
+                    canTakeAll = false;
+                    break;
+                  }
                 }
-                teacherHours.set(t.teacher_id, curH - dur);
-                teacherHours.set(cand.teacher_id, candCur + dur);
-                curH -= dur;
-                sched.teacher_id = cand.teacher_id;
+                if (!canTakeAll) break;
+              }
+
+              if (canTakeAll) {
+                // โอนย้าย "ทั้งรายวิชาของกลุ่มเรียนนั้น" ให้ครูคนใหม่พร้อมกันทุกบล็อก!
+                courseSlots.forEach(sched => {
+                  const dur = sched.period_end - sched.period_start + 1;
+                  for (let p = sched.period_start; p <= sched.period_end; p++) {
+                    occupiedTeacher.delete(`${sched.day}_${p}_${t.teacher_id}`);
+                    occupiedTeacher.add(`${sched.day}_${p}_${cand.teacher_id}`);
+                  }
+                  sched.teacher_id = cand.teacher_id;
+                });
+
+                teacherHours.set(t.teacher_id, curH - totalCourseHours);
+                teacherHours.set(cand.teacher_id, candCur + totalCourseHours);
+                curH -= totalCourseHours;
                 anyRebalanced = true;
                 break;
               }
@@ -1906,6 +1967,26 @@ const SCHED = (() => {
       });
       if (!anyRebalanced) break;
     }
+
+    // ── ตรวจสอบให้แน่ใจ 100% ว่าแต่ละรายวิชาในกลุ่มเรียนเดียวกันสอนโดยครูคนเดียว (Single Teacher per Subject-Group) ──
+    const courseGroupMap = new Map();
+    placedSchedules.forEach(s => {
+      if (s.subject_id === HOMEROOM) return;
+      const key = `${s.group_id}___${s.subject_id}`;
+      if (!courseGroupMap.has(key)) courseGroupMap.set(key, []);
+      courseGroupMap.get(key).push(s);
+    });
+
+    courseGroupMap.forEach((slots) => {
+      const teachers = [...new Set(slots.map(s => s.teacher_id))];
+      if (teachers.length > 1) {
+        // รวมทุกคาบของรายวิชานี้ให้เป็นครูคนเดียวกันตามบล็อกแรก
+        const unifiedTeacher = teachers[0];
+        slots.forEach(s => {
+          s.teacher_id = unifiedTeacher;
+        });
+      }
+    });
 
     // สร้างตารางบันทึกขั้นสุดท้าย (รวมกลุ่มเรียนคู่ขนาน)
     const finalCleanBatch = [];
