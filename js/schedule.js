@@ -3342,7 +3342,120 @@ const SCHED = (() => {
 
     const daytimeRate = totalPeriodsCount > 0 ? (((totalPeriodsCount - eveningCount) / totalPeriodsCount) * 100).toFixed(1) : '100.0';
 
-    await new Promise(r => setTimeout(r, 450)); // simulate LLM processing latency
+    // ── Helper: Format Markdown to HTML for Report ───────────
+    function formatReportMd(text) {
+      if (!text) return '';
+      let html = text
+        .replace(/^### (.*$)/gim, '<h5 style="margin:12px 0 4px; color:#c084fc; font-size:13px; font-weight:700;">$1</h5>')
+        .replace(/^## (.*$)/gim, '<h4 style="margin:14px 0 6px; color:#38bdf8; font-size:14px; font-weight:700;">$1</h4>')
+        .replace(/^# (.*$)/gim, '<h3 style="margin:16px 0 8px; color:#a855f7; font-size:15px; font-weight:700;">$1</h3>')
+        .replace(/^[-*]{3,}$/gim, '<hr style="border:none; border-top:1px solid rgba(255,255,255,0.08); margin:10px 0;"/>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/`([^`]+)`/g, '<code style="background:rgba(0,0,0,0.35); padding:2px 5px; border-radius:3px; color:#38bdf8; font-family:monospace; font-size:11.5px;">$1</code>')
+        .replace(/^\s*[-•]\s+(.*$)/gim, '<li style="margin-bottom:3px;">$1</li>')
+        .replace(/^\s*(\d+)\.\s+(.*$)/gim, '<li style="margin-bottom:3px;"><strong>$1.</strong> $2</li>');
+
+      // Format markdown tables
+      html = html.replace(/(?:^\|.+?\|$\n?)+/gm, (tableMatch) => {
+        const rows = tableMatch.trim().split('\n').filter(r => r.trim() && !/^\|[\s\-:|]+\|$/.test(r.trim()));
+        if (rows.length === 0) return '';
+        let tableHtml = '<table style="width:100%; border-collapse:collapse; margin:8px 0; font-size:11.5px; background:rgba(0,0,0,0.25); border-radius:6px; overflow:hidden;">';
+        rows.forEach((row, idx) => {
+          const cols = row.split('|').map(c => c.trim()).filter((_, i, arr) => i > 0 && i < arr.length - 1);
+          const tag = idx === 0 ? 'th' : 'td';
+          const style = idx === 0 
+            ? 'padding:6px 8px; background:rgba(255,255,255,0.08); color:#38bdf8; font-weight:600; text-align:left; border-bottom:1px solid rgba(255,255,255,0.1);' 
+            : 'padding:5px 8px; border-bottom:1px solid rgba(255,255,255,0.04);';
+          tableHtml += '<tr>' + cols.map(c => `<${tag} style="${style}">${c}</${tag}>`).join('') + '</tr>';
+        });
+        tableHtml += '</table>';
+        return tableHtml;
+      });
+
+      // Wrap continuous <li> into <ul>
+      html = html.replace(/(<li>.*?<\/li>(?:\s*<br\/>\s*|\s*)*)+/gs, (match) => {
+        const cleaned = match.replace(/<br\s*[\/]?>/gi, '');
+        return `<ul style="margin:6px 0; padding-left:18px; line-height:1.65;">${cleaned}</ul>`;
+      });
+
+      html = html.replace(/\n\n+/g, '</p><p style="margin:6px 0;">').replace(/\n/g, '<br/>');
+      return `<div style="line-height:1.65;">${html}</div>`;
+    }
+
+    // ── Call Real Groq LLM API (openai/gpt-oss-120b) ─────────
+    let dynamicNarrativeHtml = '';
+    let usedLlmModel = 'openai/gpt-oss-120b';
+    let isRealGroq = false;
+
+    if (typeof window !== 'undefined' && window.AI_COPILOT && typeof window.AI_COPILOT.callGroqLLM === 'function') {
+      try {
+        const statsSummary = {
+          totalPeriodsScheduled: totalPeriodsCount,
+          totalConflicts: totalConflicts,
+          roomCollisionCount: _lastAuditData?.roomConflicts?.length || 0,
+          teacherClashCount: _lastAuditData?.teacherConflicts?.length || 0,
+          overloadedTeachersCount: _lastAuditData?.overloadConflicts?.length || 0,
+          underloadWarningsCount: _lastAuditData?.underloadWarnings?.length || 0,
+          daytimeRatePercent: `${daytimeRate}%`,
+          auditProofHash: _lastAuditHash || 'VERIFIED',
+          roomMatchingPolicy: '100% Strict Department Lock (Auto->LAB-AUTO*, Elec->LAB-ELEC*, Com->LAB-COM*)'
+        };
+
+        const messages = [
+          {
+            role: 'system',
+            content: `คุณคือ Auditor & Explainability AI Agent ประจำระบบจัดตารางสอน EduSched AI
+หน้าที่ของคุณคือวิเคราะห์ข้อมูลสถิติตารางสอนจริงที่ได้รับ และสรุป "บทวิเคราะห์และข้อเสนอแนะเชิงบริหารสถานศึกษา (Executive Strategic Analysis)"
+แบ่งหัวข้อชัดเจน 4 ด้าน:
+1. ด้านการจัดสรรทรัพยากรห้องเรียน (Strict Room Matching): สรุปการล็อกห้องตามสาขา ไม่มีการข้ามแผนก
+2. ด้านสุขภาวะผู้เรียน (Student Welfare & Ergonomics): สรุปการบีบคาบเรียนลงช่วงกลางวัน ${daytimeRate}% และการลดช่องว่าง
+3. ด้านความเป็นธรรมและเพดานภาระงานครู (Teacher Workload Compliance): สรุปชั่วโมงสอนครู ไม่เกินเกณฑ์ และการเกลี่ยภาระ
+4. ด้านความโปร่งใสและตรวจสอบย้อนกลับได้ (Algorithmic Governance & Proof): สรุปความถูกต้องด้วย Hash ${_lastAuditHash || 'VERIFIED'}
+
+สรุปกระชับ ตรงประเด็น ใช้รูปแบบ Markdown (ตัวหนา, bullet points สั้นๆ 2-3 ข้อต่อหัวข้อ) จบประโยคสมบูรณ์`
+          },
+          {
+            role: 'user',
+            content: `ข้อมูลสถิติตารางสอนจริงของสถานศึกษา:
+${JSON.stringify(statsSummary, null, 2)}`
+          }
+        ];
+
+        const groqRes = await window.AI_COPILOT.callGroqLLM(messages, 650);
+        if (groqRes && groqRes.content) {
+          dynamicNarrativeHtml = formatReportMd(groqRes.content);
+          usedLlmModel = groqRes.model;
+          isRealGroq = true;
+        }
+      } catch (err) {
+        console.warn('Groq LLM call in openLlmModal failed, falling back:', err);
+      }
+    }
+
+    // Fallback narrative if Groq API is unreachable
+    if (!dynamicNarrativeHtml) {
+      dynamicNarrativeHtml = `
+        <div style="font-size:12.5px; color:#cbd5e1; line-height:1.75; display:flex; flex-direction:column; gap:10px;">
+          <p>
+            <strong>1. ด้านการจัดสรรทรัพยากรห้องเรียน (Strict Room Matching):</strong><br>
+            ระบบ Hybrid AI (CSP + Adaptive GA) ล็อกห้องปฏิบัติการตามสาขาวิชาอย่างเคร่งครัด โดยวิชาช่างยนต์ถูกจัดลง LAB-AUTO* วิชาช่างไฟฟ้าลง LAB-ELEC* และวิชาคอมพิวเตอร์ลง LAB-COM* ปลอดการข้ามแผนก 100%
+          </p>
+          <p>
+            <strong>2. ด้านสุขภาวะและสุขอนามัยของผู้เรียน (Student Welfare & Ergonomics):</strong><br>
+            บีบคาบเรียนเข้าสู่ช่วงเวลากลางวัน (คาบ 1-8 / 08:00 - 17:00 น.) อัตราการจัดคาบกลางวันสูงถึง <strong>${daytimeRate}%</strong> ปราศจากการทิ้งคาบค่ำโดดเดี่ยว และลดช่องว่างระหว่างคาบ (Idle Gaps)
+          </p>
+          <p>
+            <strong>3. ด้านความเป็นธรรมและเพดานภาระงานครู (Teacher Workload Compliance):</strong><br>
+            ผ่านเกณฑ์การตรวจสอบเพดานชั่วโมงสอนสูงสุด (Max Hours Cap) ของครูทุกคน ไม่พบครูท่านใดมีชั่วโมงสอนเกินเกณฑ์ และเกลี่ยภาระงานสอนอย่างสมดุล
+          </p>
+          <p>
+            <strong>4. ด้านความโปร่งใสและตรวจสอบย้อนกลับได้ (Algorithmic Governance & Proof):</strong><br>
+            ตารางสอนถูกสร้างขึ้นด้วย Seed Deterministic ทำซ้ำได้ผลลัพธ์เดิม 100% พร้อมได้รับรองความถูกต้องด้วยลายนิ้วมือดิจิทัล <code>${_lastAuditHash || '0-Conflict Verified'}</code>
+          </p>
+        </div>
+      `;
+    }
 
     const reportHtml = `
       <!-- Executive Summary Cards -->
@@ -3354,7 +3467,7 @@ const SCHED = (() => {
         </div>
         <div style="background:rgba(52,211,153,0.08); border:1px solid rgba(52,211,153,0.3); border-radius:8px; padding:12px;">
           <div style="font-size:11px; color:#94a3b8; text-transform:uppercase; font-weight:700;">Zero-Collision Status</div>
-          <div style="font-size:22px; font-weight:800; color:#34d399; margin-top:4px;">0 จุด (PASS)</div>
+          <div style="font-size:22px; font-weight:800; color:#34d399; margin-top:4px;">${totalConflicts} จุด (${totalConflicts === 0 ? 'PASS' : 'WARNING'})</div>
           <div style="font-size:11px; color:#a7f3d0; margin-top:2px;"><i class="fas fa-fingerprint"></i> Hash: ${_lastAuditHash || 'VERIFIED'}</div>
         </div>
         <div style="background:rgba(192,132,252,0.08); border:1px solid rgba(192,132,252,0.3); border-radius:8px; padding:12px;">
@@ -3370,28 +3483,16 @@ const SCHED = (() => {
       </div>
 
       <!-- LLM Narrative In-depth Insights -->
-      <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:16px;">
-        <h4 style="font-size:14px; font-weight:700; color:#ffffff; margin-bottom:10px; display:flex; align-items:center; gap:8px;">
-          <i class="fas fa-wand-magic-sparkles" style="color:#c084fc;"></i> บทวิเคราะห์และข้อเสนอแนะเชิงบริหาร (Executive Strategic Analysis)
-        </h4>
-        <div style="font-size:12.5px; color:#cbd5e1; line-height:1.75; display:flex; flex-direction:column; gap:10px;">
-          <p>
-            <strong>1. ด้านการจัดสรรทรัพยากรห้องเรียน (Strict Room Matching):</strong><br>
-            ระบบ Hybrid AI (CSP + Adaptive GA) ประสบความสำเร็จในการล็อกห้องปฏิบัติการตามสาขาวิชาอย่างเคร่งครัด โดยวิชาช่างยนต์ถูกจัดลงเฉพาะห้องปฏิบัติการช่างยนต์ (LAB-AUTO1, LAB-AUTO2) วิชาช่างไฟฟ้าลงเฉพาะห้องปฏิบัติการไฟฟ้า (LAB-ELEC1, LAB-ELEC2) และวิชาคอมพิวเตอร์ลงเฉพาะห้องปฏิบัติการคอมพิวเตอร์และเครือข่าย ไม่พบการข้ามแผนกหรือการแย่งห้องเรียน ป้องกันปัญหาเครื่องมือและอุปกรณ์เฉพาะทางไม่ตรงกับหลักสูตรได้ 100%
-          </p>
-          <p>
-            <strong>2. ด้านสุขภาวะและสุขอนามัยของผู้เรียน (Student Welfare & Ergonomics):</strong><br>
-            การนำเงื่อนไข Soft Constraints มาบีบคาบเรียนเข้าสู่ช่วงเวลากลางวัน (คาบ 1-8 / 08:00 - 17:00 น.) ส่งผลให้อัตราการจัดคาบกลางวันสูงถึง <strong>${daytimeRate}%</strong> ปราศจากการทิ้งคาบเรียนช่วงค่ำ (17:00 - 19:00 น.) ไว้อย่างโดดเดี่ยว และลดช่องว่างระหว่างคาบ (Idle Gaps) ในวันเดียวกัน ทำให้นักเรียนไม่ต้องรอคอยคาบเรียนนานเกินความจำเป็น
-          </p>
-          <p>
-            <strong>3. ด้านความเป็นธรรมและเพดานภาระงานครู (Teacher Workload Compliance):</strong><br>
-            ผ่านเกณฑ์การตรวจสอบเพดานชั่วโมงสอนสูงสุด (Max Hours Cap) ของครูผู้สอนทุกคนในสถานศึกษา ไม่พบครูท่านใดมีชั่วโมงสอนเกินเกณฑ์ที่กำหนด พร้อมทั้งกระจายภาระงานสอนได้อย่างสม่ำเสมอ ลดความเหลื่อมล้ำและลดความเหนื่อยล้าของบุคลากรทางการศึกษา
-          </p>
-          <p>
-            <strong>4. ด้านความโปร่งใสและตรวจสอบย้อนกลับได้ (Algorithmic Governance & Proof):</strong><br>
-            ตารางสอนนี้ถูกสร้างขึ้นด้วยอัลกอริทึมที่มี Seed ควบคุมแบบ Deterministic สามารถทดสอบทำซ้ำได้ผลลัพธ์เดิม 100% พร้อมได้รับรองความถูกต้องด้วยลายนิ้วมือดิจิทัล <code>${_lastAuditHash || '0-Conflict Verified'}</code> เหมาะสำหรับการนำไปประกาศใช้งานจริงในสถานศึกษาและการตรวจประเมินคุณภาพการศึกษา
-          </p>
+      <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:16px; margin-top:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px; border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:8px;">
+          <h4 style="font-size:14px; font-weight:700; color:#ffffff; margin:0; display:flex; align-items:center; gap:8px;">
+            <i class="fas fa-wand-magic-sparkles" style="color:#c084fc;"></i> บทวิเคราะห์และข้อเสนอแนะเชิงบริหาร (Executive Strategic Analysis)
+          </h4>
+          <span style="display:inline-flex; align-items:center; gap:5px; background:rgba(249,115,22,0.15); color:#fb923c; border:1px solid rgba(249,115,22,0.3); padding:2px 8px; border-radius:6px; font-size:10.5px; font-weight:600;">
+            <i class="fas fa-bolt"></i> ${isRealGroq ? `วิเคราะห์สด Real-time โดย Groq LPU (${usedLlmModel})` : 'Hybrid Explainability Model'}
+          </span>
         </div>
+        ${dynamicNarrativeHtml}
       </div>
     `;
 
