@@ -45,15 +45,23 @@ const AI_COPILOT = (() => {
     const tmp = document.createElement('div');
     tmp.innerHTML = html;
 
-    // 1. นำองค์ประกอบที่ไม่ต้องอ่านออกเสียงออกทั้งหมด (เช่น รายการข้อย่อย, ตาราง, การ์ด, โค้ด, ปุ่ม)
+    // 1. นำองค์ประกอบที่ไม่ต้องอ่านออกเสียงออกทั้งหมด (เช่น รายการข้อย่อย, ตาราง, การ์ด, โค้ด, ปุ่ม, ข้อมูลโมเดล)
     tmp.querySelectorAll(
-      'button, svg, script, style, .badge, .copilot-chip, .copilot-action-card, .status-badge, table, pre, code, ul, ol, .copilot-msg-footer, [style*="display:none"]'
+      'button, svg, script, style, .badge, .copilot-chip, .copilot-action-card, .status-badge, table, pre, code, ul, ol, .copilot-msg-footer, .copilot-tech-meta, [style*="display:none"]'
     ).forEach(el => el.remove());
+
+    // ลบองค์ประกอบที่ระบุเครดิตโมเดลหรือการประมวลผลออกทั้งหมด
+    tmp.querySelectorAll('div, p, span, small').forEach(el => {
+      const txt = (el.innerText || el.textContent || '').trim();
+      if (txt.includes('ประมวลผลโดย') || txt.includes('Groq LPU') || txt.includes('gpt-oss') || txt.includes('qwen')) {
+        el.remove();
+      }
+    });
 
     // 2. ดึงเฉพาะย่อหน้าหลักข้อความสำคัญ (First Key Paragraph)
     const paragraphs = Array.from(tmp.querySelectorAll('p'))
       .map(p => (p.innerText || p.textContent || '').replace(/\s+/g, ' ').trim())
-      .filter(t => t.length > 0);
+      .filter(t => t.length > 0 && !t.includes('ประมวลผลโดย') && !t.includes('Groq LPU'));
 
     let raw = '';
     if (paragraphs.length > 0) {
@@ -66,9 +74,13 @@ const AI_COPILOT = (() => {
       raw = (tmp.innerText || tmp.textContent || '').replace(/\s+/g, ' ').trim();
     }
 
-    // 3. กรอง Emojis, URLs และเครื่องหมาย Markdown ออก
+    // 3. กรอง Emojis, URLs, เครื่องหมาย Markdown และข้อความระบบ/โมเดลออก
     let text = raw.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '');
     text = text.replace(/https?:\/\/\S+/g, '');
+    text = text.replace(/ประมวลผลโดย[\s\S]*?(?=\n|$)/gi, '');
+    text = text.replace(/Groq\s*LPU[^\n]*/gi, '');
+    text = text.replace(/\([a-zA-Z0-9_\-\.\/]+\)/g, ''); // ตัด (openai/gpt-oss-120b)
+    text = text.replace(/Audit\s*Hash:[^\n]*/gi, '');
     text = text.replace(/[*#`_~>]/g, ' ');
     text = text.replace(/\s+/g, ' ').trim();
 
@@ -1056,7 +1068,7 @@ const AI_COPILOT = (() => {
       const htmlContent = formatMarkdown(groqRes.content);
       return `
         ${htmlContent}
-        <div style="margin-top:8px; font-size:10px; color:#94a3b8; display:flex; align-items:center; gap:5px; border-top:1px solid rgba(255,255,255,0.06); padding-top:6px;">
+        <div class="copilot-tech-meta" style="margin-top:8px; font-size:10px; color:#94a3b8; display:flex; align-items:center; gap:5px; border-top:1px solid rgba(255,255,255,0.06); padding-top:6px;">
           <i class="fas fa-bolt" style="color:#f97316;"></i> ประมวลผลโดย <strong>Groq LPU (${groqRes.model})</strong>
         </div>
       `;
