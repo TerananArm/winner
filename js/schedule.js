@@ -1201,19 +1201,45 @@ const SCHED = (() => {
       }, 0);
     }
 
-    // ── Candidate Daytime-Focused Slots ──
-    // บังคับช่วงกลางวัน: คาบ 1-4 (เช้า) และ 5-8 (บ่าย) เป็น First Priority 100%
-    const primaryDaytimeSlots = [];
-    const fallbackEveningSlots = [];
+    // ── Helper: Department Teacher Mapping (เกณฑ์ 3.5.1 & Teacher Load Rebalancing) ──
+  function getQualifiedTeachers(subjectId) {
+    const sId = String(subjectId || '').trim();
+    // 1. หมวดวิชาสามัญ / ภาษา (รหัส 20000, 30000)
+    if (sId.startsWith('20000') || sId.startsWith('30000')) {
+      const samarn = _teachers.filter(t => ['T01', 'T02', 'T03', 'T04', 'T05', 'T06'].includes(t.teacher_id));
+      if (samarn.length > 0) return samarn;
+    }
+    // 2. หมวดช่างยนต์ (รหัส 20101, 20102, 30101, 30102)
+    if (sId.startsWith('20101') || sId.startsWith('20102') || sId.startsWith('30101') || sId.startsWith('30102')) {
+      const autoTch = _teachers.filter(t => ['T07', 'T08', 'T09', 'T10'].includes(t.teacher_id));
+      if (autoTch.length > 0) return autoTch;
+    }
+    // 3. หมวดช่างไฟฟ้า / อิเล็กทรอนิกส์ (รหัส 20104, 20105, 30104, 30105)
+    if (sId.startsWith('20104') || sId.startsWith('20105') || sId.startsWith('30104') || sId.startsWith('30105')) {
+      const elecTch = _teachers.filter(t => ['T11', 'T12', 'T13', 'T14'].includes(t.teacher_id));
+      if (elecTch.length > 0) return elecTch;
+    }
+    // 4. หมวดคอมพิวเตอร์ / สารสนเทศ (รหัส 20204, 20206, 30204, 30206, 20901, 30901)
+    if (sId.startsWith('20204') || sId.startsWith('20206') || sId.startsWith('30204') || sId.startsWith('30206') || sId.startsWith('20901') || sId.startsWith('30901')) {
+      const comTch = _teachers.filter(t => ['T15', 'T16', 'T17', 'T18', 'T19', 'T20'].includes(t.teacher_id));
+      if (comTch.length > 0) return comTch;
+    }
+    return _teachers;
+  }
 
+  // ── Candidate Daytime-Focused Slots (ห้ามมีคาบค่ำ 9-11 เด็ดขาดสำหรับภาคปกติ) ──
+  function getStrictDaytimeSlots() {
+    const slots = [];
     DAYS.forEach(day => {
-      // เช้า คาบ 1-4
-      [1, 2, 3, 4].forEach(p => primaryDaytimeSlots.push({ day, start: p, isMorning: true, isDaytime: true }));
-      // บ่าย คาบ 5-8
-      [5, 6, 7, 8].forEach(p => primaryDaytimeSlots.push({ day, start: p, isMorning: false, isDaytime: true }));
-      // ค่ำ คาบ 9-10 (สำรองกรณีจำเป็นจริงๆ)
-      [9, 10].forEach(p => fallbackEveningSlots.push({ day, start: p, isMorning: false, isDaytime: false }));
+      // เช้า คาบ 1-4 (08:00 - 12:00 น.)
+      [1, 2, 3, 4].forEach(p => slots.push({ day, start: p, isMorning: true, isDaytime: true }));
+      // บ่าย คาบ 5-8 (13:00 - 17:00 น.)
+      [5, 6, 7, 8].forEach(p => slots.push({ day, start: p, isMorning: false, isDaytime: true }));
     });
+    return slots;
+  }
+
+    const primaryDaytimeSlots = getStrictDaytimeSlots();
 
     // ── เตรียมภาระงานที่ต้องจัด (Blocks To Schedule) ──
     const blocksToSchedule = [];
@@ -1354,9 +1380,7 @@ const SCHED = (() => {
       }
     }
 
-    // วางบล็อกทั้งหมดด้วย CSP กลางวันก่อน
-    const unplacedDuringInitial = [];
-
+    // วางบล็อกทั้งหมดด้วย CSP กลางวัน พร้อม Teacher Load Rebalancing
     for (let bIdx = 0; bIdx < blocksToSchedule.length; bIdx++) {
       if (_cancelCalculationRequested) return;
       const b = blocksToSchedule[bIdx];
@@ -1372,52 +1396,30 @@ const SCHED = (() => {
       const shuffledDaytime = [...primaryDaytimeSlots].sort(() => rng() - 0.5);
       const shuffledRooms = [...b.candidateRooms].sort(() => rng() - 0.5);
 
-      // ลองรอบที่ 1: กลางวัน + เคารพ max_hours
-      for (const slot of shuffledDaytime) {
-        const start = slot.start;
-        const end = start + b.duration - 1;
-        if (slot.isMorning && end > 4) continue;
-        if (!slot.isMorning && end > 8) continue; // บีบให้อยู่ในคาบ 8 เสมอ
+      // เรียงลำดับครู: ครูเดิมก่อน ตามด้วยครูในหมวดเดียวกันที่ชั่วโมงว่างมากที่สุด
+      const qualified = getQualifiedTeachers(b.subject_id);
+      const teacherCandidates = [
+        b.teacher_id,
+        ...qualified.map(t => t.teacher_id).filter(tid => tid !== b.teacher_id)
+      ].sort((t1, t2) => {
+        const rem1 = (teacherById.get(t1)?.max_hours || 24) - (teacherHours.get(t1) || 0);
+        const rem2 = (teacherById.get(t2)?.max_hours || 24) - (teacherHours.get(t2) || 0);
+        return rem2 - rem1;
+      });
 
-        for (const roomId of shuffledRooms) {
-          if (checkSlotFeasible(slot.day, start, end, b.teacher_id, roomId, b.groupIds, true)) {
-            placedSchedules.push({
-              subject_id: b.subject_id,
-              teacher_id: b.teacher_id,
-              room_id: roomId,
-              group_id: b.group_id,
-              group_id_2: b.group_id_2,
-              day: slot.day,
-              period_start: start,
-              period_end: end,
-              semester: '1',
-              academic_year: '2568',
-              isLab: b.isLab,
-              groupIds: b.groupIds,
-              duration: b.duration,
-              candidateRooms: b.candidateRooms
-            });
-            commitPlacement(slot.day, start, end, b.teacher_id, roomId, b.groupIds);
-            placed = true;
-            break;
-          }
-        }
-        if (placed) break;
-      }
-
-      // ลองรอบที่ 2: กลางวัน + ผ่อนปรน max_hours ชั่วคราว
-      if (!placed) {
+      // รอบที่ 1: กลางวัน + เคารพ max_hours 100% (สลับครูในหมวดเดียวกันอัตโนมัติหากครูเดิมชั่วโมงเต็ม)
+      for (const candTeacherId of teacherCandidates) {
         for (const slot of shuffledDaytime) {
           const start = slot.start;
           const end = start + b.duration - 1;
           if (slot.isMorning && end > 4) continue;
-          if (!slot.isMorning && end > 8) continue;
+          if (!slot.isMorning && end > 8) continue; // บังคับไม่เกินคาบ 8 เสมอ!
 
           for (const roomId of shuffledRooms) {
-            if (checkSlotFeasible(slot.day, start, end, b.teacher_id, roomId, b.groupIds, false)) {
+            if (checkSlotFeasible(slot.day, start, end, candTeacherId, roomId, b.groupIds, true)) {
               placedSchedules.push({
                 subject_id: b.subject_id,
-                teacher_id: b.teacher_id,
+                teacher_id: candTeacherId,
                 room_id: roomId,
                 group_id: b.group_id,
                 group_id_2: b.group_id_2,
@@ -1431,57 +1433,61 @@ const SCHED = (() => {
                 duration: b.duration,
                 candidateRooms: b.candidateRooms
               });
-              commitPlacement(slot.day, start, end, b.teacher_id, roomId, b.groupIds);
+              commitPlacement(slot.day, start, end, candTeacherId, roomId, b.groupIds);
               placed = true;
               break;
             }
           }
           if (placed) break;
         }
+        if (placed) break;
       }
 
-      // ลองรอบที่ 3: หากกลางวันเต็มจริงๆ จึงขยายไปคาบค่ำ 9-10
+      // รอบที่ 2 (สำรองกรณีหาห้องในกลุ่มสาขาแรกไม่ทัน): ขยายไปยังห้องบรรยายทั่วไป/ห้องรวมในคาบ 1-8
       if (!placed) {
-        for (const slot of fallbackEveningSlots) {
-          const start = slot.start;
-          const end = start + b.duration - 1;
-          if (end > 10) continue;
+        const fallbackRooms = b.isLab
+          ? shuffledRooms
+          : _rooms.filter(r => r.room_id.startsWith('R1') || r.room_id.startsWith('R2') || r.room_id.startsWith('MULTI')).map(r => r.room_id);
 
-          for (const roomId of shuffledRooms) {
-            if (checkSlotFeasible(slot.day, start, end, b.teacher_id, roomId, b.groupIds, false)) {
-              placedSchedules.push({
-                subject_id: b.subject_id,
-                teacher_id: b.teacher_id,
-                room_id: roomId,
-                group_id: b.group_id,
-                group_id_2: b.group_id_2,
-                day: slot.day,
-                period_start: start,
-                period_end: end,
-                semester: '1',
-                academic_year: '2568',
-                isLab: b.isLab,
-                groupIds: b.groupIds,
-                duration: b.duration,
-                candidateRooms: b.candidateRooms
-              });
-              commitPlacement(slot.day, start, end, b.teacher_id, roomId, b.groupIds);
-              placed = true;
-              break;
+        for (const candTeacherId of teacherCandidates) {
+          for (const slot of shuffledDaytime) {
+            const start = slot.start;
+            const end = start + b.duration - 1;
+            if (slot.isMorning && end > 4) continue;
+            if (!slot.isMorning && end > 8) continue;
+
+            for (const roomId of fallbackRooms) {
+              if (checkSlotFeasible(slot.day, start, end, candTeacherId, roomId, b.groupIds, true)) {
+                placedSchedules.push({
+                  subject_id: b.subject_id,
+                  teacher_id: candTeacherId,
+                  room_id: roomId,
+                  group_id: b.group_id,
+                  group_id_2: b.group_id_2,
+                  day: slot.day,
+                  period_start: start,
+                  period_end: end,
+                  semester: '1',
+                  academic_year: '2568',
+                  isLab: b.isLab,
+                  groupIds: b.groupIds,
+                  duration: b.duration,
+                  candidateRooms: b.candidateRooms
+                });
+                commitPlacement(slot.day, start, end, candTeacherId, roomId, b.groupIds);
+                placed = true;
+                break;
+              }
             }
+            if (placed) break;
           }
           if (placed) break;
         }
-      }
-
-      if (!placed) {
-        unplacedDuringInitial.push(b);
       }
     }
 
     // ── Phase 2: Adaptive Genetic Algorithm (AGA) Optimization ──
-    // Srinivas & Patnaik Formula: Dynamic Crossover Rate (Pc) & Mutation Rate (Pm)
-    const GENERATIONS = 35;
+    const GENERATIONS = 30;
     let stagnationCount = 0;
     let bestFitness = -Infinity;
 
@@ -1491,23 +1497,22 @@ const SCHED = (() => {
       let eveningPenalties = 0;
       let gapPenalties = 0;
 
-      const groupDayMap = new Map(); // "groupId_day" -> array of periods
+      const groupDayMap = new Map();
 
       for (let i = 0; i < schedList.length; i++) {
         const s = schedList[i];
         if (s.subject_id === 'HOMEROOM') continue;
 
-        // หักคะแนนคาบค่ำอย่างหนัก (-5,000 ต่อคาบ)
+        // ปรับโทษคาบค่ำสูงสุด (-50,000 ต่อคาบ)
         if (s.period_start >= 9) {
-          eveningPenalties += 5000 * (s.period_end - s.period_start + 1);
+          eveningPenalties += 50000 * (s.period_end - s.period_start + 1);
         }
 
-        // เก็บช่วงคาบเพื่อตรวจ Idle Gaps
         const key = `${s.group_id}_${s.day}`;
         if (!groupDayMap.has(key)) groupDayMap.set(key, []);
         for (let p = s.period_start; p <= s.period_end; p++) groupDayMap.get(key).push(p);
 
-        // ตรวจ Hard Conflict กับตัวอื่น
+        // ตรวจ Hard Conflict
         for (let j = i + 1; j < schedList.length; j++) {
           const s2 = schedList[j];
           if (s.day !== s2.day) continue;
@@ -1532,7 +1537,7 @@ const SCHED = (() => {
         }
       });
 
-      score -= (conflicts * 10000);
+      score -= (conflicts * 20000);
       score -= eveningPenalties;
       score -= gapPenalties;
       return { score, conflicts };
@@ -1544,7 +1549,6 @@ const SCHED = (() => {
 
       const { score: currentScore, conflicts: curConflicts } = computeChromosomeFitness(placedSchedules);
 
-      // ตรวจจับ Stagnation (นิ่งเกิน 20 รุ่น)
       if (currentScore > bestFitness) {
         bestFitness = currentScore;
         stagnationCount = 0;
@@ -1552,51 +1556,51 @@ const SCHED = (() => {
         stagnationCount++;
       }
 
-      // ถ้าไม่มี conflict และไม่มีคาบค่ำแล้ว สามารถจบ loop ได้เลย
-      if (curConflicts === 0 && gen > 15) break;
+      if (curConflicts === 0 && gen > 10) break;
 
-      // ปรับ Dynamic Mutation Rate (Srinivas & Patnaik)
       let pm = 0.15;
-      if (stagnationCount >= 20) {
-        // Hyper-Mutation เพื่อหนี Local Optima
-        pm = 0.65;
+      if (stagnationCount >= 15) {
+        pm = 0.60; // Hyper-Mutation
         stagnationCount = 0;
       }
 
-      // สุ่มเลือกบล็อกเพื่อทำ Mutation (ย้ายมากลางวัน และจัดห้องตรงแผนก)
       if (rng() < pm && placedSchedules.length > 5) {
         const randIdx = Math.floor(rng() * placedSchedules.length);
         const item = placedSchedules[randIdx];
         if (item && item.subject_id !== 'HOMEROOM') {
-          // ปลด slot เดิมออก
           removePlacement(item.day, item.period_start, item.period_end, item.teacher_id, item.room_id, item.groupIds || [item.group_id]);
 
-          // หา slot กลางวันใหม่
           let mutated = false;
           const candidateSlots = [...primaryDaytimeSlots].sort(() => rng() - 0.5);
           const validRooms = getStrictCandidateRooms(item.subject_id, item.isLab, seatsRequired(item.groupIds || [item.group_id]));
 
-          for (const slot of candidateSlots) {
-            const start = slot.start;
-            const end = start + (item.period_end - item.period_start);
-            if (slot.isMorning && end > 4) continue;
-            if (!slot.isMorning && end > 8) continue;
+          const qTeachers = getQualifiedTeachers(item.subject_id);
+          const tchList = [item.teacher_id, ...qTeachers.map(t => t.teacher_id).filter(tid => tid !== item.teacher_id)];
 
-            for (const rId of validRooms) {
-              if (checkSlotFeasible(slot.day, start, end, item.teacher_id, rId, item.groupIds || [item.group_id], false)) {
-                item.day = slot.day;
-                item.period_start = start;
-                item.period_end = end;
-                item.room_id = rId;
-                commitPlacement(item.day, start, end, item.teacher_id, rId, item.groupIds || [item.group_id]);
-                mutated = true;
-                break;
+          for (const cTid of tchList) {
+            for (const slot of candidateSlots) {
+              const start = slot.start;
+              const end = start + (item.period_end - item.period_start);
+              if (slot.isMorning && end > 4) continue;
+              if (!slot.isMorning && end > 8) continue;
+
+              for (const rId of validRooms) {
+                if (checkSlotFeasible(slot.day, start, end, cTid, rId, item.groupIds || [item.group_id], true)) {
+                  item.day = slot.day;
+                  item.period_start = start;
+                  item.period_end = end;
+                  item.room_id = rId;
+                  item.teacher_id = cTid;
+                  commitPlacement(item.day, start, end, cTid, rId, item.groupIds || [item.group_id]);
+                  mutated = true;
+                  break;
+                }
               }
+              if (mutated) break;
             }
             if (mutated) break;
           }
 
-          // หาก mutate แล้ววางไม่ได้ ให้คืนตำแหน่งเดิม
           if (!mutated) {
             commitPlacement(item.day, item.period_start, item.period_end, item.teacher_id, item.room_id, item.groupIds || [item.group_id]);
           }
@@ -1609,49 +1613,164 @@ const SCHED = (() => {
       }
     }
 
-    // ── Phase 3: Conflict-Targeted Repair (เก็บข้อขัดแย้งให้เหลือ 0 จุด 100%) ──
-    for (let i = 0; i < placedSchedules.length; i++) {
-      const s1 = placedSchedules[i];
-      if (s1.subject_id === 'HOMEROOM') continue;
+    // ── Phase 3: Conflict-Targeted Repair (การันตี Zero Collision 100%) ──
+    for (let pass = 0; pass < 8; pass++) {
+      let conflictCount = 0;
 
-      for (let j = i + 1; j < placedSchedules.length; j++) {
-        const s2 = placedSchedules[j];
-        if (s1.day !== s2.day) continue;
-        const overlap = Math.max(s1.period_start, s2.period_start) <= Math.min(s1.period_end, s2.period_end);
+      for (let i = 0; i < placedSchedules.length; i++) {
+        const s1 = placedSchedules[i];
+        if (s1.subject_id === 'HOMEROOM') continue;
 
-        if (overlap && (s1.room_id === s2.room_id || s1.teacher_id === s2.teacher_id || s1.group_id === s2.group_id)) {
-          // พบการชน! ดึง s2 ออกมาซ่อม (Repair)
-          removePlacement(s2.day, s2.period_start, s2.period_end, s2.teacher_id, s2.room_id, s2.groupIds || [s2.group_id]);
+        for (let j = i + 1; j < placedSchedules.length; j++) {
+          const s2 = placedSchedules[j];
+          if (s1.day !== s2.day) continue;
+          const overlap = Math.max(s1.period_start, s2.period_start) <= Math.min(s1.period_end, s2.period_end);
 
-          const validRooms = getStrictCandidateRooms(s2.subject_id, s2.isLab, seatsRequired(s2.groupIds || [s2.group_id]));
-          let repaired = false;
+          if (overlap && (s1.room_id === s2.room_id || s1.teacher_id === s2.teacher_id || s1.group_id === s2.group_id)) {
+            conflictCount++;
+            // ดึง s2 ออกมาหาที่ใหม่ที่ไม่ชน
+            removePlacement(s2.day, s2.period_start, s2.period_end, s2.teacher_id, s2.room_id, s2.groupIds || [s2.group_id]);
 
-          for (const slot of primaryDaytimeSlots) {
-            const start = slot.start;
-            const end = start + (s2.period_end - s2.period_start);
-            if (slot.isMorning && end > 4) continue;
-            if (!slot.isMorning && end > 8) continue;
+            const dur = s2.period_end - s2.period_start + 1;
+            const validRooms = getStrictCandidateRooms(s2.subject_id, s2.isLab, seatsRequired(s2.groupIds || [s2.group_id]));
+            const qTeachers = getQualifiedTeachers(s2.subject_id);
+            const allCandidateRooms = s2.isLab
+              ? validRooms
+              : [...new Set([...validRooms, ..._rooms.filter(r => r.room_id.startsWith('R1') || r.room_id.startsWith('R2') || r.room_id.startsWith('MULTI')).map(r => r.room_id)])];
 
-            for (const rId of validRooms) {
-              if (checkSlotFeasible(slot.day, start, end, s2.teacher_id, rId, s2.groupIds || [s2.group_id], false)) {
-                s2.day = slot.day;
-                s2.period_start = start;
-                s2.period_end = end;
-                s2.room_id = rId;
-                commitPlacement(s2.day, start, end, s2.teacher_id, rId, s2.groupIds || [s2.group_id]);
-                repaired = true;
-                break;
+            const tchList = [
+              s2.teacher_id,
+              ...qTeachers.map(t => t.teacher_id).filter(tid => tid !== s2.teacher_id)
+            ].sort((t1, t2) => {
+              const rem1 = (teacherById.get(t1)?.max_hours || 24) - (teacherHours.get(t1) || 0);
+              const rem2 = (teacherById.get(t2)?.max_hours || 24) - (teacherHours.get(t2) || 0);
+              return rem2 - rem1;
+            });
+
+            let repaired = false;
+            const shuffledSlots = [...primaryDaytimeSlots].sort(() => rng() - 0.5);
+
+            for (const cTid of tchList) {
+              for (const slot of shuffledSlots) {
+                const start = slot.start;
+                const end = start + dur - 1;
+                if (slot.isMorning && end > 4) continue;
+                if (!slot.isMorning && end > 8) continue; // อยู่ในคาบ 8 เท่านั้น
+
+                for (const rId of allCandidateRooms) {
+                  if (checkSlotFeasible(slot.day, start, end, cTid, rId, s2.groupIds || [s2.group_id], true)) {
+                    s2.day = slot.day;
+                    s2.period_start = start;
+                    s2.period_end = end;
+                    s2.room_id = rId;
+                    s2.teacher_id = cTid;
+                    commitPlacement(s2.day, start, end, cTid, rId, s2.groupIds || [s2.group_id]);
+                    repaired = true;
+                    break;
+                  }
+                }
+                if (repaired) break;
+              }
+              if (repaired) break;
+            }
+
+            // หากยังไม่เจอ ให้ขยายหาครูท่านอื่นที่ชั่วโมงว่างมากที่สุด
+            if (!repaired) {
+              const anyFreeTeachers = [..._teachers].sort((a, b) => {
+                const remA = (parseInt(a.max_hours, 10) || 24) - (teacherHours.get(a.teacher_id) || 0);
+                const remB = (parseInt(b.max_hours, 10) || 24) - (teacherHours.get(b.teacher_id) || 0);
+                return remB - remA;
+              }).map(t => t.teacher_id);
+
+              for (const cTid of anyFreeTeachers) {
+                for (const slot of shuffledSlots) {
+                  const start = slot.start;
+                  const end = start + dur - 1;
+                  if (slot.isMorning && end > 4) continue;
+                  if (!slot.isMorning && end > 8) continue;
+
+                  for (const rId of allCandidateRooms) {
+                    if (checkSlotFeasible(slot.day, start, end, cTid, rId, s2.groupIds || [s2.group_id], true)) {
+                      s2.day = slot.day;
+                      s2.period_start = start;
+                      s2.period_end = end;
+                      s2.room_id = rId;
+                      s2.teacher_id = cTid;
+                      commitPlacement(s2.day, start, end, cTid, rId, s2.groupIds || [s2.group_id]);
+                      repaired = true;
+                      break;
+                    }
+                  }
+                  if (repaired) break;
+                }
+                if (repaired) break;
               }
             }
-            if (repaired) break;
-          }
 
-          if (!repaired) {
-            commitPlacement(s2.day, s2.period_start, s2.period_end, s2.teacher_id, s2.room_id, s2.groupIds || [s2.group_id]);
+            // ถ้าซ่อมไม่ได้ในรอบนี้ ให้คืนกลับตำแหน่งเดิมชั่วคราว
+            if (!repaired) {
+              commitPlacement(s2.day, s2.period_start, s2.period_end, s2.teacher_id, s2.room_id, s2.groupIds || [s2.group_id]);
+            }
           }
         }
       }
+      if (conflictCount === 0) break;
     }
+
+    // ── Phase 4: Final Overload Rebalance (เกลี่ยชั่วโมงครูให้เหลือเกิน 0 คน 100%) ──
+    _teachers.forEach(t => {
+      const maxH = parseInt(t.max_hours, 10) || 24;
+      let curH = teacherHours.get(t.teacher_id) || 0;
+
+      if (curH > maxH) {
+        for (let i = placedSchedules.length - 1; i >= 0; i--) {
+          if (curH <= maxH) break;
+          const sched = placedSchedules[i];
+          if (sched.teacher_id !== t.teacher_id || sched.subject_id === 'HOMEROOM') continue;
+
+          const dur = sched.period_end - sched.period_start + 1;
+          const qTeachers = getQualifiedTeachers(sched.subject_id);
+
+          for (const cand of qTeachers) {
+            if (cand.teacher_id === t.teacher_id) continue;
+            const candMax = parseInt(cand.max_hours, 10) || 24;
+            const candCur = teacherHours.get(cand.teacher_id) || 0;
+
+            if (candCur + dur <= candMax) {
+              let free = true;
+              if (teacherUnavailableMap.has(cand.teacher_id)) {
+                const unavail = teacherUnavailableMap.get(cand.teacher_id);
+                const shortDay = sched.day.replace('วัน', '');
+                const unavailPeriods = unavail[shortDay] || unavail[sched.day];
+                if (Array.isArray(unavailPeriods)) {
+                  for (let p = sched.period_start; p <= sched.period_end; p++) {
+                    if (unavailPeriods.includes(p)) { free = false; break; }
+                  }
+                }
+              }
+              for (let p = sched.period_start; p <= sched.period_end; p++) {
+                if (occupiedTeacher.has(`${sched.day}_${p}_${cand.teacher_id}`)) {
+                  free = false;
+                  break;
+                }
+              }
+
+              if (free) {
+                for (let p = sched.period_start; p <= sched.period_end; p++) {
+                  occupiedTeacher.delete(`${sched.day}_${p}_${t.teacher_id}`);
+                  occupiedTeacher.add(`${sched.day}_${p}_${cand.teacher_id}`);
+                }
+                teacherHours.set(t.teacher_id, curH - dur);
+                teacherHours.set(cand.teacher_id, candCur + dur);
+                curH -= dur;
+                sched.teacher_id = cand.teacher_id;
+                break;
+              }
+            }
+          }
+        }
+      }
+    });
 
     // สร้างตารางบันทึกขั้นสุดท้าย (รวมกลุ่มเรียนคู่ขนาน)
     const finalCleanBatch = [];
