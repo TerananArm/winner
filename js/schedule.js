@@ -3312,30 +3312,59 @@ const SCHED = (() => {
       return acc + dur;
     }, 0);
 
-    const totalConflicts = (_lastAuditData?.teacherConflicts?.length || 0) +
-                           (_lastAuditData?.roomConflicts?.length || 0) +
-                           (_lastAuditData?.groupConflicts?.length || 0) +
-                           (_lastAuditData?.overloadConflicts?.length || 0);
+    // รวบรวมเฉพาะจุดที่ชนจริง
+    const activeConflicts = [];
 
-    // ตรวจสอบ Strict Room Matching
-    let autoMatched = 0;
-    let elecMatched = 0;
-    let comMatched = 0;
+    (_lastAuditData?.teacherConflicts || []).forEach((c, idx) => {
+      activeConflicts.push({
+        id: `TC-${idx + 1}`,
+        type: 'ครูซ้ำซ้อน (Teacher Clash)',
+        location: `${c.s1?.day || ''} คาบ ${c.s1?.period_start}-${c.s1?.period_end}`,
+        issue: c.reason,
+        cause: c.cause,
+        suggestion: c.suggestion
+      });
+    });
+
+    (_lastAuditData?.roomConflicts || []).forEach((c, idx) => {
+      activeConflicts.push({
+        id: `RC-${idx + 1}`,
+        type: 'ห้องเรียนชน (Room Collision)',
+        location: `ห้อง ${c.s1?.room_id || ''} | ${c.s1?.day || ''} คาบ ${c.s1?.period_start}-${c.s1?.period_end}`,
+        issue: c.reason,
+        cause: c.cause,
+        suggestion: c.suggestion
+      });
+    });
+
+    (_lastAuditData?.groupConflicts || []).forEach((c, idx) => {
+      activeConflicts.push({
+        id: `GC-${idx + 1}`,
+        type: 'กลุ่มเรียนชน (Student Group Clash)',
+        location: `กลุ่ม ${c.s1?.group_id || ''} | ${c.s1?.day || ''} คาบ ${c.s1?.period_start}-${c.s1?.period_end}`,
+        issue: c.reason,
+        cause: c.cause,
+        suggestion: c.suggestion
+      });
+    });
+
+    (_lastAuditData?.overloadConflicts || []).forEach((c, idx) => {
+      activeConflicts.push({
+        id: `OC-${idx + 1}`,
+        type: 'ครูเกินชั่วโมงสอน (Teacher Overload)',
+        location: `ครู ${c.teacher?.teacher_name || c.teacher?.teacher_id || ''} (สอนจริง ${c.actual} ชม. / เพดาน ${c.max} ชม.)`,
+        issue: c.reason,
+        cause: c.cause,
+        suggestion: c.suggestion
+      });
+    });
+
+    const totalConflicts = activeConflicts.length;
+
+    // คำนวณสถิติช่วงเวลา
     let daytimeCount = 0;
     let eveningCount = 0;
-
     _schedules.forEach(s => {
-      const sId = String(s.subject_id || '');
-      const rId = String(s.room_id || '');
-      if (sId.startsWith('20101') || sId.startsWith('20102') || sId.startsWith('30101')) {
-        if (rId.startsWith('LAB-AUTO') || rId.startsWith('R1') || rId.startsWith('R2')) autoMatched++;
-      }
-      if (sId.startsWith('20104') || sId.startsWith('20105') || sId.startsWith('30104')) {
-        if (rId.startsWith('LAB-ELEC') || rId.startsWith('R1') || rId.startsWith('R2')) elecMatched++;
-      }
-      if (sId.startsWith('20204') || sId.startsWith('30204')) {
-        if (rId.startsWith('LAB-COM') || rId.startsWith('LAB-NET') || rId.startsWith('LAB-GRAPH') || rId.startsWith('R1') || rId.startsWith('R2')) comMatched++;
-      }
       if (s.period_start >= 9) eveningCount++;
       else daytimeCount++;
     });
@@ -3383,78 +3412,93 @@ const SCHED = (() => {
       return `<div style="line-height:1.65;">${html}</div>`;
     }
 
-    // ── Call Real Groq LLM API (openai/gpt-oss-120b) ─────────
-    let dynamicNarrativeHtml = '';
-    let usedLlmModel = 'openai/gpt-oss-120b';
+    // ── วิเคราะห์เฉพาะจุดที่ชนด้วย Groq LLM API ───────────────
+    let conflictAnalysisHtml = '';
     let isRealGroq = false;
+    let usedModel = 'openai/gpt-oss-120b';
 
-    if (typeof window !== 'undefined' && window.AI_COPILOT && typeof window.AI_COPILOT.callGroqLLM === 'function') {
-      try {
-        const statsSummary = {
-          totalPeriodsScheduled: totalPeriodsCount,
-          totalConflicts: totalConflicts,
-          roomCollisionCount: _lastAuditData?.roomConflicts?.length || 0,
-          teacherClashCount: _lastAuditData?.teacherConflicts?.length || 0,
-          overloadedTeachersCount: _lastAuditData?.overloadConflicts?.length || 0,
-          underloadWarningsCount: _lastAuditData?.underloadWarnings?.length || 0,
-          daytimeRatePercent: `${daytimeRate}%`,
-          auditProofHash: _lastAuditHash || 'VERIFIED',
-          roomMatchingPolicy: '100% Strict Department Lock (Auto->LAB-AUTO*, Elec->LAB-ELEC*, Com->LAB-COM*)'
-        };
+    if (totalConflicts > 0) {
+      if (typeof window !== 'undefined' && window.AI_COPILOT && typeof window.AI_COPILOT.callGroqLLM === 'function') {
+        try {
+          const messages = [
+            {
+              role: 'system',
+              content: `คุณคือ Auditor AI ผู้เชี่ยวชาญการแก้ปัญหาตารางสอน
+หน้าที่สำคัญ: วิเคราะห์ "เฉพาะจุดที่ชน/มีปัญหา" ตามรายการที่ได้รับเท่านั้น (ห้ามเขียนเรื่องทั่วไปอื่นที่ไม่เกี่ยวข้อง)
+สำหรับแต่ละจุดที่ชน ให้เขียน 3 ข้อย่อยชัดเจนและกระชับ:
+- 💥 **จุดที่ชน:** ระบุชื่อวิชา/ครู/ห้อง/วัน/คาบ
+- ❓ **ชนเพราะอะไร:** ระบุสาเหตุที่แท้จริงแบบตรงไปตรงมา
+- 🛠️ **ควรทำยังไง:** ระบุขั้นตอนการแก้ปัญหาที่เป็นรูปธรรม (เช่น สลับไปห้องไหน, ย้ายไปวัน/คาบใด, หรือปรับ max_hours ในหน้าไหน)
 
-        const messages = [
-          {
-            role: 'system',
-            content: `คุณคือ Auditor & Explainability AI Agent ประจำระบบจัดตารางสอน EduSched AI
-หน้าที่ของคุณคือวิเคราะห์ข้อมูลสถิติตารางสอนจริงที่ได้รับ และสรุป "บทวิเคราะห์และข้อเสนอแนะเชิงบริหารสถานศึกษา (Executive Strategic Analysis)"
-แบ่งหัวข้อชัดเจน 4 ด้าน:
-1. ด้านการจัดสรรทรัพยากรห้องเรียน (Strict Room Matching): สรุปการล็อกห้องตามสาขา ไม่มีการข้ามแผนก
-2. ด้านสุขภาวะผู้เรียน (Student Welfare & Ergonomics): สรุปการบีบคาบเรียนลงช่วงกลางวัน ${daytimeRate}% และการลดช่องว่าง
-3. ด้านความเป็นธรรมและเพดานภาระงานครู (Teacher Workload Compliance): สรุปชั่วโมงสอนครู ไม่เกินเกณฑ์ และการเกลี่ยภาระ
-4. ด้านความโปร่งใสและตรวจสอบย้อนกลับได้ (Algorithmic Governance & Proof): สรุปความถูกต้องด้วย Hash ${_lastAuditHash || 'VERIFIED'}
+ตอบเป็นภาษาไทยอย่างกระชับ ตรงประเด็น ใช้รูปแบบ Markdown bullet points ให้อ่านง่าย`
+            },
+            {
+              role: 'user',
+              content: `พบข้อขัดแย้งในตารางสอนทั้งหมด ${totalConflicts} จุด ดังนี้:\n${JSON.stringify(activeConflicts, null, 2)}`
+            }
+          ];
 
-สรุปกระชับ ตรงประเด็น ใช้รูปแบบ Markdown (ตัวหนา, bullet points สั้นๆ 2-3 ข้อต่อหัวข้อ) จบประโยคสมบูรณ์`
-          },
-          {
-            role: 'user',
-            content: `ข้อมูลสถิติตารางสอนจริงของสถานศึกษา:
-${JSON.stringify(statsSummary, null, 2)}`
+          const groqRes = await window.AI_COPILOT.callGroqLLM(messages, 650);
+          if (groqRes && groqRes.content) {
+            conflictAnalysisHtml = formatReportMd(groqRes.content);
+            isRealGroq = true;
+            usedModel = groqRes.model;
           }
-        ];
-
-        const groqRes = await window.AI_COPILOT.callGroqLLM(messages, 650);
-        if (groqRes && groqRes.content) {
-          dynamicNarrativeHtml = formatReportMd(groqRes.content);
-          usedLlmModel = groqRes.model;
-          isRealGroq = true;
+        } catch (err) {
+          console.warn('Groq LLM conflict analysis failed, using fallback:', err);
         }
-      } catch (err) {
-        console.warn('Groq LLM call in openLlmModal failed, falling back:', err);
+      }
+
+      // Fallback: หากเรียก LLM ไม่สำเร็จ ให้แสดงรายการวิเคราะห์จาก Audit Data ตรงๆ
+      if (!conflictAnalysisHtml) {
+        let fallbackItems = activeConflicts.map(c => `
+          <div style="background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.25); border-radius:8px; padding:12px; margin-bottom:10px;">
+            <div style="font-weight:700; color:#f87171; font-size:13px; margin-bottom:6px;">
+              💥 [${c.type}] ${c.location}
+            </div>
+            <div style="font-size:12px; color:#cbd5e1; margin-bottom:4px;">
+              <strong>❓ ชนเพราะอะไร:</strong> ${c.cause}
+            </div>
+            <div style="font-size:12px; color:#38bdf8;">
+              <strong>🛠️ ควรทำยังไง:</strong> ${c.suggestion}
+            </div>
+          </div>
+        `).join('');
+
+        conflictAnalysisHtml = `<div>${fallbackItems}</div>`;
       }
     }
 
-    // Fallback narrative if Groq API is unreachable
-    if (!dynamicNarrativeHtml) {
-      dynamicNarrativeHtml = `
-        <div style="font-size:12.5px; color:#cbd5e1; line-height:1.75; display:flex; flex-direction:column; gap:10px;">
-          <p>
-            <strong>1. ด้านการจัดสรรทรัพยากรห้องเรียน (Strict Room Matching):</strong><br>
-            ระบบ Hybrid AI (CSP + Adaptive GA) ล็อกห้องปฏิบัติการตามสาขาวิชาอย่างเคร่งครัด โดยวิชาช่างยนต์ถูกจัดลง LAB-AUTO* วิชาช่างไฟฟ้าลง LAB-ELEC* และวิชาคอมพิวเตอร์ลง LAB-COM* ปลอดการข้ามแผนก 100%
-          </p>
-          <p>
-            <strong>2. ด้านสุขภาวะและสุขอนามัยของผู้เรียน (Student Welfare & Ergonomics):</strong><br>
-            บีบคาบเรียนเข้าสู่ช่วงเวลากลางวัน (คาบ 1-8 / 08:00 - 17:00 น.) อัตราการจัดคาบกลางวันสูงถึง <strong>${daytimeRate}%</strong> ปราศจากการทิ้งคาบค่ำโดดเดี่ยว และลดช่องว่างระหว่างคาบ (Idle Gaps)
-          </p>
-          <p>
-            <strong>3. ด้านความเป็นธรรมและเพดานภาระงานครู (Teacher Workload Compliance):</strong><br>
-            ผ่านเกณฑ์การตรวจสอบเพดานชั่วโมงสอนสูงสุด (Max Hours Cap) ของครูทุกคน ไม่พบครูท่านใดมีชั่วโมงสอนเกินเกณฑ์ และเกลี่ยภาระงานสอนอย่างสมดุล
-          </p>
-          <p>
-            <strong>4. ด้านความโปร่งใสและตรวจสอบย้อนกลับได้ (Algorithmic Governance & Proof):</strong><br>
-            ตารางสอนถูกสร้างขึ้นด้วย Seed Deterministic ทำซ้ำได้ผลลัพธ์เดิม 100% พร้อมได้รับรองความถูกต้องด้วยลายนิ้วมือดิจิทัล <code>${_lastAuditHash || '0-Conflict Verified'}</code>
+    // กรณีตารางสมบูรณ์ 0 จุดขัดแย้ง (Zero Collision)
+    let zeroConflictBox = '';
+    if (totalConflicts === 0) {
+      zeroConflictBox = `
+        <div style="background:rgba(52,211,153,0.06); border:1px solid rgba(52,211,153,0.25); border-radius:10px; padding:22px; text-align:center;">
+          <div style="font-size:36px; margin-bottom:8px;">🎉</div>
+          <h4 style="font-size:16px; font-weight:700; color:#34d399; margin-bottom:6px;">
+            ไม่พบจุดขัดแย้งในตารางสอน (Zero Collision 100%)
+          </h4>
+          <p style="font-size:13px; color:#cbd5e1; line-height:1.7; max-width:580px; margin:0 auto;">
+            ระบบได้ตรวจสอบทุกคาบเรียนแล้ว <strong>ไม่พบห้องเรียนชน ไม่พบครูซ้ำซ้อน และไม่มีกลุ่มเรียนชนกัน</strong> รวมถึงครูทุกคนมีชั่วโมงสอนอยู่ในเกณฑ์เพดานที่กำหนดอย่างถูกต้อง <strong>ไม่มีรายการใดที่ต้องแก้ไขครับ</strong>
           </p>
         </div>
       `;
+
+      // แสดงข้อเสนอแนะครูภาระสอนน้อย (ถ้ามี)
+      const underloads = _lastAuditData?.underloadWarnings || [];
+      if (underloads.length > 0) {
+        const uList = underloads.map(u => `<li><strong>${u.teacher?.teacher_name || u.teacher?.teacher_id}:</strong> ${u.reason} → <em>${u.suggestion}</em></li>`).join('');
+        zeroConflictBox += `
+          <div style="margin-top:12px; background:rgba(251,191,36,0.05); border:1px solid rgba(251,191,36,0.2); border-radius:8px; padding:12px 14px;">
+            <div style="font-size:12px; font-weight:700; color:#fbbf24; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+              <i class="fas fa-lightbulb"></i> ข้อเสนอแนะเพิ่มเติม (${underloads.length} รายการ):
+            </div>
+            <ul style="font-size:11.5px; color:#cbd5e1; padding-left:18px; margin:0; line-height:1.6;">
+              ${uList}
+            </ul>
+          </div>
+        `;
+      }
     }
 
     const reportHtml = `
@@ -3465,9 +3509,9 @@ ${JSON.stringify(statsSummary, null, 2)}`
           <div style="font-size:22px; font-weight:800; color:#38bdf8; margin-top:4px;">${totalPeriodsCount} คาบ</div>
           <div style="font-size:11px; color:#34d399; margin-top:2px;"><i class="fas fa-check-circle"></i> ครบ 100% ไม่ตกหล่น</div>
         </div>
-        <div style="background:rgba(52,211,153,0.08); border:1px solid rgba(52,211,153,0.3); border-radius:8px; padding:12px;">
-          <div style="font-size:11px; color:#94a3b8; text-transform:uppercase; font-weight:700;">Zero-Collision Status</div>
-          <div style="font-size:22px; font-weight:800; color:#34d399; margin-top:4px;">${totalConflicts} จุด (${totalConflicts === 0 ? 'PASS' : 'WARNING'})</div>
+        <div style="background:${totalConflicts === 0 ? 'rgba(52,211,153,0.08)' : 'rgba(239,68,68,0.08)'}; border:1px solid ${totalConflicts === 0 ? 'rgba(52,211,153,0.3)' : 'rgba(239,68,68,0.3)'}; border-radius:8px; padding:12px;">
+          <div style="font-size:11px; color:#94a3b8; text-transform:uppercase; font-weight:700;">สถานะข้อขัดแย้ง</div>
+          <div style="font-size:22px; font-weight:800; color:${totalConflicts === 0 ? '#34d399' : '#f87171'}; margin-top:4px;">${totalConflicts} จุด (${totalConflicts === 0 ? 'PASS' : 'ชนกัน'})</div>
           <div style="font-size:11px; color:#a7f3d0; margin-top:2px;"><i class="fas fa-fingerprint"></i> Hash: ${_lastAuditHash || 'VERIFIED'}</div>
         </div>
         <div style="background:rgba(192,132,252,0.08); border:1px solid rgba(192,132,252,0.3); border-radius:8px; padding:12px;">
@@ -3482,32 +3526,29 @@ ${JSON.stringify(statsSummary, null, 2)}`
         </div>
       </div>
 
-      <!-- LLM Narrative In-depth Insights -->
+      <!-- LLM Conflict Analysis Body -->
       <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:16px; margin-top:12px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px; border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:8px;">
           <h4 style="font-size:14px; font-weight:700; color:#ffffff; margin:0; display:flex; align-items:center; gap:8px;">
-            <i class="fas fa-wand-magic-sparkles" style="color:#c084fc;"></i> บทวิเคราะห์และข้อเสนอแนะเชิงบริหาร (Executive Strategic Analysis)
+            <i class="fas ${totalConflicts === 0 ? 'fa-shield-check' : 'fa-triangle-exclamation'}" style="color:${totalConflicts === 0 ? '#34d399' : '#f87171'};"></i>
+            ${totalConflicts === 0 ? 'ผลการตรวจสอบข้อขัดแย้ง (Verification Passed)' : `วิเคราะห์จุดขัดแย้งที่ชน (${totalConflicts} จุด) & วิธีแก้ไข`}
           </h4>
           <span style="display:inline-flex; align-items:center; gap:5px; background:rgba(249,115,22,0.15); color:#fb923c; border:1px solid rgba(249,115,22,0.3); padding:2px 8px; border-radius:6px; font-size:10.5px; font-weight:600;">
-            <i class="fas fa-bolt"></i> ${isRealGroq ? `วิเคราะห์สด Real-time โดย Groq LPU (${usedLlmModel})` : 'Hybrid Explainability Model'}
+            <i class="fas fa-bolt"></i> ${isRealGroq ? `วิเคราะห์สดโดย Groq LPU (${usedModel})` : 'AI Auditor Agent'}
           </span>
         </div>
-        ${dynamicNarrativeHtml}
+        ${totalConflicts === 0 ? zeroConflictBox : conflictAnalysisHtml}
       </div>
     `;
 
-    _lastLlmReportText = `รายงานบทวิเคราะห์เชิงบริหารสถานศึกษา (EduSched Hybrid AI Executive Report)\n` +
+    _lastLlmReportText = `รายงานการตรวจสอบข้อขัดแย้งในตารางสอน (EduSched AI Conflict Audit)\n` +
       `----------------------------------------------------------------------\n` +
-      `จำนวนคาบเรียนที่จัดสำเร็จ: ${totalPeriodsCount} คาบ (ครบถ้วน 100%)\n` +
-      `สถานะข้อขัดแย้ง: 0 จุด (Zero Collision PASS)\n` +
-      `รหัสรับรอง Audit Hash: ${_lastAuditHash || 'VERIFIED'}\n` +
-      `สัดส่วนคาบเรียนกลางวัน: ${daytimeRate}%\n` +
-      `การจับคู่ห้องเรียนตามสาขาวิชา: 100% Strict Room Matching PASS\n\n` +
-      `บทวิเคราะห์เชิงลึก:\n` +
-      `1. ทรัพยากรห้องเรียน: ล็อกห้องปฏิบัติการตามสาขาวิชาอย่างเคร่งครัด (ช่างยนต์, ไฟฟ้า, คอมพิวเตอร์) ปลอดการข้ามแผนก 100%\n` +
-      `2. สุขภาวะผู้เรียน: บีบคาบเรียนลงช่วงกลางวัน ลดช่องว่างระหว่างคาบ (Idle Gaps) ไม่ทิ้งคาบค่ำโดดเดี่ยว\n` +
-      `3. ภาระงานครู: อยู่ในเกณฑ์เพดานชั่วโมงสูงสุด (Max Hours) ไม่เกินเกณฑ์ และเกลี่ยสมดุล\n` +
-      `4. ความโปร่งใส: ทำซ้ำได้ 100% ด้วย Seed ควบคุม และมี Audit Hash รับรองความถูกต้อง`;
+      `จำนวนคาบเรียนที่จัดสำเร็จ: ${totalPeriodsCount} คาบ\n` +
+      `สถานะข้อขัดแย้ง: ${totalConflicts} จุด (${totalConflicts === 0 ? 'Zero Collision PASS' : 'พบจุดชน'})\n` +
+      `Audit Hash: ${_lastAuditHash || 'VERIFIED'}\n\n` +
+      (totalConflicts === 0 
+        ? `ผลการตรวจ: ไม่พบจุดขัดแย้งในตารางสอน 100% ทุกคาบ ห้อง และครูผ่านเกณฑ์มาตรฐานทั้งหมด`
+        : activeConflicts.map(c => `[${c.type}] ${c.location}\n- ชนเพราะ: ${c.cause}\n- ควรทำยังไง: ${c.suggestion}`).join('\n\n'));
 
     if (loading) loading.classList.add('hidden');
     if (reportBody) {
@@ -3515,7 +3556,6 @@ ${JSON.stringify(statsSummary, null, 2)}`
       reportBody.classList.remove('hidden');
     }
   }
-
   function closeLlmModal() {
     const modal = document.getElementById('llmModal');
     if (modal) modal.classList.add('hidden');
