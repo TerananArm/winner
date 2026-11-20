@@ -1223,7 +1223,7 @@ const SCHED = (() => {
     if (_rooms.length === 0) throw new Error('ไม่พบห้องเรียนในระบบ');
 
     const seedInput = document.getElementById('sched-seed');
-    const seedVal = seedInput ? (parseInt(seedInput.value, 10) || 1) : 1;
+    const seedVal = seedInput ? (parseInt(seedInput.value, 10) || _seed || 1) : (_seed || 1);
     let seed = seedVal;
     function rng() {
       seed = (seed + 0x6D2B79F5) | 0;
@@ -1471,14 +1471,16 @@ const SCHED = (() => {
       });
     }
 
-    // เรียงลำดับวิชาชีพเฉพาะและวิชาที่มีชั่วโมงมากก่อน (MRV Heuristic)
+    // เรียงลำดับวิชาชีพเฉพาะและวิชาที่มีชั่วโมงมากก่อน (MRV Heuristic + Seeded Tie-breaker)
     courseOfferings.sort((a, b) => {
       const aDept = getSubjectDepartment(a.subject_id);
       const bDept = getSubjectDepartment(b.subject_id);
       const aSpec = aDept === 'general' ? 1 : 0;
       const bSpec = bDept === 'general' ? 1 : 0;
       if (aSpec !== bSpec) return aSpec - bSpec;
-      return b.totalHours - a.totalHours || a.candidateRooms.length - b.candidateRooms.length;
+      if (b.totalHours !== a.totalHours) return b.totalHours - a.totalHours;
+      if (a.candidateRooms.length !== b.candidateRooms.length) return a.candidateRooms.length - b.candidateRooms.length;
+      return rng() - 0.5;
     });
 
     // ── Phase 1: CSP + MRV Deterministic Initial Placement ──
@@ -1594,8 +1596,11 @@ const SCHED = (() => {
         const t = teacherById.get(tid);
         const maxH = parseInt(t?.max_hours, 10) || 20;
         const curH = teacherHours.get(tid) || 0;
-        return { tid, remaining: maxH - curH, curH, maxH };
-      }).sort((a, b) => b.remaining - a.remaining);
+        return { tid, remaining: maxH - curH, curH, maxH, rnd: rng() };
+      }).sort((a, b) => {
+        if (b.remaining !== a.remaining) return b.remaining - a.remaining;
+        return a.rnd - b.rnd;
+      });
 
       // รอบ 1: ตรวจสอบโควต้าชั่วโมงครูอย่างเคร่งครัด
       for (const { tid: cTid, remaining } of sortedTeachers) {
@@ -1611,12 +1616,23 @@ const SCHED = (() => {
             if (s.isMorning && (s.start + dur - 1) > 4) return false;
             if (!s.isMorning && (s.start + dur - 1) > 8) return false;
             return true;
-          }).sort((a, b) => (usedDays.has(a.day) ? 1 : 0) - (usedDays.has(b.day) ? 1 : 0));
+          }).map(s => ({ ...s, rnd: rng() }))
+            .sort((a, b) => {
+              const uA = usedDays.has(a.day) ? 1 : 0;
+              const uB = usedDays.has(b.day) ? 1 : 0;
+              if (uA !== uB) return uA - uB;
+              return a.rnd - b.rnd;
+            });
+
+          const candRoomsShuffled = [...course.candidateRooms]
+            .map(rId => ({ rId, rnd: rng() }))
+            .sort((a, b) => a.rnd - b.rnd)
+            .map(x => x.rId);
 
           for (const slot of daySlots) {
             const start = slot.start;
             const end = start + dur - 1;
-            for (const rId of course.candidateRooms) {
+            for (const rId of candRoomsShuffled) {
               if (checkSlotFeasible(slot.day, start, end, cTid, rId, course.groupIds, false)) {
                 const clash = tentative.some(t => t.day === slot.day && Math.max(t.start, start) <= Math.min(t.end, end));
                 if (!clash) {
@@ -1673,12 +1689,23 @@ const SCHED = (() => {
               if (s.isMorning && (s.start + dur - 1) > 4) return false;
               if (!s.isMorning && (s.start + dur - 1) > 8) return false;
               return true;
-            }).sort((a, b) => (usedDays.has(a.day) ? 1 : 0) - (usedDays.has(b.day) ? 1 : 0));
+            }).map(s => ({ ...s, rnd: rng() }))
+              .sort((a, b) => {
+                const uA = usedDays.has(a.day) ? 1 : 0;
+                const uB = usedDays.has(b.day) ? 1 : 0;
+                if (uA !== uB) return uA - uB;
+                return a.rnd - b.rnd;
+              });
+
+            const candRoomsShuffled = [...course.candidateRooms]
+              .map(rId => ({ rId, rnd: rng() }))
+              .sort((a, b) => a.rnd - b.rnd)
+              .map(x => x.rId);
 
             for (const slot of daySlots) {
               const start = slot.start;
               const end = start + dur - 1;
-              for (const rId of course.candidateRooms) {
+              for (const rId of candRoomsShuffled) {
                 if (checkSlotFeasible(slot.day, start, end, cTid, rId, course.groupIds, false)) {
                   const clash = tentative.some(t => t.day === slot.day && Math.max(t.start, start) <= Math.min(t.end, end));
                   if (!clash) {
@@ -2023,18 +2050,23 @@ const SCHED = (() => {
                 // หากครูไม่ว่างใน slot เดิม ให้ย้ายบล็อกนี้ไปลงวัน/คาบกลางวันอื่นที่ทั้งครู ห้อง และกลุ่มเรียนว่างพร้อมกัน
                 let altFound = false;
                 const candRooms = getStrictCandidateRooms(sched.subject_id, sched.isLab, seatsRequired(sched.groupIds || [sched.group_id]));
+                const candRoomsShuffled = [...candRooms]
+                  .map(rId => ({ rId, rnd: rng() }))
+                  .sort((a, b) => a.rnd - b.rnd)
+                  .map(x => x.rId);
+
                 const validSlots = primaryDaytimeSlots.filter(s => {
                   if (s.isMorning && (s.start + dur - 1) > 4) return false;
                   if (!s.isMorning && (s.start + dur - 1) > 8) return false;
                   return true;
-                });
+                }).map(s => ({ ...s, rnd: rng() })).sort((a, b) => a.rnd - b.rnd);
 
                 removePlacement(sched.day, sched.period_start, sched.period_end, sched.teacher_id, sched.room_id, sched.groupIds || [sched.group_id]);
 
                 for (const slot of validSlots) {
                   const sStart = slot.start;
                   const sEnd = sStart + dur - 1;
-                  for (const rId of candRooms) {
+                  for (const rId of candRoomsShuffled) {
                     if (checkSlotFeasible(slot.day, sStart, sEnd, cand.teacher_id, rId, sched.groupIds || [sched.group_id], false)) {
                       const clashPlan = newSlotPlan.some(p => p.day === slot.day && Math.max(p.start, sStart) <= Math.min(p.end, sEnd));
                       if (!clashPlan) {
