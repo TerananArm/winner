@@ -1971,7 +1971,7 @@ const SCHED = (() => {
     // ── ตรวจสอบให้แน่ใจ 100% ว่าแต่ละรายวิชาในกลุ่มเรียนเดียวกันสอนโดยครูคนเดียว (Single Teacher per Subject-Group) ──
     const courseGroupMap = new Map();
     placedSchedules.forEach(s => {
-      if (s.subject_id === HOMEROOM) return;
+      if (s.subject_id === 'HOMEROOM') return;
       const key = `${s.group_id}___${s.subject_id}`;
       if (!courseGroupMap.has(key)) courseGroupMap.set(key, []);
       courseGroupMap.get(key).push(s);
