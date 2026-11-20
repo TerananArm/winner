@@ -67,9 +67,11 @@
           <span class="nav-icon"><img src="assets/icons/teaching-load.svg" alt="" class="nav-svg-icon"></span>ภาระงานสอน
         </a>
         <a href="registration.html" class="nav-item">
-          <span class="nav-icon"><img src="assets/icons/registration.svg" alt="" class="nav-svg-icon"></span>ข้อมูลการลงทะเบียน
+          <span class="nav-icon"><img src="assets/icons/registration.svg" alt=""
+              class="nav-svg-icon"></span>ข้อมูลการลงทะเบียน
         </a>
-      <a href="help.html" class="nav-item"><span class="nav-icon"><img src="assets/icons/help.svg" alt="" class="nav-svg-icon"></span>คู่มือการใช้งาน</a>
+        <a href="help.html" class="nav-item"><span class="nav-icon"><img src="assets/icons/help.svg" alt=""
+              class="nav-svg-icon"></span>คู่มือการใช้งาน</a>
       </nav>
 
     </aside>
@@ -88,7 +90,7 @@
       <main class="page-content sched-page-container">
         <!-- ── Page Header matching user screenshot ── -->
         <div class="sched-header-section">
-          <a href="index.html" class="sched-back-btn" title="กลับหน้าแดชบอร์ด">
+          <a href="index.html" class="back-btn" title="กลับหน้าแดชบอร์ด">
             <i class="fas fa-chevron-left"></i>
           </a>
           <div class="sched-header-titles">
@@ -125,9 +127,11 @@
             <div class="sched-filter-item hidden" id="sched-student-lookup-wrap">
               <label class="sched-filter-label" for="sched-student-search">ค้นหารหัสนักเรียน / ชื่อ</label>
               <div style="position:relative;">
-                <input type="text" class="sched-select-input" id="sched-student-search" placeholder="พิมพ์รหัสหรือชื่อนักเรียน..."
-                  oninput="SCHED.onStudentSearch(this.value)" style="min-width: 260px; padding-left: 32px;" />
-                <i class="fas fa-search" style="position:absolute; left:12px; top:12px; color:#64748b; font-size:12px;"></i>
+                <input type="text" class="sched-select-input" id="sched-student-search"
+                  placeholder="พิมพ์รหัสหรือชื่อนักเรียน..." oninput="SCHED.onStudentSearch(this.value)"
+                  style="min-width: 260px; padding-left: 32px;" />
+                <i class="fas fa-search"
+                  style="position:absolute; left:12px; top:12px; color:#64748b; font-size:12px;"></i>
                 <div id="sched-student-results" class="student-search-results hidden"></div>
               </div>
             </div>
@@ -136,8 +140,8 @@
           <!-- Right: Clean & Organized Action Buttons -->
           <div class="sched-right-actions">
             <!-- จัดตารางอัตโนมัติ (AI) - พระเอกหลัก -->
-            <button class="sched-action-btn btn-sched-ai" id="btn-auto-sched" onclick="SCHED.startAiScheduleWithProgress()"
-              title="ประมวลผลจัดตารางสอนอัตโนมัติตามข้อมูลจริง">
+            <button class="sched-action-btn btn-sched-ai" id="btn-auto-sched"
+              onclick="SCHED.startAiScheduleWithProgress()" title="ประมวลผลจัดตารางสอนอัตโนมัติตามข้อมูลจริง">
               <i class="fas fa-wand-magic-sparkles"></i> จัดตารางอัตโนมัติ (AI)
             </button>
 
@@ -159,17 +163,20 @@
             </button>
 
             <!-- ตารางสรุปรวม -->
-            <button class="sched-action-btn btn-sched-export" onclick="SCHED.openMasterModal()" title="ดูตารางสรุปรวมทั้งหมด">
+            <button class="sched-action-btn btn-sched-export" onclick="SCHED.openMasterModal()"
+              title="ดูตารางสรุปรวมทั้งหมด">
               <i class="fas fa-table-cells-large"></i> ตารางรวม
             </button>
 
             <!-- ส่งออก Excel -->
-            <button class="sched-action-btn btn-sched-export" onclick="SCHED.exportExcel()" title="ส่งออกตารางเป็น Excel">
+            <button class="sched-action-btn btn-sched-export" onclick="SCHED.exportExcel()"
+              title="ส่งออกตารางเป็น Excel">
               <i class="fas fa-file-excel"></i> ส่งออก
             </button>
 
             <!-- นำเข้า Excel -->
-            <button class="sched-action-btn btn-sched-import" onclick="SCHED.openImportModal()" title="นำเข้าข้อมูลจาก Excel">
+            <button class="sched-action-btn btn-sched-import" onclick="SCHED.openImportModal()"
+              title="นำเข้าข้อมูลจาก Excel">
               <i class="fas fa-file-import"></i> นำเข้า
             </button>
 
@@ -235,18 +242,26 @@
             <i class="fas fa-shield-check"></i> ไม่พบข้อขัดแย้ง 100% (Zero Collision)
           </div>
           <div class="conflict-metrics-row">
-            <span class="metric-item"><i class="fas fa-chalkboard-user"></i> ครูซ้ำซ้อน: <strong id="cnt-teacher-conflict">0 จุด</strong></span>
-            <span class="metric-item"><i class="fas fa-door-closed"></i> ห้องเรียนชน: <strong id="cnt-room-conflict">0 จุด</strong></span>
-            <span class="metric-item"><i class="fas fa-users"></i> กลุ่มเรียนชน: <strong id="cnt-group-conflict">0 จุด</strong></span>
-            <span class="metric-item"><i class="fas fa-business-time"></i> เกินชั่วโมงครู: <strong id="cnt-overload-conflict">0 คน</strong></span>
-            <span class="metric-item"><i class="fas fa-battery-quarter"></i> ภาระสอนน้อย: <strong id="cnt-underload-conflict">0 คน</strong></span>
-            <span class="metric-item"><i class="fas fa-fingerprint"></i> Audit Hash: <strong id="sched-audit-hash" style="font-family:monospace; color:#38bdf8;">a7f9c2e1 (Valid)</strong></span>
+            <span class="metric-item"><i class="fas fa-chalkboard-user"></i> ครูซ้ำซ้อน: <strong
+                id="cnt-teacher-conflict">0 จุด</strong></span>
+            <span class="metric-item"><i class="fas fa-door-closed"></i> ห้องเรียนชน: <strong id="cnt-room-conflict">0
+                จุด</strong></span>
+            <span class="metric-item"><i class="fas fa-users"></i> กลุ่มเรียนชน: <strong id="cnt-group-conflict">0
+                จุด</strong></span>
+            <span class="metric-item"><i class="fas fa-business-time"></i> เกินชั่วโมงครู: <strong
+                id="cnt-overload-conflict">0 คน</strong></span>
+            <span class="metric-item"><i class="fas fa-battery-quarter"></i> ภาระสอนน้อย: <strong
+                id="cnt-underload-conflict">0 คน</strong></span>
+            <span class="metric-item"><i class="fas fa-fingerprint"></i> Audit Hash: <strong id="sched-audit-hash"
+                style="font-family:monospace; color:#38bdf8;">a7f9c2e1 (Valid)</strong></span>
           </div>
           <div style="display:flex; gap:8px; align-items:center;">
-            <button class="btn btn-ghost btn-xs" onclick="SCHED.openAuditModal()" title="ตรวจสอบหลักฐานข้อขัดแย้งโดยละเอียด">
+            <button class="btn btn-ghost btn-xs" onclick="SCHED.openAuditModal()"
+              title="ตรวจสอบหลักฐานข้อขัดแย้งโดยละเอียด">
               <i class="fas fa-magnifying-glass-chart"></i> รายละเอียดการตรวจสอบ
             </button>
-            <button class="btn btn-ghost btn-xs" onclick="SCHED.openLlmModal()" title="รายงานสรุปผู้บริหารเชิงลึกโดย AI">
+            <button class="btn btn-ghost btn-xs" onclick="SCHED.openLlmModal()"
+              title="รายงานสรุปผู้บริหารเชิงลึกโดย AI">
               <i class="fas fa-wand-magic-sparkles" style="color:#c084fc;"></i> LLM วิเคราะห์เชิงลึก
             </button>
           </div>
@@ -259,7 +274,8 @@
               <div class="print-logo-badge">🎓</div>
               <div class="print-school-titles">
                 <div class="print-school-name">วิทยาลัยและสถาบันการศึกษา – ฝ่ายวิชาการและแผนการเรียนการสอน</div>
-                <h1 class="print-doc-title" id="print-doc-main-title">ตารางเรียน – ประจำภาคเรียนที่ 1 ปีการศึกษา 2568</h1>
+                <h1 class="print-doc-title" id="print-doc-main-title">ตารางเรียน – ประจำภาคเรียนที่ 1 ปีการศึกษา 2568
+                </h1>
               </div>
             </div>
             <div class="print-doc-meta-badge">
@@ -358,7 +374,8 @@
           <div class="print-signatures">
             <div class="print-sign-col">
               <div class="sign-line">ลงชื่อ............................................................</div>
-              <div class="sign-name" id="print-sign-name-1">( ............................................................ )</div>
+              <div class="sign-name" id="print-sign-name-1">(
+                ............................................................ )</div>
               <div class="sign-role" id="print-sign-role-1">ครูที่ปรึกษา / ครูผู้สอน</div>
             </div>
             <div class="print-sign-col">
@@ -674,16 +691,17 @@
       </div>
 
       <!-- Upload Zone -->
-      <div id="import-upload-zone" class="import-upload-zone" onclick="document.getElementById('excel-file-input2').click()"
+      <div id="import-upload-zone" class="import-upload-zone"
+        onclick="document.getElementById('excel-file-input2').click()"
         ondragover="event.preventDefault(); this.classList.add('drag-over')"
-        ondragleave="this.classList.remove('drag-over')"
-        ondrop="SCHED.handleImportDrop(event)">
+        ondragleave="this.classList.remove('drag-over')" ondrop="SCHED.handleImportDrop(event)">
         <input type="file" id="excel-file-input2" accept=".xlsx,.xls,.csv" style="display:none;"
           onchange="SCHED.handleExcelFile(event)" />
         <div class="import-drop-icon"><i class="fas fa-cloud-arrow-up"></i></div>
         <div class="import-drop-title">วางไฟล์ Excel ที่นี่ หรือคลิกเพื่อเลือกไฟล์</div>
         <div class="import-drop-sub">รองรับ .xlsx, .xls, .csv · ใช้แม่แบบที่ระบบจัดเตรียมให้เท่านั้น</div>
-        <div style="margin-top:14px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;" onclick="event.stopPropagation()">
+        <div style="margin-top:14px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;"
+          onclick="event.stopPropagation()">
           <button type="button" class="btn btn-primary" onclick="SCHED.downloadTemplate()"
             style="display:inline-flex; align-items:center; gap:8px;">
             <i class="fas fa-file-excel"></i> ดาวน์โหลดแม่แบบ Excel (.xlsx)
@@ -743,9 +761,13 @@
       <div style="margin: 16px 0; max-height: 520px; overflow-y: auto; padding-right: 4px;" id="llmModalContent">
         <!-- Live Loading Spinner -->
         <div id="llmLoadingState" style="text-align:center; padding:40px 20px;">
-          <div class="spinner" style="width:36px; height:36px; border-width:3px; margin:0 auto 16px; border-color:rgba(192,132,252,0.2); border-top-color:#c084fc;"></div>
-          <div style="font-weight:700; color:#e2e8f0; font-size:14px;">กำลังรวบรวมข้อมูลโครงสร้างตารางและรัน LLM Analysis Agent...</div>
-          <div style="font-size:12px; color:#94a3b8; margin-top:6px;">วิเคราะห์ Zero-Collision, Strict Room Matching, ภาระงานครู และความต่อเนื่องของคาบเรียน</div>
+          <div class="spinner"
+            style="width:36px; height:36px; border-width:3px; margin:0 auto 16px; border-color:rgba(192,132,252,0.2); border-top-color:#c084fc;">
+          </div>
+          <div style="font-weight:700; color:#e2e8f0; font-size:14px;">กำลังรวบรวมข้อมูลโครงสร้างตารางและรัน LLM
+            Analysis Agent...</div>
+          <div style="font-size:12px; color:#94a3b8; margin-top:6px;">วิเคราะห์ Zero-Collision, Strict Room Matching,
+            ภาระงานครู และความต่อเนื่องของคาบเรียน</div>
         </div>
 
         <!-- Rendered Report -->
@@ -760,7 +782,8 @@
         </div>
         <div style="display:flex; gap:8px;">
           <button class="btn btn-ghost" onclick="SCHED.closeLlmModal()">ปิด</button>
-          <button class="btn btn-primary" onclick="SCHED.copyLlmReport()" style="background:#7c3aed; border-color:#a855f7;">
+          <button class="btn btn-primary" onclick="SCHED.copyLlmReport()"
+            style="background:#7c3aed; border-color:#a855f7;">
             <i class="fas fa-copy"></i> คัดลอกรายงานบทวิเคราะห์
           </button>
         </div>
@@ -770,32 +793,39 @@
 
   <!-- Modal: Drag & Drop Conflict Warning (แจ้งเตือนคาบชนเมื่อเลื่อนลากวาง) -->
   <div class="modal-overlay hidden" id="dragConflictModal">
-    <div class="modal" style="max-width: 520px; text-align: left; border: 1px solid rgba(239, 68, 68, 0.4); box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
+    <div class="modal"
+      style="max-width: 520px; text-align: left; border: 1px solid rgba(239, 68, 68, 0.4); box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
       <div class="modal-header" style="border-bottom: 1px solid rgba(239, 68, 68, 0.2); padding-bottom: 14px;">
-        <div class="modal-title" style="color: #f87171; display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 700;">
+        <div class="modal-title"
+          style="color: #f87171; display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 700;">
           <i class="fas fa-triangle-exclamation" style="font-size: 20px;"></i>
           <span>ตรวจพบข้อขัดแย้งในการย้ายคาบเรียน</span>
         </div>
         <button class="modal-close" onclick="SCHED.closeDragConflictModal()"><i class="fas fa-xmark"></i></button>
       </div>
-      
+
       <div style="margin: 16px 0;">
-        <div id="dragConflictInfo" style="padding: 12px 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; font-size: 13px; line-height: 1.6; margin-bottom: 14px;">
+        <div id="dragConflictInfo"
+          style="padding: 12px 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; font-size: 13px; line-height: 1.6; margin-bottom: 14px;">
         </div>
 
-        <div style="font-size: 13px; font-weight: 600; color: #fca5a5; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+        <div
+          style="font-size: 13px; font-weight: 600; color: #fca5a5; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
           <i class="fas fa-circle-exclamation"></i> รายละเอียดจุดที่เกิดการชน (Conflict Details):
         </div>
 
-        <div id="dragConflictList" style="max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px;">
+        <div id="dragConflictList"
+          style="max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px;">
         </div>
       </div>
 
-      <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 14px;">
+      <div class="modal-footer"
+        style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 14px;">
         <button class="btn btn-ghost" onclick="SCHED.closeDragConflictModal()" style="font-weight: 600;">
           <i class="fas fa-arrow-rotate-left"></i> ยกเลิก (ไม่ย้าย)
         </button>
-        <button class="btn btn-danger" id="btnConfirmDragConflict" onclick="SCHED.confirmForceMoveSlot()" style="background: #dc2626; border-color: #ef4444; color: #fff; font-weight: 600;">
+        <button class="btn btn-danger" id="btnConfirmDragConflict" onclick="SCHED.confirmForceMoveSlot()"
+          style="background: #dc2626; border-color: #ef4444; color: #fff; font-weight: 600;">
           <i class="fas fa-triangle-exclamation"></i> ยืนยันย้ายต่อไป (ยอมรับการชน)
         </button>
       </div>
@@ -804,9 +834,11 @@
 
   <!-- Modal: Move or Split Continuous Block (ตัวเลือกย้ายหรือแบ่งคาบต่อเนื่อง) -->
   <div class="modal-overlay hidden" id="moveOrSplitModal">
-    <div class="modal" style="max-width: 520px; text-align: left; border: 1px solid rgba(99, 102, 241, 0.35); box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
+    <div class="modal"
+      style="max-width: 520px; text-align: left; border: 1px solid rgba(99, 102, 241, 0.35); box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
       <div class="modal-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 14px;">
-        <div class="modal-title" style="color: var(--primary-light); display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 700;">
+        <div class="modal-title"
+          style="color: var(--primary-light); display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 700;">
           <i class="fas fa-scissors" style="font-size: 18px;"></i>
           <span>เลือกวิธีย้ายหรือแบ่งคาบต่อเนื่อง</span>
         </div>
@@ -814,10 +846,12 @@
       </div>
 
       <div style="margin: 16px 0;">
-        <div id="moveOrSplitInfo" style="padding: 12px 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; font-size: 13px; line-height: 1.6; margin-bottom: 16px;">
+        <div id="moveOrSplitInfo"
+          style="padding: 12px 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; font-size: 13px; line-height: 1.6; margin-bottom: 16px;">
         </div>
 
-        <div style="font-size: 13px; font-weight: 600; color: #cbd5e1; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+        <div
+          style="font-size: 13px; font-weight: 600; color: #cbd5e1; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
           <i class="fas fa-hand-pointer"></i> เลือกรูปแบบที่ต้องการย้าย:
         </div>
 
