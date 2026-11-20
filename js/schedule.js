@@ -2638,9 +2638,7 @@ const SCHED = (() => {
       }
 
       // 3. วาดตารางใหม่และคำนวณข้อขัดแย้ง
-      filterAndRender();
-      calculateConflicts();
-      calculateKpis();
+      render();
 
       const subj = _subjects.find(s => s.subject_id === slot.subject_id);
       showToast('success', 'ย้ายคาบเรียนสำเร็จ', `ย้ายวิชา ${subj?.subject_name || slot.subject_id} ไปยัง ${targetDay} คาบ ${targetPeriod}-${newPeriodEnd} เรียบร้อยแล้ว`);
