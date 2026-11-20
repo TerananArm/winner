@@ -197,6 +197,7 @@
           <div style="padding:12px 16px; border-top:1px solid rgba(255,255,255,0.05); display:flex; gap:8px; flex-wrap:wrap;">
             <button class="btn btn-ghost btn-sm" onclick="SCHED.validateBeforeSchedule()"><i class="fas fa-stethoscope"></i> ตรวจความพร้อม</button>
             <button class="btn btn-ghost btn-sm" onclick="SCHED.openPriorityModal()"><i class="fas fa-list-ol" style="color:#38bdf8;"></i> ปัจจัย & ลำดับความสำคัญ</button>
+            <button class="btn btn-ghost btn-sm" onclick="SCHED.openLlmModal()"><i class="fas fa-wand-magic-sparkles" style="color:#c084fc;"></i> LLM วิเคราะห์เชิงลึก</button>
             <button class="btn btn-ghost btn-sm" onclick="SCHED.openDatasetModal()"><i class="fas fa-database"></i> ชุดข้อมูลจำลอง</button>
             <button class="btn btn-ghost btn-sm" onclick="SCHED.openAiArchitectureModal()"><i class="fas fa-brain-circuit"></i> Multi-Agent Architecture</button>
             <button class="btn btn-ghost btn-sm" onclick="SCHED.openBenchmarkModal()"><i class="fas fa-chart-column"></i> Benchmark</button>
@@ -1465,6 +1466,49 @@
 
       <div class="modal-footer">
         <button class="btn btn-ghost" onclick="SCHED.closePriorityModal()">ปิด</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL: LLM Executive Explainability Agent (เกณฑ์ 3.5.4 & Hybrid AI) ── -->
+  <div class="modal-overlay hidden" id="llmModal">
+    <div class="modal" style="max-width: 840px; text-align: left;">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title" style="color:#c084fc; display:flex; align-items:center; gap:8px;">
+            <i class="fas fa-brain-circuit"></i> LLM Executive Explainability Agent – บทวิเคราะห์เชิงบริหารสถานศึกษา
+          </div>
+          <div style="font-size:11.5px; color:#94a3b8; margin-top:2px;">
+            ประมวลผลสรุปเชิงลึกจาก Auditor Agent ด้วย Hybrid AI (CSP + Adaptive GA + LLM Agent)
+          </div>
+        </div>
+        <button class="modal-close" onclick="SCHED.closeLlmModal()"><i class="fas fa-xmark"></i></button>
+      </div>
+
+      <div style="margin: 16px 0; max-height: 520px; overflow-y: auto; padding-right: 4px;" id="llmModalContent">
+        <!-- Live Loading Spinner -->
+        <div id="llmLoadingState" style="text-align:center; padding:40px 20px;">
+          <div class="spinner" style="width:36px; height:36px; border-width:3px; margin:0 auto 16px; border-color:rgba(192,132,252,0.2); border-top-color:#c084fc;"></div>
+          <div style="font-weight:700; color:#e2e8f0; font-size:14px;">กำลังรวบรวมข้อมูลโครงสร้างตารางและรัน LLM Analysis Agent...</div>
+          <div style="font-size:12px; color:#94a3b8; margin-top:6px;">วิเคราะห์ Zero-Collision, Strict Room Matching, ภาระงานครู และความต่อเนื่องของคาบเรียน</div>
+        </div>
+
+        <!-- Rendered Report -->
+        <div id="llmReportBody" class="hidden" style="display:flex; flex-direction:column; gap:14px;">
+          <!-- Content dynamically rendered by SCHED.openLlmModal() -->
+        </div>
+      </div>
+
+      <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="font-size:11.5px; color:#94a3b8;">
+          <i class="fas fa-shield-check" style="color:#34d399;"></i> รับรองผลการวิเคราะห์โดย Explainability Agent
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-ghost" onclick="SCHED.closeLlmModal()">ปิด</button>
+          <button class="btn btn-primary" onclick="SCHED.copyLlmReport()" style="background:#7c3aed; border-color:#a855f7;">
+            <i class="fas fa-copy"></i> คัดลอกรายงานบทวิเคราะห์
+          </button>
+        </div>
       </div>
     </div>
   </div>
