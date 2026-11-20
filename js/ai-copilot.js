@@ -97,8 +97,45 @@ const AI_COPILOT = (() => {
     return `<div style="line-height:1.6;">${html}</div>`;
   }
 
+  // ── Handle URL Parameters for Deep-Linking ─────────────────
+  function handleUrlParams() {
+    if (typeof window === 'undefined' || !window.location) return;
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tab = urlParams.get('tab');
+      const action = urlParams.get('action');
+
+      if (tab === 'form') {
+        setTimeout(() => {
+          if (typeof STUDENTS !== 'undefined' && typeof STUDENTS.switchTab === 'function') STUDENTS.switchTab('form');
+          else if (typeof ROOMS !== 'undefined' && typeof ROOMS.switchTab === 'function') ROOMS.switchTab('form');
+          else if (typeof TEACHERS !== 'undefined' && typeof TEACHERS.switchTab === 'function') TEACHERS.switchTab('form');
+          else if (typeof GROUPS !== 'undefined' && typeof GROUPS.switchTab === 'function') GROUPS.switchTab('form');
+          else if (typeof SUBJECTS !== 'undefined' && typeof SUBJECTS.switchTab === 'function') SUBJECTS.switchTab('form');
+          else if (typeof TEACHING_LOAD !== 'undefined' && typeof TEACHING_LOAD.switchTab === 'function') TEACHING_LOAD.switchTab('form');
+          else if (typeof REGISTRATION !== 'undefined' && typeof REGISTRATION.switchTab === 'function') REGISTRATION.switchTab('form');
+        }, 350);
+      } else if (action === 'add') {
+        setTimeout(() => {
+          if (typeof SCHED !== 'undefined' && typeof SCHED.openAddModal === 'function') {
+            SCHED.openAddModal();
+          }
+        }, 350);
+      } else if (action === 'auto') {
+        setTimeout(() => {
+          if (typeof SCHED !== 'undefined' && typeof SCHED.generateAutoSchedule === 'function') {
+            SCHED.generateAutoSchedule();
+          }
+        }, 600);
+      }
+    } catch (e) {
+      console.warn('handleUrlParams error:', e);
+    }
+  }
+
   // ── Initialize Copilot Widget on DOM Ready ─────────────────
   function init() {
+    handleUrlParams();
     if (document.getElementById('ai-copilot-container')) return;
 
     // Create Widget Container
@@ -296,6 +333,117 @@ const AI_COPILOT = (() => {
     const text = rawText.trim().toLowerCase();
 
     // ─────────────────────────────────────────────────────────
+    // 0. สั่งพาไปหน้าต่างๆ ในระบบ (Page Navigation & Deep Linking)
+    // ─────────────────────────────────────────────────────────
+    const isNavVerb = /พาไป|ไปที่|เปิดหน้า|ไปหน้า|ข้ามไป|เข้าหน้า|นำทาง|ขอไป|อยากไป|ดูหน้า|เปิดฟอร์ม|พาผมไป|พาฉันไป|ช่วยพา|navigate|go to|open/i.test(text);
+    const isDirectPage = /^(หน้านักเรียน|หน้าตารางสอน|หน้าห้องเรียน|หน้าอาจารย์|หน้ารายวิชา|หน้ากลุ่มเรียน|หน้ากลุ่มนักเรียน|หน้าภาระงาน|หน้าลงทะเบียน|หน้าแดชบอร์ด|หน้าคู่มือ)$/i.test(text);
+    const isAddAction = /เพิ่ม|add|กรอก|สร้าง|ลงทะเบียนใหม่|new/i.test(text);
+
+    let navTarget = null;
+    if (/นักเรียน|นักศึกษา|student/i.test(text)) {
+      navTarget = { name: 'ข้อมูลนักเรียน / นักศึกษา', icon: 'fa-user-graduate', file: 'students.html', action: isAddAction ? 'form' : null, desc: isAddAction ? 'ฟอร์มสำหรับเพิ่มข้อมูลนักเรียน' : 'รายชื่อและข้อมูลนักเรียนทั้งหมด' };
+    } else if (/ตารางสอน|ตารางเรียน|schedule/i.test(text) && (isNavVerb || isDirectPage || /หน้า/.test(text))) {
+      navTarget = { name: 'จัดการตารางสอน', icon: 'fa-calendar-days', file: 'schedule.html', action: isAddAction ? 'add' : null, desc: isAddAction ? 'เปิดหน้าต่างเพิ่มรายวิชาในตาราง' : 'ตารางสอนและระบบจัดตาราง AI' };
+    } else if (/อาจารย์|ครู|ผู้สอน|teacher/i.test(text)) {
+      navTarget = { name: 'ข้อมูลอาจารย์และครูผู้สอน', icon: 'fa-chalkboard-user', file: 'teachers.html', action: isAddAction ? 'form' : null, desc: isAddAction ? 'ฟอร์มสำหรับเพิ่มข้อมูลอาจารย์' : 'รายชื่อและข้อมูลอาจารย์ทั้งหมด' };
+    } else if (/ห้องเรียน|ห้องปฏิบัติการ|ห้องแล็บ|ห้องคอม|room/i.test(text)) {
+      navTarget = { name: 'ข้อมูลห้องเรียนและห้องปฏิบัติการ', icon: 'fa-door-open', file: 'rooms.html', action: isAddAction ? 'form' : null, desc: isAddAction ? 'ฟอร์มสำหรับเพิ่มห้องเรียน' : 'รายการห้องเรียนทั้งหมด' };
+    } else if (/รายวิชา|วิชา|หลักสูตร|subject/i.test(text)) {
+      navTarget = { name: 'ข้อมูลรายวิชา', icon: 'fa-book-open', file: 'subjects.html', action: isAddAction ? 'form' : null, desc: isAddAction ? 'ฟอร์มสำหรับเพิ่มรายวิชา' : 'รายชื่อวิชาทั้งหมด' };
+    } else if (/กลุ่มเรียน|กลุ่มนักเรียน|ชั้นเรียน|group/i.test(text)) {
+      navTarget = { name: 'ข้อมูลกลุ่มนักเรียน', icon: 'fa-users', file: 'groups.html', action: isAddAction ? 'form' : null, desc: isAddAction ? 'ฟอร์มสำหรับเพิ่มกลุ่มนักเรียน' : 'รายชื่อกลุ่มเรียนทั้งหมด' };
+    } else if (/ภาระงาน|ภาระงานสอน|teaching load|โหลดสอน/i.test(text)) {
+      navTarget = { name: 'ภาระงานสอนอาจารย์', icon: 'fa-person-chalkboard', file: 'teaching-load.html', action: isAddAction ? 'form' : null, desc: isAddAction ? 'ฟอร์มมอบหมายภาระงานสอน' : 'ตารางภาระงานสอนครูทุกคน' };
+    } else if (/ลงทะเบียน|registration/i.test(text)) {
+      navTarget = { name: 'ข้อมูลการลงทะเบียนเรียน', icon: 'fa-clipboard-list', file: 'registration.html', action: isAddAction ? 'form' : null, desc: isAddAction ? 'ฟอร์มลงทะเบียนรายวิชา' : 'รายการลงทะเบียนของกลุ่มเรียน' };
+    } else if (/แดชบอร์ด|dashboard|หน้าแรก|หน้าหลัก|home/i.test(text)) {
+      navTarget = { name: 'แดชบอร์ดภาพรวม', icon: 'fa-chart-pie', file: 'index.html', action: null, desc: 'ภาพรวมระบบและสถิติสำคัญ' };
+    } else if (/คู่มือ|วิธีใช้|help/i.test(text)) {
+      navTarget = { name: 'คู่มือการใช้งานระบบ', icon: 'fa-circle-question', file: 'help.html', action: null, desc: 'คู่มือและเอกสารการใช้งาน EduSched AI' };
+    }
+
+    if (navTarget && (isNavVerb || isDirectPage || isAddAction)) {
+      const currentPath = (typeof window !== 'undefined' && window.location) ? window.location.pathname : '';
+      const isCurrentPage = currentPath.endsWith('/' + navTarget.file) || 
+        (navTarget.file === 'index.html' && (currentPath === '/' || currentPath.endsWith('/index.html') || currentPath === ''));
+
+      if (isCurrentPage) {
+        if (navTarget.action === 'form') {
+          setTimeout(() => {
+            if (typeof STUDENTS !== 'undefined' && typeof STUDENTS.switchTab === 'function') STUDENTS.switchTab('form');
+            else if (typeof ROOMS !== 'undefined' && typeof ROOMS.switchTab === 'function') ROOMS.switchTab('form');
+            else if (typeof TEACHERS !== 'undefined' && typeof TEACHERS.switchTab === 'function') TEACHERS.switchTab('form');
+            else if (typeof GROUPS !== 'undefined' && typeof GROUPS.switchTab === 'function') GROUPS.switchTab('form');
+            else if (typeof SUBJECTS !== 'undefined' && typeof SUBJECTS.switchTab === 'function') SUBJECTS.switchTab('form');
+            else if (typeof TEACHING_LOAD !== 'undefined' && typeof TEACHING_LOAD.switchTab === 'function') TEACHING_LOAD.switchTab('form');
+            else if (typeof REGISTRATION !== 'undefined' && typeof REGISTRATION.switchTab === 'function') REGISTRATION.switchTab('form');
+          }, 150);
+          return `
+            <p>📍 <strong>คุณอยู่ที่หน้า ${navTarget.name} อยู่แล้วครับ!</strong></p>
+            <p>✨ ผมได้เปิด <strong>${navTarget.desc}</strong> ให้เรียบร้อยแล้ว สามารถกรอกข้อมูลได้ทันทีครับ</p>
+          `;
+        } else if (navTarget.action === 'add' && typeof SCHED !== 'undefined' && typeof SCHED.openAddModal === 'function') {
+          setTimeout(() => SCHED.openAddModal(), 150);
+          return `
+            <p>📍 <strong>คุณอยู่ที่หน้า ${navTarget.name} อยู่แล้วครับ!</strong></p>
+            <p>✨ เปิดหน้าต่างสำหรับเพิ่มรายวิชาในตารางให้เรียบร้อยแล้วครับ</p>
+          `;
+        }
+        return `
+          <p>📍 <strong>คุณอยู่ที่หน้า ${navTarget.name} อยู่แล้วครับ!</strong> มีข้อมูลใดที่ต้องการให้ผมช่วยค้นหา ตรวจสอบ หรือดำเนินการเพิ่มเติม แจ้งได้เลยครับ</p>
+        `;
+      } else {
+        const targetUrl = navTarget.action === 'form' 
+          ? `${navTarget.file}?tab=form` 
+          : (navTarget.action === 'add' ? `${navTarget.file}?action=add` : navTarget.file);
+
+        setTimeout(() => {
+          if (typeof window !== 'undefined' && window.location) {
+            window.location.href = targetUrl;
+          }
+        }, 1200);
+
+        return `
+          <p>🧭 <strong>รับทราบครับ! กำลังพาคุณไปยังหน้า ${navTarget.name}...</strong></p>
+          <div class="copilot-action-card" style="border-left: 3px solid #38bdf8; margin:8px 0; padding:10px 14px; background:rgba(56,189,248,0.06); border-radius:8px;">
+            <div class="card-title" style="color:#38bdf8; font-weight:600; font-size:13px; display:flex; align-items:center; gap:6px;">
+              <i class="fas ${navTarget.icon}"></i> ${navTarget.name}
+            </div>
+            <div style="font-size:12px; color:#cbd5e1; margin:6px 0;">${navTarget.desc}</div>
+            <a href="${targetUrl}" class="btn btn-primary btn-sm" style="display:inline-flex; align-items:center; gap:6px; margin-top:6px; background:#0284c7; border:none; text-decoration:none; padding:6px 14px; border-radius:6px; color:#fff; font-size:12px; font-weight:600; cursor:pointer;">
+              <i class="fas fa-arrow-up-right-from-square"></i> คลิกเพื่อไปทันที
+            </a>
+          </div>
+          <div style="font-size:11px; color:#94a3b8; display:flex; align-items:center; gap:6px; margin-top:4px;">
+            <i class="fas fa-spinner fa-spin"></i> ระบบกำลังนำทางอัตโนมัติภายใน 1.2 วินาที...
+          </div>
+        `;
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // เมนูระบบทั้งหมด (System Navigation Menu)
+    // ─────────────────────────────────────────────────────────
+    if (/มีหน้าอะไรบ้าง|เมนูทั้งหมด|หน้าระบบ|รายการหน้า|รายชื่อหน้า/.test(text)) {
+      return `
+        <p>🧭 <strong>หน้าระบบทั้งหมดใน EduSched AI:</strong></p>
+        <ul style="margin:6px 0; padding-left:18px; line-height:1.7; font-size:12px;">
+          <li><a href="index.html" style="color:#38bdf8; text-decoration:none;">📊 <strong>แดชบอร์ด</strong> (ภาพรวมวิทยาลัยและสถิติ)</a></li>
+          <li><a href="schedule.html" style="color:#38bdf8; text-decoration:none;">📅 <strong>จัดการตารางสอน</strong> (ระบบจัดตาราง AI)</a></li>
+          <li><a href="rooms.html" style="color:#38bdf8; text-decoration:none;">🚪 <strong>ห้องเรียน</strong> (ข้อมูลห้องและห้องแล็บ)</a></li>
+          <li><a href="groups.html" style="color:#38bdf8; text-decoration:none;">👥 <strong>กลุ่มนักเรียน</strong> (ข้อมูลชั้นเรียน)</a></li>
+          <li><a href="students.html" style="color:#38bdf8; text-decoration:none;">🎓 <strong>ข้อมูลนักเรียน</strong> (รายชื่อและเงื่อนไขพิเศษ)</a></li>
+          <li><a href="teachers.html" style="color:#38bdf8; text-decoration:none;">👨‍🏫 <strong>ข้อมูลอาจารย์</strong> (รายชื่อและเพดานชั่วโมง)</a></li>
+          <li><a href="subjects.html" style="color:#38bdf8; text-decoration:none;">📖 <strong>รายวิชา</strong> (หลักสูตรและหน่วยกิต)</a></li>
+          <li><a href="teaching-load.html" style="color:#38bdf8; text-decoration:none;">📋 <strong>ภาระงานสอน</strong> (มอบหมายชั่วโมงสอน)</a></li>
+          <li><a href="registration.html" style="color:#38bdf8; text-decoration:none;">📝 <strong>การลงทะเบียน</strong> (รายวิชาที่กลุ่มเรียนลง)</a></li>
+          <li><a href="help.html" style="color:#38bdf8; text-decoration:none;">❓ <strong>คู่มือการใช้งาน</strong> (วิธีใช้งานระบบ)</a></li>
+        </ul>
+        <p style="font-size:11.5px; color:#94a3b8; margin-top:4px;">💡 คุณสามารถบอกผม เช่น <em>"พาไปหน้านักเรียน"</em> หรือ <em>"เปิดหน้าห้องเรียน"</em> ได้เลยครับ</p>
+      `;
+    }
+
+    // ─────────────────────────────────────────────────────────
     // 1. สั่งจัดตารางสอน (Generate Schedule Command)
     // ─────────────────────────────────────────────────────────
     if (/จัดตาราง|สร้างตาราง|รันตาราง|รัน ai|generate|auto sched/.test(text)) {
@@ -313,7 +461,27 @@ const AI_COPILOT = (() => {
           </div>
         `;
       } else {
-        return `<p>⚠️ คำสั่งจัดตารางสอนรองรับเฉพาะในหน้า <strong>จัดการตารางสอน (schedule.html)</strong> ครับ <a href="schedule.html" style="color:#38bdf8; text-decoration:underline;">คลิกเพื่อไปที่หน้าตารางสอน</a></p>`;
+        setTimeout(() => {
+          if (typeof window !== 'undefined' && window.location) {
+            window.location.href = 'schedule.html?action=auto';
+          }
+        }, 1200);
+
+        return `
+          <p>🚀 <strong>รับคำสั่งจัดตารางสอนครับ!</strong></p>
+          <p>กำลังพาคุณไปยังหน้า <strong>จัดการตารางสอน (schedule.html)</strong> เพื่อเริ่มประมวลผลจัดตารางแบบ Zero-Collision ทันที...</p>
+          <div class="copilot-action-card" style="border-left: 3px solid #a855f7; margin:8px 0; padding:10px 14px; background:rgba(168,85,247,0.06); border-radius:8px;">
+            <div class="card-title" style="color:#c084fc; font-weight:600; font-size:13px; display:flex; align-items:center; gap:6px;">
+              <i class="fas fa-wand-magic-sparkles"></i> จัดการตารางสอน (AI Engine)
+            </div>
+            <a href="schedule.html?action=auto" class="btn btn-primary btn-sm" style="display:inline-flex; align-items:center; gap:6px; margin-top:6px; background:#7c3aed; border:none; text-decoration:none; padding:6px 14px; border-radius:6px; color:#fff; font-size:12px; font-weight:600;">
+              <i class="fas fa-calendar-days"></i> ไปที่หน้าตารางสอนทันที
+            </a>
+          </div>
+          <div style="font-size:11px; color:#94a3b8; display:flex; align-items:center; gap:6px; margin-top:4px;">
+            <i class="fas fa-spinner fa-spin"></i> กำลังเปลี่ยนหน้าอัตโนมัติใน 1.2 วินาที...
+          </div>
+        `;
       }
     }
 
@@ -517,6 +685,7 @@ const AI_COPILOT = (() => {
    - แนะนำการใช้งานระบบ การจัดตารางสอนอัตโนมัติ การบริหารชั่วโมงสอนครู
    - หากผู้ใช้ถามเรื่องข้อขัดแย้ง, ครูสอนเกิน (overload), ครูภาระสอนน้อย (underload), ห้องเรียนชน, คาบชน ให้วิเคราะห์สาเหตุและเสนอแนวทางแก้ไขที่เป็นรูปธรรม (Actionable Steps) เช่น แนะนำให้ปรับชั่วโมงสอนสูงสุด (max_hours) ในหน้าจัดการอาจารย์, เพิ่มอัตรากำลังครูในสาขา, หรือมอบหมายรายวิชาเพิ่ม
 3. รูปแบบการตอบ: ตอบเป็นภาษาไทยอย่างสุภาพ เป็นกันเอง มีโครงสร้างหัวข้อชัดเจน ใช้ bullet points หรือแบ่งขั้นตอนเป็นข้อๆ ให้อ่านง่าย
+4. การนำทางในระบบ: คุณสามารถพาผู้ใช้ไปหน้าต่างๆ ได้โดยตรง หากผู้ใช้ถามถึงหน้าใด ให้แนะนำลิงก์หรือบอกว่าสามารถพิมพ์ "พาไปหน้า..." ได้ทันที เช่น หน้านักเรียน (students.html), หน้าอาจารย์ (teachers.html), หน้าห้องเรียน (rooms.html), หน้าตารางสอน (schedule.html), หน้ารายวิชา (subjects.html), หน้ากลุ่มเรียน (groups.html), หน้าภาระงานสอน (teaching-load.html)
 
 ข้อมูลสถานะระบบจัดตารางสอนปัจจุบัน (ใช้ตอบเมื่อถามเกี่ยวกับตารางหรือข้อมูลระบบ):
 - สถานะข้อขัดแย้ง: ${conflictCount === 0 ? '0 จุด (Zero-Collision 100% ผ่านเกณฑ์)' : `พบปัญหา ${conflictCount} จุด`}
