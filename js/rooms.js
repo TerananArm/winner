@@ -124,13 +124,18 @@ const ROOMS = (() => {
   async function confirmDelete() {
     if (!_deleteId) return;
     try {
+      const target = _rooms.find(r => r.id === _deleteId);
+      if (target && target.room_id) {
+        // Cascade delete: เคลียร์ตารางสอนที่ผูกกับห้องนี้ก่อน เพื่อไม่ให้ติด Foreign Key Constraint
+        await db.from(TABLES.SCHEDULES).delete().eq('room_id', target.room_id);
+      }
       const { error } = await db.from(TABLES.ROOMS).delete().eq('id', _deleteId);
       if (error) throw error;
-      showToast('success', 'ลบสำเร็จ');
+      showToast('success', 'ลบสำเร็จ', 'ลบข้อมูลห้องเรียนเรียบร้อย');
       closeModal();
       loadAll();
     } catch (err) {
-      showToast('error', 'ลบล้มเหลว', err.message);
+      showToast('error', 'ลบล้มเหลว', translateError(err.message));
     }
   }
 

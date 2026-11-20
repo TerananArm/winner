@@ -49,6 +49,10 @@ function translateErrorMessage(msg) {
     const detailMatch = text.match(/Key \(([^)]+)\)=\(([^)]+)\)/i);
     const detailStr = detailMatch ? ` (รหัส: "${detailMatch[2]}")` : '';
 
+    if (text.includes('is still referenced from table') || text.includes('update or delete on table')) {
+      return `ไม่สามารถลบข้อมูลนี้ได้เนื่องจากถูกใช้งานอยู่ในตารางอื่น ${detailStr} กรุณาลบข้อมูลที่เชื่อมโยงก่อน`;
+    }
+
     if (text.includes('teacher_id')) return `ไม่พบรหัสอาจารย์${detailStr} ในระบบ (กรุณาเพิ่มข้อมูลอาจารย์ก่อน)`;
     if (text.includes('subject_id')) return `ไม่พบรหัสวิชา${detailStr} ในระบบ (กรุณาเพิ่มข้อมูลรายวิชาก่อน)`;
     if (text.includes('group_id'))   return `ไม่พบรหัสกลุ่มเรียน${detailStr} ในระบบ (กรุณาเพิ่มข้อมูลกลุ่มเรียนก่อน)`;

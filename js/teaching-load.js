@@ -161,7 +161,7 @@ const TL = (() => {
       closeDeleteModal();
       await loadAll();
     } catch (err) {
-      showToast('error', 'ลบล้มเหลว', err.message);
+      showToast('error', 'ลบล้มเหลว', translateError(err.message));
     }
   }
 

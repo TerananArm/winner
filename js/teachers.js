@@ -312,13 +312,22 @@ const TEACHERS = (() => {
   async function confirmDelete() {
     if (!_deleteId) return;
     try {
+      const target = _teachers.find(t => t.id === _deleteId);
+      if (target && target.teacher_id) {
+        // Cascade delete: เคลียร์ตารางสอน, ภาระงานสอน และปลดที่ปรึกษาที่ผูกกับครูท่านนี้ก่อน
+        await Promise.all([
+          db.from(TABLES.SCHEDULES).delete().eq('teacher_id', target.teacher_id),
+          db.from(TABLES.TEACHING_LOADS).delete().eq('teacher_id', target.teacher_id),
+          db.from(TABLES.GROUPS).update({ advisor: null }).eq('advisor', target.teacher_id)
+        ]);
+      }
       const { error } = await db.from(TABLES.TEACHERS).delete().eq('id', _deleteId);
       if (error) throw error;
-      showToast('success', 'ลบสำเร็จ');
+      showToast('success', 'ลบสำเร็จ', 'ลบข้อมูลอาจารย์เรียบร้อย');
       closeModal();
       loadAll();
     } catch (err) {
-      showToast('error', 'ลบล้มเหลว', err.message);
+      showToast('error', 'ลบล้มเหลว', translateError(err.message));
     }
   }
 

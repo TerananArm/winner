@@ -71,9 +71,22 @@ const SUBJECTS = (() => {
   function closeModal() { _deleteId = null; document.getElementById('deleteModal').classList.add('hidden'); }
   async function confirmDelete() {
     if(!_deleteId) return;
-    const { error } = await db.from(TABLES.SUBJECTS).delete().eq('id', _deleteId);
-    if(error) { showToast('error','ลบล้มเหลว'); return; }
-    showToast('success','ลบสำเร็จ'); closeModal(); loadAll();
+    try {
+      const target = _subjects.find(s => s.id === _deleteId);
+      if (target && target.subject_id) {
+        // Cascade delete: เคลียร์ตารางสอน, ภาระงานสอน และการลงทะเบียนที่ผูกกับวิชานี้ก่อน
+        await Promise.all([
+          db.from(TABLES.SCHEDULES).delete().eq('subject_id', target.subject_id),
+          db.from(TABLES.TEACHING_LOADS).delete().eq('subject_id', target.subject_id),
+          db.from(TABLES.REGISTRATIONS).delete().eq('subject_id', target.subject_id)
+        ]);
+      }
+      const { error } = await db.from(TABLES.SUBJECTS).delete().eq('id', _deleteId);
+      if(error) throw error;
+      showToast('success','ลบสำเร็จ', 'ลบข้อมูลรายวิชาเรียบร้อย'); closeModal(); loadAll();
+    } catch(err) {
+      showToast('error', 'ลบล้มเหลว', translateError(err.message));
+    }
   }
   // ── Download Template Excel ────────────────────────────────
   function downloadTemplate() {
