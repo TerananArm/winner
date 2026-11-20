@@ -789,7 +789,16 @@ const SCHED = (() => {
             const s2 = list[j];
             const isParallelPair = (s1.subject_id === s2.subject_id && s1.teacher_id === s2.teacher_id && s1.room_id === s2.room_id && s1.period_start === s2.period_start && s1.period_end === s2.period_end);
             if (!isParallelPair) {
-              teacherConflicts.push({ s1, s2, reason: `ครู ${s1.teacher_id} มีสอนซ้ำซ้อนใน ${s1.day} คาบ ${s1.period_start}-${s1.period_end}` });
+              const s1Subj = _subjects.find(s => s.subject_id === s1.subject_id);
+              const s2Subj = _subjects.find(s => s.subject_id === s2.subject_id);
+              const tObj = _teachers.find(t => t.teacher_id === s1.teacher_id);
+              const tName = tObj ? tObj.teacher_name : s1.teacher_id;
+              teacherConflicts.push({
+                s1, s2,
+                reason: `ครู ${tName} (${s1.teacher_id}) มีคาบสอนซ้ำซ้อนใน ${s1.day} คาบ ${s1.period_start}-${s1.period_end}`,
+                cause: `วิชา "${s1Subj?.subject_name || s1.subject_id}" และวิชา "${s2Subj?.subject_name || s2.subject_id}" ถูกจัดลงในคาบเวลาเดียวกัน`,
+                suggestion: `แนะนำให้ย้ายวิชาใดวิชาหนึ่งไปลงในช่วงเวลาที่ครูว่าง (เช่น คาบ 1-4 หรือ 5-8) หรือโอนรายวิชาให้ครูในหมวดเดียวกันช่วยสอนแทน`
+              });
             }
           }
         }
@@ -805,7 +814,16 @@ const SCHED = (() => {
             const s2 = list[j];
             const isParallelPair = (s1.subject_id === s2.subject_id && s1.teacher_id === s2.teacher_id && s1.room_id === s2.room_id && s1.period_start === s2.period_start && s1.period_end === s2.period_end);
             if (!isParallelPair) {
-              roomConflicts.push({ s1, s2, reason: `ห้อง ${s1.room_id} ถูกใช้ซ้ำซ้อนใน ${s1.day} คาบ ${s1.period_start}-${s1.period_end}` });
+              const rObj = _rooms.find(r => r.room_id === s1.room_id);
+              const rName = rObj ? rObj.room_name : s1.room_id;
+              const g1Obj = _groups.find(g => g.group_id === s1.group_id);
+              const g2Obj = _groups.find(g => g.group_id === s2.group_id);
+              roomConflicts.push({
+                s1, s2,
+                reason: `ห้อง ${rName} (${s1.room_id}) ถูกใช้ซ้ำซ้อนใน ${s1.day} คาบ ${s1.period_start}-${s1.period_end}`,
+                cause: `กลุ่มเรียน "${g1Obj?.group_name || s1.group_id}" และ "${g2Obj?.group_name || s2.group_id}" เข้าใช้ห้องพร้อมกันในคาบเวลาเดียวกัน`,
+                suggestion: `แนะนำให้สลับกลุ่มเรียนไปใช้ห้องว่างอื่นในกลุ่มสาขาวิชาเดียวกัน หรือหากเป็นวิชาเรียนร่วม ให้กำหนดเป็นกลุ่มเรียนคู่ขนาน (Parallel Group)`
+              });
             }
           }
         }
@@ -819,7 +837,16 @@ const SCHED = (() => {
           for (let j = i + 1; j < list.length; j++) {
             const s1 = list[i];
             const s2 = list[j];
-            groupConflicts.push({ s1, s2, reason: `กลุ่ม ${s1.group_id} มีเรียนซ้ำซ้อนใน ${s1.day} คาบ ${s1.period_start}-${s1.period_end}` });
+            const gObj = _groups.find(g => g.group_id === s1.group_id);
+            const gName = gObj ? gObj.group_name : s1.group_id;
+            const s1Subj = _subjects.find(s => s.subject_id === s1.subject_id);
+            const s2Subj = _subjects.find(s => s.subject_id === s2.subject_id);
+            groupConflicts.push({
+              s1, s2,
+              reason: `กลุ่มเรียน ${gName} (${s1.group_id}) มีเรียนซ้ำซ้อนใน ${s1.day} คาบ ${s1.period_start}-${s1.period_end}`,
+              cause: `วิชา "${s1Subj?.subject_name || s1.subject_id}" และวิชา "${s2Subj?.subject_name || s2.subject_id}" ถูกจัดให้กลุ่มนี้เรียนในเวลาเดียวกัน`,
+              suggestion: `แนะนำให้ย้ายคาบเรียนของวิชาใดวิชาหนึ่งไปลงในช่วงคาบว่างอื่นของกลุ่มเรียน`
+            });
           }
         }
       }
@@ -834,14 +861,34 @@ const SCHED = (() => {
     });
 
     _teachers.forEach(t => {
-      const maxH = parseInt(t.max_hours, 10) || 24;
+      const maxH = parseInt(t.max_hours, 10) || 20;
       const actualH = teacherHours[t.teacher_id] || 0;
       if (actualH > maxH) {
         overloadConflicts.push({
           teacher: t,
           actual: actualH,
           max: maxH,
-          reason: `ครู ${t.teacher_name || t.teacher_id} สอน ${actualH} ชม./สัปดาห์ เกินเกณฑ์สูงสุด (${maxH} ชม.)`
+          reason: `ครู ${t.teacher_name || t.teacher_id} สอน ${actualH} ชม./สัปดาห์ เกินเกณฑ์สูงสุด (${maxH} ชม.) ขาดเกิน ${actualH - maxH} ชม.`,
+          cause: `ภาระงานสอนที่ได้รับมอบหมายในระบบมากกว่าเพดานที่กำหนด หรือจำนวนครูในสาขาวิชาไม่เพียงพอรองรับวิชาทั้งหมด`,
+          suggestion: `แนะนำให้ปรับเพิ่มชั่วโมงสอนสูงสุด (max_hours) ของอาจารย์ ${t.teacher_name || t.teacher_id} ในหน้าจัดการอาจารย์ หรือเพิ่มอัตรากำลังครูผู้สอนในแผนก/สาขาวิชา หรือมอบหมายวิชาให้ครูท่านอื่นในแผนกที่มีชั่วโมงว่างช่วยสอนแทน`
+        });
+      }
+    });
+
+    // 3. Teacher Underload Warning (ครูภาระสอนน้อยไป)
+    const underloadWarnings = [];
+    _teachers.forEach(t => {
+      const maxH = parseInt(t.max_hours, 10) || 20;
+      const actualH = teacherHours[t.teacher_id] || 0;
+      if (actualH > 0 && actualH < 12 && actualH < maxH) {
+        underloadWarnings.push({
+          teacher: t,
+          actual: actualH,
+          min: 12,
+          max: maxH,
+          reason: `ครู ${t.teacher_name || t.teacher_id} มีภาระสอนเพียง ${actualH} ชม./สัปดาห์ (ต่ำกว่าเกณฑ์ภาระงานขั้นต่ำ 12 ชม.)`,
+          cause: `ได้รับมอบหมายรายวิชาในภาคเรียนนี้น้อยเกินไป หรือมีชั่วโมงว่างในสัปดาห์มากเกินเกณฑ์`,
+          suggestion: `แนะนำให้มอบหมายรายวิชาสอนเพิ่มเติมในหน้า "ภาระงานสอน" หรือเพิ่มกลุ่มเรียนให้อาจารย์รับผิดชอบ เพื่อให้ได้ชั่วโมงสอนครบตามเกณฑ์มาตรฐาน สอศ.`
         });
       }
     });
@@ -851,7 +898,8 @@ const SCHED = (() => {
       teacherConflicts,
       roomConflicts,
       groupConflicts,
-      overloadConflicts
+      overloadConflicts,
+      underloadWarnings
     };
 
     // Update UI elements
@@ -859,12 +907,14 @@ const SCHED = (() => {
     const rcEl = document.getElementById('cnt-room-conflict');
     const gcEl = document.getElementById('cnt-group-conflict');
     const ocEl = document.getElementById('cnt-overload-conflict');
+    const ucEl = document.getElementById('cnt-underload-conflict');
     const badgeEl = document.getElementById('conflictStatusBadge');
 
     if (tcEl) tcEl.textContent = `${teacherConflicts.length} จุด`;
     if (rcEl) rcEl.textContent = `${roomConflicts.length} จุด`;
     if (gcEl) gcEl.textContent = `${groupConflicts.length} จุด`;
     if (ocEl) ocEl.textContent = `${overloadConflicts.length} คน`;
+    if (ucEl) ucEl.textContent = `${underloadWarnings.length} คน`;
 
     const totalConflicts = teacherConflicts.length + roomConflicts.length + groupConflicts.length + overloadConflicts.length;
 
@@ -906,8 +956,9 @@ const SCHED = (() => {
     if (!modal || !content) return;
 
     calculateConflicts();
-    const { totalChecked, teacherConflicts, roomConflicts, groupConflicts, overloadConflicts } = _lastAuditData;
+    const { totalChecked, teacherConflicts, roomConflicts, groupConflicts, overloadConflicts, underloadWarnings } = _lastAuditData;
     const total = teacherConflicts.length + roomConflicts.length + groupConflicts.length + overloadConflicts.length;
+    const warnTotal = underloadWarnings ? underloadWarnings.length : 0;
 
     const checks = [
       {
@@ -930,9 +981,16 @@ const SCHED = (() => {
       },
       {
         title: 'การจำกัดชั่วโมงสอนสูงสุดของครู (Max Teaching Hours Cap)',
-        desc: 'ครูผู้สอนต้องไม่มีภาระชั่วโมงสอนรวมเกินกว่าชั่วโมงสูงสุดที่กำหนด (ค่าปกติ 24 ชม./สัปดาห์)',
+        desc: 'ครูผู้สอนต้องไม่มีภาระชั่วโมงสอนรวมเกินกว่าชั่วโมงสูงสุดที่กำหนด (เพดาน max_hours)',
         count: overloadConflicts.length,
         items: overloadConflicts
+      },
+      {
+        title: 'การตรวจสอบภาระงานสอนขั้นต่ำของครู (Minimum Teaching Hours Compliance)',
+        desc: 'ครูผู้สอนควรมีภาระงานสอนไม่ต่ำกว่าเกณฑ์ขั้นต่ำ (12 ชม./สัปดาห์ ตามมาตรฐาน สอศ.)',
+        count: warnTotal,
+        items: underloadWarnings || [],
+        isWarning: true
       },
       {
         title: 'การล็อกช่วงเวลาพักกลางวัน (Lunch Break Lock)',
@@ -959,23 +1017,32 @@ const SCHED = (() => {
           <div style="font-size:15px; font-weight:700; color:${total === 0 ? 'var(--success)' : 'var(--danger)'};">
             <i class="fas ${total === 0 ? 'fa-circle-check' : 'fa-triangle-exclamation'}"></i> ${total === 0 ? '100% ผ่านเกณฑ์ (Zero Conflict)' : `พบปัญหา ${total} จุด`}
           </div>
+          ${warnTotal > 0 ? `<div style="font-size:11px; color:#fde047; text-align:right; margin-top:2px;">⚠️ ข้อเสนอแนะภาระงานสอน: ${warnTotal} รายการ</div>` : ''}
         </div>
       </div>
 
       <div style="display:flex; flex-direction:column; gap:10px;">
         ${checks.map(c => `
-          <div style="background:rgba(255,255,255,0.02); border:1px solid ${c.count === 0 ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.3)'}; border-radius:8px; padding:12px;">
+          <div style="background:rgba(255,255,255,0.02); border:1px solid ${c.count === 0 ? 'rgba(16,185,129,0.2)' : (c.isWarning ? 'rgba(234,179,8,0.3)' : 'rgba(239,68,68,0.3)')}; border-radius:8px; padding:12px;">
             <div style="display:flex; justify-content:space-between; align-items:center;">
               <div style="font-weight:600; font-size:13px; color:var(--text-primary); display:flex; align-items:center; gap:8px;">
-                <i class="fas ${c.count === 0 ? 'fa-check-circle' : 'fa-times-circle'}" style="color:${c.count === 0 ? 'var(--success)' : 'var(--danger)'};"></i>
+                <i class="fas ${c.count === 0 ? 'fa-check-circle' : (c.isWarning ? 'fa-triangle-exclamation' : 'fa-times-circle')}" style="color:${c.count === 0 ? 'var(--success)' : (c.isWarning ? '#fde047' : 'var(--danger)')};"></i>
                 ${c.title}
               </div>
-              <span class="badge ${c.count === 0 ? 'badge-success' : 'badge-danger'}">${c.count === 0 ? 'PASS (0 จุด)' : `FAIL (${c.count} จุด)`}</span>
+              <span class="badge ${c.count === 0 ? 'badge-success' : (c.isWarning ? 'badge-warning' : 'badge-danger')}">${c.count === 0 ? 'PASS (0 จุด)' : (c.isWarning ? `WARNING (${c.count} ท่าน)` : `FAIL (${c.count} จุด)`)}</span>
             </div>
             <div style="font-size:12px; color:var(--text-secondary); margin-top:4px;">${c.desc}</div>
             ${c.count > 0 ? `
-              <div style="margin-top:8px; background:rgba(239,68,68,0.1); border-radius:6px; padding:8px; font-size:11px; color:#fca5a5;">
-                ${c.items.map(it => `<div>• ${it.reason}</div>`).join('')}
+              <div style="margin-top:10px; display:flex; flex-direction:column; gap:8px;">
+                ${c.items.map(it => `
+                  <div style="background:rgba(0,0,0,0.35); border:1px solid ${c.isWarning ? 'rgba(234,179,8,0.3)' : 'rgba(239,68,68,0.3)'}; border-radius:8px; padding:10px 12px; font-size:12px; line-height:1.5;">
+                    <div style="color:${c.isWarning ? '#fde047' : '#fca5a5'}; font-weight:700; margin-bottom:4px;">
+                      <i class="fas ${c.isWarning ? 'fa-triangle-exclamation' : 'fa-circle-xmark'}"></i> ${it.reason}
+                    </div>
+                    ${it.cause ? `<div style="color:#cbd5e1; margin-bottom:4px;"><strong style="color:#94a3b8;">🔍 สาเหตุที่ขัดแย้ง:</strong> ${it.cause}</div>` : ''}
+                    ${it.suggestion ? `<div style="color:#a7f3d0; background:rgba(16,185,129,0.08); border-left:3px solid #10b981; padding:6px 10px; border-radius:4px; margin-top:6px;"><strong>💡 วิธีแก้ไขที่แนะนำ:</strong> ${it.suggestion}</div>` : ''}
+                  </div>
+                `).join('')}
               </div>
             ` : ''}
           </div>
@@ -3726,6 +3793,9 @@ const SCHED = (() => {
     exportCSV,
     exportICS,
     openMasterModal,
+    calculateConflicts: () => calculateConflicts(),
+    getLastAuditData: () => _lastAuditData,
+    loadAllData: () => loadAllData(),
     getLastUnplacedBlocks: () => _lastUnplacedBlocks,
     openImportModal,
     closeImportModal,

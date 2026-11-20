@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="stylesheet" href="css/main.css" />
   <link rel="stylesheet" href="css/schedule.css" />
+  <link rel="stylesheet" href="css/ai-copilot.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 </head>
@@ -265,6 +266,7 @@
             <span class="metric-item"><i class="fas fa-door-closed"></i> ห้องเรียนชน: <strong id="cnt-room-conflict">0 จุด</strong></span>
             <span class="metric-item"><i class="fas fa-users"></i> กลุ่มเรียนชน: <strong id="cnt-group-conflict">0 จุด</strong></span>
             <span class="metric-item"><i class="fas fa-business-time"></i> เกินชั่วโมงครู: <strong id="cnt-overload-conflict">0 คน</strong></span>
+            <span class="metric-item"><i class="fas fa-battery-quarter"></i> ภาระสอนน้อย: <strong id="cnt-underload-conflict">0 คน</strong></span>
             <span class="metric-item"><i class="fas fa-fingerprint"></i> Audit Hash: <strong id="sched-audit-hash" style="font-family:monospace; color:#38bdf8;">a7f9c2e1 (Valid)</strong></span>
           </div>
           <button class="btn btn-ghost btn-xs" onclick="SCHED.openAuditModal()" title="ตรวจสอบหลักฐานข้อขัดแย้งโดยละเอียด">
@@ -1520,6 +1522,7 @@
   <script src="js/supabase-config.js"></script>
   <script src="js/main.js"></script>
   <script src="js/schedule.js"></script>
+  <script src="js/ai-copilot.js"></script>
 </body>
 
 </html>
