@@ -812,6 +812,35 @@
     </div>
   </div>
 
+  <!-- Modal: Move or Split Continuous Block (ตัวเลือกย้ายหรือแบ่งคาบต่อเนื่อง) -->
+  <div class="modal-overlay hidden" id="moveOrSplitModal">
+    <div class="modal" style="max-width: 520px; text-align: left; border: 1px solid rgba(99, 102, 241, 0.35); box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
+      <div class="modal-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 14px;">
+        <div class="modal-title" style="color: var(--primary-light); display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 700;">
+          <i class="fas fa-scissors" style="font-size: 18px;"></i>
+          <span>เลือกวิธีย้ายหรือแบ่งคาบต่อเนื่อง</span>
+        </div>
+        <button class="modal-close" onclick="SCHED.closeMoveOrSplitModal()"><i class="fas fa-xmark"></i></button>
+      </div>
+
+      <div style="margin: 16px 0;">
+        <div id="moveOrSplitInfo" style="padding: 12px 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; font-size: 13px; line-height: 1.6; margin-bottom: 16px;">
+        </div>
+
+        <div style="font-size: 13px; font-weight: 600; color: #cbd5e1; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+          <i class="fas fa-hand-pointer"></i> เลือกรูปแบบที่ต้องการย้าย:
+        </div>
+
+        <div id="moveOrSplitOptions" style="display: flex; flex-direction: column; gap: 10px;">
+        </div>
+      </div>
+
+      <div class="modal-footer" style="border-top: 1px solid rgba(255,255,255,0.06); padding-top: 14px;">
+        <button class="btn btn-ghost" onclick="SCHED.closeMoveOrSplitModal()" style="font-weight: 600;">ยกเลิก</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Container -->
   <div class="toast-container" id="toastContainer"></div>
 

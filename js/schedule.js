@@ -2464,6 +2464,13 @@ const SCHED = (() => {
     }
 
     const dur = Math.max(1, (slot.period_end - slot.period_start + 1));
+
+    // หากเป็นคาบต่อเนื่อง (มากกว่า 1 คาบ) เปิดหน้าต่างให้เลือก ย้ายทั้งบล็อก หรือ แบ่งย้ายบางคาบ
+    if (dur > 1) {
+      showMoveOrSplitModal(slot, targetDay, targetPeriod);
+      return;
+    }
+
     const newPeriodEnd = targetPeriod + dur - 1;
 
     // 1. ตรวจสอบขอบเขตช่วงเวลา (Boundary Constraints)
@@ -2702,11 +2709,247 @@ const SCHED = (() => {
     _pendingMovePlan = null;
   }
 
+  let _pendingDropTarget = null;
+
+  function showMoveOrSplitModal(slot, targetDay, targetPeriod) {
+    const dur = Math.max(1, (slot.period_end - slot.period_start + 1));
+    _pendingDropTarget = { slot, targetDay, targetPeriod, dur };
+
+    const modal = document.getElementById('moveOrSplitModal');
+    const infoEl = document.getElementById('moveOrSplitInfo');
+    const optEl = document.getElementById('moveOrSplitOptions');
+    if (!modal || !infoEl || !optEl) {
+      proceedMoveOrSplit(dur);
+      return;
+    }
+
+    const subj = _subjects.find(x => x.subject_id === slot.subject_id);
+    const grp = _groups.find(x => x.group_id === slot.group_id);
+    const tch = _teachers.find(x => x.teacher_id === slot.teacher_id);
+    const rm = _rooms.find(x => x.room_id === slot.room_id);
+
+    infoEl.innerHTML = `
+      <div style="font-weight:700; color:#f8fafc; font-size:14px; margin-bottom:4px;">
+        ${slot.subject_id} - ${subj?.subject_name || ''}
+      </div>
+      <div style="color:var(--text-secondary); font-size:12px; display:flex; flex-direction:column; gap:2px;">
+        <div>กลุ่มเรียน: <strong>${grp?.group_name || slot.group_id}</strong> &nbsp;|&nbsp; ครูผู้สอน: <strong>${tch?.teacher_name || slot.teacher_id}</strong> &nbsp;|&nbsp; ห้อง: <strong>${rm?.room_name || slot.room_id}</strong></div>
+        <div style="color:#38bdf8; margin-top:4px;">
+          <i class="fas fa-clock"></i> คาบเดิม: <strong>${slot.day} คาบ ${slot.period_start}-${slot.period_end} (${dur} คาบต่อเนื่อง)</strong>
+        </div>
+        <div style="color:#34d399;">
+          <i class="fas fa-location-dot"></i> จุดที่วาง: <strong>${targetDay} เริ่มคาบ ${targetPeriod}</strong>
+        </div>
+      </div>
+    `;
+
+    let html = `
+      <button type="button" onclick="SCHED.proceedMoveOrSplit(${dur})" 
+        style="padding:12px 14px; border-radius:10px; background:rgba(99,102,241,0.12); border:1px solid rgba(99,102,241,0.35); text-align:left; cursor:pointer; display:flex; justify-content:space-between; align-items:center; transition:all 0.15s ease;">
+        <div>
+          <div style="font-weight:700; color:#ffffff; font-size:13.5px;"><i class="fas fa-boxes-stacked" style="color:#818cf8; margin-right:6px;"></i> ย้ายทั้งบล็อก (${dur} คาบต่อเนื่อง)</div>
+          <div style="font-size:12px; color:#94a3b8; margin-top:2px;">ย้ายทุกคาบไปวางที่ ${targetDay} คาบ ${targetPeriod}-${targetPeriod + dur - 1}</div>
+        </div>
+        <i class="fas fa-chevron-right" style="color:#818cf8;"></i>
+      </button>
+    `;
+
+    for (let k = 1; k < dur; k++) {
+      const remainingAtOld = dur - k;
+      html += `
+        <button type="button" onclick="SCHED.proceedMoveOrSplit(${k})"
+          style="padding:12px 14px; border-radius:10px; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.3); text-align:left; cursor:pointer; display:flex; justify-content:space-between; align-items:center; transition:all 0.15s ease;">
+          <div>
+            <div style="font-weight:700; color:#34d399; font-size:13.5px;"><i class="fas fa-scissors" style="color:#34d399; margin-right:6px;"></i> แบ่งย้าย ${k} คาบ (เหลือที่เดิม ${remainingAtOld} คาบ)</div>
+            <div style="font-size:12px; color:#94a3b8; margin-top:2px;">
+              • คาบใหม่: ${targetDay} คาบ ${targetPeriod}-${targetPeriod + k - 1} (${k} คาบ)<br>
+              • คาบเดิม: ${slot.day} คาบ ${slot.period_start}-${slot.period_start + remainingAtOld - 1} (${remainingAtOld} คาบ)
+            </div>
+          </div>
+          <i class="fas fa-chevron-right" style="color:#34d399;"></i>
+        </button>
+      `;
+    }
+
+    optEl.innerHTML = html;
+    modal.classList.remove('hidden');
+  }
+
+  function closeMoveOrSplitModal() {
+    const modal = document.getElementById('moveOrSplitModal');
+    if (modal) modal.classList.add('hidden');
+    _pendingDropTarget = null;
+  }
+
+  async function proceedMoveOrSplit(moveHours) {
+    if (!_pendingDropTarget) return;
+    const { slot, targetDay, targetPeriod, dur } = _pendingDropTarget;
+    closeMoveOrSplitModal();
+
+    const newPeriodEnd = targetPeriod + moveHours - 1;
+
+    // ตรวจสอบขอบเขตช่วงเวลา
+    if (targetPeriod <= 4 && newPeriodEnd > 4) {
+      showToast('warning', 'ไม่สามารถย้ายคาบได้', 'ไม่สามารถวางคาบเรียนข้ามช่วงพักกลางวัน (คาบ 5) ได้');
+      return;
+    }
+    if (newPeriodEnd > 11) {
+      showToast('warning', 'ไม่สามารถย้ายคาบได้', `คาบเรียนเกินช่วงเวลาทำการ (สิ้นสุดคาบที่ ${newPeriodEnd} เกินคาบ 11)`);
+      return;
+    }
+
+    // ตรวจสอบข้อขัดแย้งปลายทางตามจำนวนคาบที่จะย้ายจริง
+    const conflicts = checkMoveConflicts(slot, targetDay, targetPeriod, newPeriodEnd);
+
+    if (conflicts.length > 0) {
+      _pendingMovePlan = {
+        slot,
+        targetDay,
+        targetPeriod,
+        newPeriodEnd,
+        moveHours,
+        dur,
+        conflicts
+      };
+      showDragConflictModal(_pendingMovePlan);
+    } else {
+      if (moveHours === dur) {
+        await executeMoveSlot(slot, targetDay, targetPeriod, newPeriodEnd);
+      } else {
+        await executeSplitAndMove(slot, targetDay, targetPeriod, moveHours);
+      }
+    }
+  }
+
+  async function executeSplitAndMove(slot, targetDay, targetPeriod, moveHours) {
+    try {
+      const dur = slot.period_end - slot.period_start + 1;
+      const keepHours = dur - moveHours;
+      const newOldEnd = slot.period_start + keepHours - 1;
+      const targetEnd = targetPeriod + moveHours - 1;
+
+      // 1. อัปเดตคาบเดิมให้เหลือ keepHours
+      const { error: updErr } = await db
+        .from(TABLES.SCHEDULES)
+        .update({ period_end: newOldEnd })
+        .eq('id', slot.id);
+
+      if (updErr) throw updErr;
+
+      // 2. สร้างเรคคอร์ดใหม่สำหรับส่วนที่แบ่งย้ายไป
+      const newPayload = {
+        subject_id: slot.subject_id,
+        teacher_id: slot.teacher_id,
+        room_id: slot.room_id,
+        group_id: slot.group_id,
+        day: targetDay,
+        period_start: targetPeriod,
+        period_end: targetEnd,
+        semester: slot.semester || '1',
+        academic_year: slot.academic_year || '2568'
+      };
+
+      const { data: inserted, error: insErr } = await db
+        .from(TABLES.SCHEDULES)
+        .insert([newPayload])
+        .select();
+
+      if (insErr) throw insErr;
+
+      // 3. อัปเดตในหน่วยความจำ
+      slot.period_end = newOldEnd;
+      if (inserted && inserted[0]) {
+        _schedules.push(inserted[0]);
+      } else {
+        newPayload.id = Date.now();
+        _schedules.push(newPayload);
+      }
+
+      render();
+
+      const subj = _subjects.find(s => s.subject_id === slot.subject_id);
+      showToast(
+        'success',
+        'แบ่งและย้ายคาบเรียนสำเร็จ',
+        `แบ่งวิชา ${subj?.subject_name || slot.subject_id} ย้าย ${moveHours} คาบไปที่ ${targetDay} คาบ ${targetPeriod}-${targetEnd} (คงเหลือที่เดิม ${keepHours} คาบ)`
+      );
+    } catch (err) {
+      console.error('Error splitting and moving slot:', err);
+      showToast('error', 'แบ่งและย้ายคาบไม่สำเร็จ', err.message || 'โปรดลองใหม่อีกครั้ง');
+    }
+  }
+
+  async function splitSlotInPlace(slotId, firstPartHours) {
+    const slot = _schedules.find(s => s.id === slotId);
+    if (!slot) return;
+    const dur = slot.period_end - slot.period_start + 1;
+    const secondPartHours = dur - firstPartHours;
+    if (secondPartHours <= 0) return;
+
+    try {
+      const originalEnd = slot.period_end;
+      const newFirstEnd = slot.period_start + firstPartHours - 1;
+      const secondStart = newFirstEnd + 1;
+
+      // 1. อัปเดตคาบแรก
+      const { error: updErr } = await db
+        .from(TABLES.SCHEDULES)
+        .update({ period_end: newFirstEnd })
+        .eq('id', slot.id);
+
+      if (updErr) throw updErr;
+
+      // 2. แทรกคาบส่วนที่สอง
+      const newPayload = {
+        subject_id: slot.subject_id,
+        teacher_id: slot.teacher_id,
+        room_id: slot.room_id,
+        group_id: slot.group_id,
+        day: slot.day,
+        period_start: secondStart,
+        period_end: originalEnd,
+        semester: slot.semester || '1',
+        academic_year: slot.academic_year || '2568'
+      };
+
+      const { data: inserted, error: insErr } = await db
+        .from(TABLES.SCHEDULES)
+        .insert([newPayload])
+        .select();
+
+      if (insErr) throw insErr;
+
+      slot.period_end = newFirstEnd;
+      if (inserted && inserted[0]) {
+        _schedules.push(inserted[0]);
+      } else {
+        newPayload.id = Date.now();
+        _schedules.push(newPayload);
+      }
+
+      closeSlotDetail();
+      render();
+
+      showToast(
+        'success',
+        'แบ่งคาบเรียนสำเร็จ',
+        `แบ่งออกเป็น 2 บล็อกย่อย (${firstPartHours} คาบ และ ${secondPartHours} คาบ) เรียบร้อยแล้ว ตอนนี้สามารถลากวางแยกกันได้อย่างอิสระ`
+      );
+    } catch (err) {
+      console.error('Error splitting slot in place:', err);
+      showToast('error', 'แบ่งคาบเรียนไม่สำเร็จ', err.message || 'โปรดลองใหม่อีกครั้ง');
+    }
+  }
+
   async function confirmForceMoveSlot() {
     if (!_pendingMovePlan) return;
     const plan = _pendingMovePlan;
     closeDragConflictModal();
-    await executeMoveSlot(plan.slot, plan.targetDay, plan.targetPeriod, plan.newPeriodEnd);
+    if (plan.moveHours && plan.dur && plan.moveHours < plan.dur) {
+      await executeSplitAndMove(plan.slot, plan.targetDay, plan.targetPeriod, plan.moveHours);
+    } else {
+      await executeMoveSlot(plan.slot, plan.targetDay, plan.targetPeriod, plan.newPeriodEnd);
+    }
   }
 
 
@@ -2724,15 +2967,44 @@ const SCHED = (() => {
     const teacher = _teachers.find(t => t.teacher_id === slot.teacher_id) || { teacher_name: slot.teacher_id };
     const group = _groups.find(g => g.group_id === slot.group_id) || { group_name: slot.group_id };
 
+    const dur = slot.period_end - slot.period_start + 1;
+    let splitUi = '';
+    if (dur > 1 && slot.subject_id !== 'HOMEROOM') {
+      let splitButtons = '';
+      for (let k = 1; k < dur; k++) {
+        splitButtons += `
+          <button type="button" class="btn btn-xs" onclick="SCHED.splitSlotInPlace(${slot.id}, ${k})" 
+            style="background:rgba(99,102,241,0.18); border:1px solid rgba(99,102,241,0.4); color:#c7d2fe; font-size:12px; padding:6px 12px; border-radius:6px; cursor:pointer;">
+            <i class="fas fa-scissors"></i> แบ่งเป็น ${k} คาบ + ${dur - k} คาบ
+          </button>
+        `;
+      }
+
+      splitUi = `
+        <div style="margin-top:14px; padding:12px; background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.22); border-radius:8px;">
+          <div style="font-weight:700; color:#818cf8; font-size:12.5px; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+            <i class="fas fa-arrows-split-up-and-left"></i> แบ่งบล็อกต่อเนื่องนี้ (${dur} คาบ) ออกจากกัน:
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:6px;">
+            ${splitButtons}
+          </div>
+          <div style="font-size:11px; color:#94a3b8; margin-top:6px;">
+            * เมื่อแบ่งแล้ว แต่ละส่วนจะแยกเป็นบล็อกอิสระ สามารถลากวางแยกวัน/คาบได้ทันที
+          </div>
+        </div>
+      `;
+    }
+
     const bodyEl = document.getElementById('slot-detail-body');
     if (bodyEl) {
       bodyEl.innerHTML = `
         <div style="display:flex;flex-direction:column;gap:10px;">
           <div><strong style="color:#ffffff;">รหัสวิชา:</strong> <span style="color:#93c5fd;">${slot.subject_id}</span> — ${subj.subject_name}</div>
-          <div><strong style="color:#ffffff;">วัน/เวลา:</strong> ${slot.day} · คาบ ${slot.period_start} - ${slot.period_end}</div>
+          <div><strong style="color:#ffffff;">วัน/เวลา:</strong> ${slot.day} · คาบ ${slot.period_start} - ${slot.period_end} (${dur} คาบ)</div>
           <div><strong style="color:#ffffff;">ห้องเรียน:</strong> ${room.room_name || slot.room_id} (${slot.room_id})</div>
           <div><strong style="color:#ffffff;">ครูผู้สอน:</strong> ${teacher.teacher_name || slot.teacher_id} (${slot.teacher_id})</div>
           <div><strong style="color:#ffffff;">กลุ่มเรียน:</strong> ${formatGroupLabel(group)}</div>
+          ${splitUi}
         </div>
       `;
     }
@@ -4475,6 +4747,9 @@ const SCHED = (() => {
     handleDrop,
     closeDragConflictModal,
     confirmForceMoveSlot,
+    closeMoveOrSplitModal,
+    proceedMoveOrSplit,
+    splitSlotInPlace,
     openSlotDetail,
     closeSlotDetail,
     deleteActiveSlot,
