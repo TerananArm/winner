@@ -62,12 +62,30 @@ const AI_COPILOT = (() => {
       .replace(/^### (.*$)/gim, '<h4 style="margin:10px 0 4px; color:#c084fc; font-size:13px;">$1</h4>')
       .replace(/^## (.*$)/gim, '<h3 style="margin:12px 0 6px; color:#38bdf8; font-size:14px;">$1</h3>')
       .replace(/^# (.*$)/gim, '<h2 style="margin:14px 0 8px; color:#a855f7; font-size:15px;">$1</h2>')
+      .replace(/^[-*]{3,}$/gim, '<hr style="border:none; border-top:1px solid rgba(255,255,255,0.1); margin:10px 0;"/>')
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
       .replace(/```([\s\S]*?)```/g, '<pre style="background:rgba(0,0,0,0.45); padding:8px 10px; border-radius:6px; font-size:11px; overflow-x:auto; margin:6px 0; border:1px solid rgba(255,255,255,0.08);"><code>$1</code></pre>')
       .replace(/`([^`]+)`/g, '<code style="background:rgba(0,0,0,0.35); padding:2px 5px; border-radius:3px; color:#38bdf8; font-family:monospace; font-size:11.5px;">$1</code>')
       .replace(/^\s*[-•]\s+(.*$)/gim, '<li>$1</li>')
       .replace(/^\s*(\d+)\.\s+(.*$)/gim, '<li><strong>$1.</strong> $2</li>');
+
+    // Handle markdown tables
+    html = html.replace(/(?:^\|.+?\|$\n?)+/gm, (tableMatch) => {
+      const rows = tableMatch.trim().split('\n').filter(r => r.trim() && !/^\|[\s\-:|]+\|$/.test(r.trim()));
+      if (rows.length === 0) return '';
+      let tableHtml = '<table style="width:100%; border-collapse:collapse; margin:8px 0; font-size:11.5px; background:rgba(0,0,0,0.2); border-radius:6px; overflow:hidden;">';
+      rows.forEach((row, idx) => {
+        const cols = row.split('|').map(c => c.trim()).filter((_, i, arr) => i > 0 && i < arr.length - 1);
+        const tag = idx === 0 ? 'th' : 'td';
+        const style = idx === 0 
+          ? 'padding:6px 8px; background:rgba(255,255,255,0.07); color:#38bdf8; font-weight:600; text-align:left; border-bottom:1px solid rgba(255,255,255,0.1);' 
+          : 'padding:5px 8px; border-bottom:1px solid rgba(255,255,255,0.04);';
+        tableHtml += '<tr>' + cols.map(c => `<${tag} style="${style}">${c}</${tag}>`).join('') + '</tr>';
+      });
+      tableHtml += '</table>';
+      return tableHtml;
+    });
 
     // Wrap continuous <li> into <ul>
     html = html.replace(/(<li>.*?<\/li>(?:\s*<br\/>\s*|\s*)*)+/gs, (match) => {
@@ -490,29 +508,50 @@ const AI_COPILOT = (() => {
     }
 
     // เตรียม System Prompt พร้อมข้อมูลระบบสด
-    const systemPrompt = `คุณคือ EduSched AI Copilot ผู้ช่วยอัจฉริยะประจำระบบจัดตารางสอนและบริหารวิทยาลัยอาชีวศึกษา (สังกัด สอศ.) ขับเคลื่อนด้วยชิป Groq LPU Ultra-Fast Inference
-หน้าที่ของคุณ:
-1. ตอบคำถามเกี่ยวกับการจัดตารางสอน, กฎเกณฑ์ สอศ., การบริหารจัดการภาระงานครู, และการแก้ปัญหาตารางเรียนตารางสอน
-2. หากผู้ใช้ถามเรื่องข้อขัดแย้ง, ครูสอนเกิน, ครูภาระสอนน้อยไป, ห้องชน, คาบชน ให้แนะนำสาเหตุและแนวทางแก้ไขที่เป็นรูปธรรม (Actionable Steps) เช่น แนะนำให้เพิ่มชั่วโมงสอนสูงสุด (max_hours) ในหน้าจัดการอาจารย์, เพิ่มอัตรากำลังครูในสาขา, หรือมอบหมายรายวิชาเพิ่มในหน้าภาระงานสอน
-3. ตอบเป็นภาษาไทยอย่างสุภาพ กระชับ ชัดเจน มีโครงสร้างหัวข้อและใช้สัญลักษณ์ bullet points ที่อ่านง่าย
+    const systemPrompt = `คุณคือ EduSched AI Copilot ผู้ช่วยอัจฉริยะสารพัดประโยชน์ ขับเคลื่อนด้วยชิปประมวลผล Groq LPU Ultra-Fast Inference
+คุณมีความรอบรู้ มีมนุษยสัมพันธ์ดีเยี่ยม สามารถพูดคุย ให้คำปรึกษา และตอบคำถามได้ทุกเรื่องอย่างเป็นมิตร สุภาพ มีเหตุผล และมีประโยชน์สูงสุด
 
-ข้อมูลสถานะระบบปัจจุบัน:
+หลักการตอบ:
+1. ตอบได้ทุกคำถาม: สามารถตอบคำถามได้ทุกเรื่อง ไม่ว่าจะเป็นเรื่องทั่วไปในชีวิตประจำวัน, วิธีทำอาหาร, การเขียนโปรแกรม, เทคโนโลยี, วิทยาศาสตร์, คณิตศาสตร์, ความรู้รอบตัว, การเรียน หรือการทำงาน ห้ามปฏิเสธหรือบอกปัดคำถามทั่วไป ให้ตอบอย่างครบถ้วน ละเอียด เข้าใจง่าย
+2. ความเชี่ยวชาญพิเศษด้านระบบจัดตารางสอน EduSched AI และวิทยาลัยอาชีวศึกษา (สอศ.):
+   - แนะนำการใช้งานระบบ การจัดตารางสอนอัตโนมัติ การบริหารชั่วโมงสอนครู
+   - หากผู้ใช้ถามเรื่องข้อขัดแย้ง, ครูสอนเกิน (overload), ครูภาระสอนน้อย (underload), ห้องเรียนชน, คาบชน ให้วิเคราะห์สาเหตุและเสนอแนวทางแก้ไขที่เป็นรูปธรรม (Actionable Steps) เช่น แนะนำให้ปรับชั่วโมงสอนสูงสุด (max_hours) ในหน้าจัดการอาจารย์, เพิ่มอัตรากำลังครูในสาขา, หรือมอบหมายรายวิชาเพิ่ม
+3. รูปแบบการตอบ: ตอบเป็นภาษาไทยอย่างสุภาพ เป็นกันเอง มีโครงสร้างหัวข้อชัดเจน ใช้ bullet points หรือแบ่งขั้นตอนเป็นข้อๆ ให้อ่านง่าย
+
+ข้อมูลสถานะระบบจัดตารางสอนปัจจุบัน (ใช้ตอบเมื่อถามเกี่ยวกับตารางหรือข้อมูลระบบ):
 - สถานะข้อขัดแย้ง: ${conflictCount === 0 ? '0 จุด (Zero-Collision 100% ผ่านเกณฑ์)' : `พบปัญหา ${conflictCount} จุด`}
 - จำนวนครูเกินชั่วโมง: ${auditData?.overloadConflicts?.length || 0} คน
 - จำนวนครูภาระสอนน้อย: ${auditData?.underloadWarnings?.length || 0} คน
 - จำนวนห้องเรียนชน: ${auditData?.roomConflicts?.length || 0} จุด
 - จำนวนครูซ้ำซ้อน: ${auditData?.teacherConflicts?.length || 0} จุด
-- นโยบาย: จัดสอนช่วงกลางวันคาบ 1-8 (08:00-17:00 น.), พักเที่ยงคาบ 5 (12:00-13:00 น.), ล็อกห้องตามสาขาวิชา (ช่างยนต์ LAB-AUTO*, ไฟฟ้า LAB-ELEC*, คอมพิวเตอร์ LAB-COM*)`;
+- นโยบายเวลา: จัดสอนช่วงกลางวันคาบ 1-8 (08:00-17:00 น.), พักเที่ยงคาบ 5 (12:00-13:00 น.), ล็อกห้องตามสาขาวิชา (ช่างยนต์ LAB-AUTO*, ไฟฟ้า LAB-ELEC*, คอมพิวเตอร์ LAB-COM*)`;
 
     // ─────────────────────────────────────────────────────────
     // 9. เรียกใช้งาน Groq LLM API แบบ Ultra-Fast
     // ─────────────────────────────────────────────────────────
+    // ดึงบทสนทนาก่อนหน้าเพื่อรักษาบริบทการพูดคุย
+    const recentHistory = [];
+    const prevHistory = _chatHistory.slice(0, -1);
+    for (let i = Math.max(0, prevHistory.length - 4); i < prevHistory.length; i++) {
+      const msg = prevHistory[i];
+      if (msg && msg.role && msg.content) {
+        const cleanContent = msg.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+        if (cleanContent && !cleanContent.includes('ประมวลผลโดย Groq LPU')) {
+          recentHistory.push({
+            role: msg.role === 'user' ? 'user' : 'assistant',
+            content: cleanContent.substring(0, 300)
+          });
+        }
+      }
+    }
+
     const messages = [
       { role: 'system', content: systemPrompt },
+      ...recentHistory,
       { role: 'user', content: rawText }
     ];
 
-    const groqRes = await callGroqLLM(messages, 650);
+    const groqRes = await callGroqLLM(messages, 800);
     if (groqRes && groqRes.content) {
       const htmlContent = formatMarkdown(groqRes.content);
       return `
