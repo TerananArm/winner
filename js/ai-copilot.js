@@ -19,6 +19,220 @@ const AI_COPILOT = (() => {
   let _isOpen = false;
   let _isProcessing = false;
 
+  // ── Voice & Speech Synthesis (TTS) Engine ───────────────────
+  let _voiceEnabled = typeof localStorage !== 'undefined' ? localStorage.getItem('edusched_ai_voice') !== 'false' : true;
+  let _currentUtterance = null;
+  let _activeSpeakBtn = null;
+  let _recognition = null;
+  let _isListening = false;
+
+  function getThaiVoice() {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null;
+    const voices = window.speechSynthesis.getVoices();
+    return voices.find(v => v.lang === 'th-TH' || v.lang === 'th_TH' || v.lang.startsWith('th')) ||
+           voices.find(v => v.lang.toLowerCase().includes('th')) ||
+           null;
+  }
+
+  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+    window.speechSynthesis.onvoiceschanged = () => { getThaiVoice(); };
+  }
+
+  function cleanTextForSpeech(html) {
+    if (!html) return '';
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    tmp.querySelectorAll('button, svg, script, style, .badge, .copilot-chip, .copilot-action-card, .status-badge').forEach(el => el.remove());
+    let text = tmp.innerText || tmp.textContent || '';
+    // Strip emojis
+    text = text.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '');
+    // Clean markdown symbols
+    text = text.replace(/[*#`_~>]/g, ' ');
+    text = text.replace(/\s+/g, ' ').trim();
+    // Keep speech natural and concise if response is too long
+    if (text.length > 360) {
+      const parts = text.match(/[^.!?\n]+[.!?\n]+/g) || [text];
+      let truncated = '';
+      for (const p of parts) {
+        if ((truncated + p).length <= 320) truncated += p + ' ';
+        else break;
+      }
+      text = truncated.trim() || text.substring(0, 300) + '... ดูรายละเอียดเพิ่มเติมในแชทครับ';
+    }
+    return text;
+  }
+
+  function stopSpeaking() {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      try { window.speechSynthesis.cancel(); } catch (e) {}
+    }
+    if (_activeSpeakBtn) {
+      _activeSpeakBtn.classList.remove('speaking');
+      _activeSpeakBtn.innerHTML = '<i class="fas fa-volume-high"></i> <span>ฟังเสียง</span>';
+      _activeSpeakBtn = null;
+    }
+    _currentUtterance = null;
+  }
+
+  function speakText(htmlOrText, btnEl = null) {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      console.warn('SpeechSynthesis is not supported in this browser.');
+      return;
+    }
+
+    if (_activeSpeakBtn === btnEl && window.speechSynthesis.speaking) {
+      stopSpeaking();
+      return;
+    }
+
+    stopSpeaking();
+
+    const clean = cleanTextForSpeech(htmlOrText);
+    if (!clean) return;
+
+    const utterance = new SpeechSynthesisUtterance(clean);
+    utterance.lang = 'th-TH';
+    utterance.rate = 1.05;
+    utterance.pitch = 1.0;
+
+    const thaiVoice = getThaiVoice();
+    if (thaiVoice) utterance.voice = thaiVoice;
+
+    if (btnEl) {
+      _activeSpeakBtn = btnEl;
+      btnEl.classList.add('speaking');
+      btnEl.innerHTML = '<i class="fas fa-stop"></i> <span>หยุดพูด</span>';
+    }
+
+    utterance.onend = () => { stopSpeaking(); };
+    utterance.onerror = () => { stopSpeaking(); };
+
+    _currentUtterance = utterance;
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function speakThisMessage(btn) {
+    const parent = btn.closest('.copilot-msg-content');
+    if (!parent) return;
+    speakText(parent.innerHTML, btn);
+  }
+
+  function toggleVoice() {
+    _voiceEnabled = !_voiceEnabled;
+    try { localStorage.setItem('edusched_ai_voice', _voiceEnabled ? 'true' : 'false'); } catch (e) {}
+    updateVoiceToggleBtn();
+    if (!_voiceEnabled) {
+      stopSpeaking();
+      if (typeof showToast === 'function') showToast('info', 'ปิดเสียงพูด AI แล้ว', 'AI จะไม่พูดตอบกลับอัตโนมัติ');
+    } else {
+      if (typeof showToast === 'function') showToast('success', 'เปิดเสียงพูด AI แล้ว', 'AI จะพูดตอบกลับด้วยเสียงภาษาไทย');
+      speakText('เปิดเสียงพูดแล้วครับ ผมพร้อมตอบคำถามและสั่งการระบบด้วยเสียงครับ');
+    }
+  }
+
+  function updateVoiceToggleBtn() {
+    const btn = document.getElementById('aiCopilotVoiceToggle');
+    if (!btn) return;
+    if (_voiceEnabled) {
+      btn.classList.add('active');
+      btn.style.color = '#22d3ee';
+      btn.style.borderColor = 'rgba(34, 211, 238, 0.4)';
+      btn.title = 'ปิดเสียงพูด AI (กำลังเปิดอยู่)';
+      btn.innerHTML = '<i class="fas fa-volume-high"></i>';
+    } else {
+      btn.classList.remove('active');
+      btn.style.color = '#94a3b8';
+      btn.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+      btn.title = 'เปิดเสียงพูด AI (กำลังปิดอยู่)';
+      btn.innerHTML = '<i class="fas fa-volume-xmark"></i>';
+    }
+  }
+
+  // ── Speech Recognition (STT - Microphone Input) ─────────────
+  function initSpeechRecognition() {
+    if (typeof window === 'undefined') return null;
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return null;
+    const r = new SpeechRecognition();
+    r.lang = 'th-TH';
+    r.continuous = false;
+    r.interimResults = true;
+
+    r.onstart = () => {
+      _isListening = true;
+      const btn = document.getElementById('aiCopilotMicBtn');
+      if (btn) {
+        btn.classList.add('listening');
+        btn.innerHTML = '<i class="fas fa-stop"></i>';
+        btn.title = 'กำลังฟัง... คลิกเพื่อหยุด';
+      }
+    };
+
+    r.onresult = (event) => {
+      let transcript = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript;
+      }
+      const input = document.getElementById('aiCopilotInput');
+      if (input && transcript) {
+        input.value = transcript;
+      }
+      if (event.results[0].isFinal) {
+        setTimeout(() => {
+          stopListening();
+          handleSubmit(new Event('submit'));
+        }, 400);
+      }
+    };
+
+    r.onerror = (e) => {
+      console.warn('SpeechRecognition error:', e);
+      stopListening();
+    };
+
+    r.onend = () => {
+      stopListening();
+    };
+
+    return r;
+  }
+
+  function toggleSpeechRecognition() {
+    const SpeechRecognition = typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
+    if (!SpeechRecognition) {
+      if (typeof showToast === 'function') {
+        showToast('warning', 'เบราว์เซอร์ไม่รองรับไมโครโฟน', 'กรุณาใช้ Google Chrome หรือ Edge เพื่อสั่งการด้วยเสียง');
+      }
+      return;
+    }
+    if (_isListening) {
+      stopListening();
+    } else {
+      stopSpeaking();
+      if (!_recognition) {
+        _recognition = initSpeechRecognition();
+      }
+      try {
+        _recognition.start();
+      } catch (e) {
+        console.warn('Recognition start error:', e);
+      }
+    }
+  }
+
+  function stopListening() {
+    _isListening = false;
+    const btn = document.getElementById('aiCopilotMicBtn');
+    if (btn) {
+      btn.classList.remove('listening');
+      btn.innerHTML = '<i class="fas fa-microphone"></i>';
+      btn.title = 'กดเพื่อพูดสั่งการด้วยเสียง';
+    }
+    if (_recognition) {
+      try { _recognition.stop(); } catch (e) {}
+    }
+  }
+
   // ── Call Groq LPU API ──────────────────────────────────────
   async function callGroqLLM(messages, maxTokens = 650) {
     for (const model of GROQ_CONFIG.models) {
@@ -166,6 +380,7 @@ const AI_COPILOT = (() => {
             </div>
           </div>
           <div class="ai-copilot-header-actions">
+            <button class="ai-copilot-header-btn" id="aiCopilotVoiceToggle" onclick="AI_COPILOT.toggleVoice()" title="เปิด/ปิดเสียงพูดตอบกลับ"><i class="fas fa-volume-high"></i></button>
             <button class="ai-copilot-header-btn" onclick="AI_COPILOT.clearChat()" title="ล้างข้อความ"><i class="fas fa-rotate-left"></i></button>
             <button class="ai-copilot-header-btn" onclick="AI_COPILOT.toggle()" title="ปิดหน้าต่าง"><i class="fas fa-xmark"></i></button>
           </div>
@@ -188,7 +403,10 @@ const AI_COPILOT = (() => {
         <div class="ai-copilot-footer">
           <form class="ai-copilot-input-form" onsubmit="AI_COPILOT.handleSubmit(event)">
             <input type="text" class="ai-copilot-input" id="aiCopilotInput"
-              placeholder="พิมพ์คำสั่งหรือถามคำถามที่นี่... (เช่น จัดตาราง, แก้ปัญหาครูภาระน้อย, เพิ่มห้อง...)" autocomplete="off" />
+              placeholder="พิมพ์หรือกดไมค์พูดสั่งการ... (เช่น จัดตาราง, สถิติครู...)" autocomplete="off" />
+            <button type="button" class="ai-copilot-mic-btn" id="aiCopilotMicBtn" onclick="AI_COPILOT.toggleSpeechRecognition()" title="กดเพื่อพูดสั่งการด้วยเสียง">
+              <i class="fas fa-microphone"></i>
+            </button>
             <button type="submit" class="ai-copilot-send-btn" id="aiCopilotSendBtn" title="ส่งคำสั่ง">
               <i class="fas fa-paper-plane"></i>
             </button>
@@ -198,13 +416,14 @@ const AI_COPILOT = (() => {
     `;
 
     document.body.appendChild(container);
+    updateVoiceToggleBtn();
     addGreeting();
   }
 
   function addGreeting() {
     appendMessage('assistant', `
       <p>👋 สวัสดีครับ! ผมคือ <strong>EduSched AI Copilot</strong> ขับเคลื่อนด้วยขุมพลัง <strong>Groq LPU LLM</strong> ⚡</p>
-      <p>ผมพร้อมช่วย **สั่งการระบบ** และ **ให้คำปรึกษาเชิงลึก** ทันที:</p>
+      <p>ผมพร้อมช่วย **สั่งการระบบ** และ **ให้คำปรึกษาเชิงลึก** ทั้งแบบพิมพ์และเสียงพูดคุยทันที:</p>
       <ul>
         <li>⚡ <code>จัดตารางสอนให้หน่อย</code> (สั่งรัน Hybrid AI จัดตาราง 100%)</li>
         <li>🔍 <code>ตรวจสอบข้อขัดแย้งและวิธีแก้</code> (วิเคราะห์ห้องชน/ภาระครูพร้อมแนวทางแก้ไข)</li>
@@ -213,7 +432,7 @@ const AI_COPILOT = (() => {
         <li>🗑️ <code>ลบข้อมูลตารางสอน</code> (เปิดกล่องยืนยันการล้างตาราง)</li>
         <li>💡 <code>ถามคำถามทั่วไป เช่น กฎ สอศ., การเกลี่ยคาบสอน, ครูภาระน้อยไปทำอย่างไร</code></li>
       </ul>
-    `);
+    `, false /* do not auto-speak greeting */);
   }
 
   function toggle() {
@@ -224,6 +443,9 @@ const AI_COPILOT = (() => {
     if (_isOpen) {
       setTimeout(() => document.getElementById('aiCopilotInput')?.focus(), 150);
       scrollToBottom();
+    } else {
+      stopSpeaking();
+      stopListening();
     }
   }
 
@@ -237,9 +459,12 @@ const AI_COPILOT = (() => {
   function close() {
     _isOpen = false;
     document.getElementById('aiCopilotPanel')?.classList.add('hidden');
+    stopSpeaking();
+    stopListening();
   }
 
   function clearChat() {
+    stopSpeaking();
     _chatHistory = [];
     const box = document.getElementById('aiCopilotMessages');
     if (box) box.innerHTML = '';
@@ -251,21 +476,34 @@ const AI_COPILOT = (() => {
     if (box) box.scrollTop = box.scrollHeight;
   }
 
-  function appendMessage(role, html) {
+  function appendMessage(role, html, autoSpeak = false) {
     _chatHistory.push({ role, content: html, time: new Date() });
     const box = document.getElementById('aiCopilotMessages');
     if (!box) return;
 
     const msgEl = document.createElement('div');
     msgEl.className = `copilot-msg ${role}`;
+    
+    const speakBtnHtml = role === 'assistant'
+      ? `<div class="copilot-msg-footer"><button type="button" class="copilot-speak-btn" onclick="AI_COPILOT.speakThisMessage(this)" title="ฟังเสียงอ่าน"><i class="fas fa-volume-high"></i> <span>ฟังเสียง</span></button></div>`
+      : '';
+
     msgEl.innerHTML = `
       <div class="copilot-msg-avatar">
         <i class="fas ${role === 'assistant' ? 'fa-robot' : 'fa-user'}"></i>
       </div>
-      <div class="copilot-msg-content">${html}</div>
+      <div class="copilot-msg-content">
+        ${html}
+        ${speakBtnHtml}
+      </div>
     `;
     box.appendChild(msgEl);
     scrollToBottom();
+
+    if (role === 'assistant' && autoSpeak && _voiceEnabled) {
+      const speakBtn = msgEl.querySelector('.copilot-speak-btn');
+      speakText(html, speakBtn);
+    }
   }
 
   function sendQuickPrompt(text) {
@@ -286,6 +524,7 @@ const AI_COPILOT = (() => {
     if (!query) return;
 
     input.value = '';
+    stopSpeaking();
     appendMessage('user', escapeHtml(query));
 
     _isProcessing = true;
@@ -316,10 +555,10 @@ const AI_COPILOT = (() => {
     try {
       const responseHtml = await processCommand(query);
       document.getElementById(typingId)?.remove();
-      appendMessage('assistant', responseHtml);
+      appendMessage('assistant', responseHtml, true);
     } catch (err) {
       document.getElementById(typingId)?.remove();
-      appendMessage('assistant', `<p style="color:#f87171;"><i class="fas fa-triangle-exclamation"></i> เกิดข้อผิดพลาดในการประมวลผล: ${err.message}</p>`);
+      appendMessage('assistant', `<p style="color:#f87171;"><i class="fas fa-triangle-exclamation"></i> เกิดข้อผิดพลาดในการประมวลผล: ${err.message}</p>`, true);
     } finally {
       _isProcessing = false;
       if (sendBtn) { sendBtn.disabled = false; sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>'; }
@@ -759,7 +998,12 @@ const AI_COPILOT = (() => {
     sendQuickPrompt,
     handleSubmit,
     processCommand,
-    callGroqLLM
+    callGroqLLM,
+    speakText,
+    speakThisMessage,
+    stopSpeaking,
+    toggleVoice,
+    toggleSpeechRecognition
   };
 })();
 
