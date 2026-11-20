@@ -660,7 +660,7 @@ const SCHED = (() => {
         } else {
           const coveredBy = schedules.find(s => (s.day === day || s.day === dayShort) && s.period_start < p && s.period_end >= p);
           if (!coveredBy) {
-            html += `<td class="empty-slot" onclick="SCHED.quickAdd('${day}', ${p})"><span class="empty-add-hint"><i class="fas fa-plus"></i></span></td>`;
+            html += `<td class="empty-slot" data-day="${day}" data-period="${p}" ondragover="SCHED.handleDragOver(event, '${day}', ${p})" ondragleave="SCHED.handleDragLeave(event)" ondrop="SCHED.handleDrop(event, '${day}', ${p})" onclick="SCHED.quickAdd('${day}', ${p})"><span class="empty-add-hint"><i class="fas fa-plus"></i></span></td>`;
           }
           p++;
         }
@@ -686,7 +686,7 @@ const SCHED = (() => {
         } else {
           const coveredBy = schedules.find(s => (s.day === day || s.day === dayShort) && s.period_start < p && s.period_end >= p);
           if (!coveredBy) {
-            html += `<td class="empty-slot" onclick="SCHED.quickAdd('${day}', ${p})"><span class="empty-add-hint"><i class="fas fa-plus"></i></span></td>`;
+            html += `<td class="empty-slot" data-day="${day}" data-period="${p}" ondragover="SCHED.handleDragOver(event, '${day}', ${p})" ondragleave="SCHED.handleDragLeave(event)" ondrop="SCHED.handleDrop(event, '${day}', ${p})" onclick="SCHED.quickAdd('${day}', ${p})"><span class="empty-add-hint"><i class="fas fa-plus"></i></span></td>`;
           }
           p++;
         }
@@ -713,9 +713,11 @@ const SCHED = (() => {
       line3 = slot.teacher_id || '';
     }
 
+    const dragAttrs = `draggable="true" ondragstart="SCHED.handleDragStart(event, ${slot.id})" ondragend="SCHED.handleDragEnd(event)" ondragover="SCHED.handleDragOver(event, '${slot.day}', ${slot.period_start})" ondragleave="SCHED.handleDragLeave(event)" ondrop="SCHED.handleDrop(event, '${slot.day}', ${slot.period_start})" data-slot-id="${slot.id}" data-day="${slot.day}" data-period="${slot.period_start}"`;
+
     if (isHomeroom) {
       return `
-        <td colspan="${colspan}" class="occupied-slot" onclick="SCHED.openSlotDetail(${slot.id})" title="กิจกรรมแถว/แนะแนว">
+        <td colspan="${colspan}" class="occupied-slot" ${dragAttrs} onclick="SCHED.openSlotDetail(${slot.id})" title="กิจกรรมแถว/แนะแนว (ลากวางเพื่อย้ายคาบ)">
           <div class="slot-inner">
             <div class="slot-course-code slot-homeroom-text">HOMEROOM</div>
             <div class="slot-room-code">${line2}</div>
@@ -725,7 +727,7 @@ const SCHED = (() => {
     }
 
     return `
-      <td colspan="${colspan}" class="occupied-slot" onclick="SCHED.openSlotDetail(${slot.id})">
+      <td colspan="${colspan}" class="occupied-slot" ${dragAttrs} onclick="SCHED.openSlotDetail(${slot.id})" title="ลากเพื่อย้ายคาบ หรือคลิกเพื่อดูรายละเอียด">
         <div class="slot-inner">
           <div class="slot-course-code">${line1}</div>
           <div class="slot-room-code">${line2}</div>
@@ -2402,6 +2404,313 @@ const SCHED = (() => {
     await loadAllData();
     render();
   }
+
+  // ── Drag & Drop Timetable Scheduling (ลากวางย้ายคาบพร้อมตรวจจับการชน) ──
+  let _draggedSlotId = null;
+  let _pendingMovePlan = null;
+
+  function handleDragStart(event, slotId) {
+    _draggedSlotId = slotId;
+    if (event.dataTransfer) {
+      event.dataTransfer.setData('text/plain', String(slotId));
+      event.dataTransfer.effectAllowed = 'move';
+    }
+    const cell = event.currentTarget;
+    if (cell) {
+      setTimeout(() => cell.classList.add('slot-is-dragging'), 0);
+    }
+  }
+
+  function handleDragEnd(event) {
+    document.querySelectorAll('.slot-is-dragging').forEach(el => el.classList.remove('slot-is-dragging'));
+    document.querySelectorAll('.drag-over-cell').forEach(el => el.classList.remove('drag-over-cell'));
+    _draggedSlotId = null;
+  }
+
+  function handleDragOver(event, day, period) {
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+    const cell = event.currentTarget;
+    if (cell && !cell.classList.contains('drag-over-cell')) {
+      document.querySelectorAll('.drag-over-cell').forEach(el => el.classList.remove('drag-over-cell'));
+      cell.classList.add('drag-over-cell');
+    }
+  }
+
+  function handleDragLeave(event) {
+    const cell = event.currentTarget;
+    if (cell) {
+      cell.classList.remove('drag-over-cell');
+    }
+  }
+
+  async function handleDrop(event, targetDay, targetPeriod) {
+    event.preventDefault();
+    document.querySelectorAll('.slot-is-dragging').forEach(el => el.classList.remove('slot-is-dragging'));
+    document.querySelectorAll('.drag-over-cell').forEach(el => el.classList.remove('drag-over-cell'));
+
+    const rawId = event.dataTransfer ? event.dataTransfer.getData('text/plain') : _draggedSlotId;
+    const slotId = parseInt(rawId || _draggedSlotId, 10);
+    if (!slotId) return;
+
+    const slot = _schedules.find(s => s.id === slotId);
+    if (!slot) return;
+
+    // ถ้าลากลงตำแหน่งเดิมเป๊ะ ไม่ต้องทำอะไร
+    if (slot.day === targetDay && slot.period_start === targetPeriod) {
+      return;
+    }
+
+    const dur = Math.max(1, (slot.period_end - slot.period_start + 1));
+    const newPeriodEnd = targetPeriod + dur - 1;
+
+    // 1. ตรวจสอบขอบเขตช่วงเวลา (Boundary Constraints)
+    if (targetPeriod <= 4 && newPeriodEnd > 4) {
+      showToast('warning', 'ไม่สามารถย้ายคาบได้', 'ไม่สามารถวางคาบเรียนข้ามช่วงพักกลางวัน (คาบ 5) ได้');
+      return;
+    }
+    if (newPeriodEnd > 11) {
+      showToast('warning', 'ไม่สามารถย้ายคาบได้', `คาบเรียนเกินช่วงเวลาทำการ (สิ้นสุดคาบที่ ${newPeriodEnd} เกินคาบ 11)`);
+      return;
+    }
+
+    // 2. วิเคราะห์ข้อขัดแย้ง (Collision & Conflict Audit)
+    const conflicts = checkMoveConflicts(slot, targetDay, targetPeriod, newPeriodEnd);
+
+    if (conflicts.length > 0) {
+      // ตรวจพบการชน -> แสดงกล่องแจ้งเตือนพร้อมรายละเอียด
+      _pendingMovePlan = {
+        slot,
+        targetDay,
+        targetPeriod,
+        newPeriodEnd,
+        conflicts
+      };
+      showDragConflictModal(_pendingMovePlan);
+    } else {
+      // ไม่มีข้อขัดแย้ง -> ดำเนินการย้ายคาบทันที
+      await executeMoveSlot(slot, targetDay, targetPeriod, newPeriodEnd);
+    }
+  }
+
+  function checkMoveConflicts(slot, targetDay, targetPeriod, newPeriodEnd) {
+    const conflicts = [];
+
+    // 1. ตรวจสอบครูชน (Teacher Conflict)
+    if (slot.teacher_id) {
+      const teacherClashes = _schedules.filter(s => {
+        if (s.id === slot.id) return false;
+        if (s.day !== targetDay || s.teacher_id !== slot.teacher_id) return false;
+        const overlap = Math.max(s.period_start, targetPeriod) <= Math.min(s.period_end, newPeriodEnd);
+        if (!overlap) return false;
+        const isShared = (s.subject_id === slot.subject_id && s.room_id === slot.room_id);
+        return !isShared;
+      });
+
+      teacherClashes.forEach(s => {
+        const tObj = _teachers.find(t => t.teacher_id === slot.teacher_id);
+        const sObj = _subjects.find(sub => sub.subject_id === s.subject_id);
+        const gObj = _groups.find(g => g.group_id === s.group_id);
+        conflicts.push({
+          type: 'ครูสอนซ้ำซ้อน',
+          icon: 'fa-user-tie',
+          title: `อาจารย์ ${tObj?.teacher_name || slot.teacher_id} มีตารางสอนซ้อน`,
+          detail: `ติดสอนวิชา "${sObj?.subject_name || s.subject_id}" ให้กลุ่ม "${gObj?.group_name || s.group_id}" ใน ${targetDay} คาบ ${s.period_start}-${s.period_end}`
+        });
+      });
+
+      // ตรวจสอบเวลาไม่สะดวกของครู
+      const t = _teachers.find(tch => tch.teacher_id === slot.teacher_id);
+      if (t && t.unavailable_time && t.unavailable_time !== 'ไม่มี') {
+        let unavail = {};
+        try { unavail = typeof t.unavailable_time === 'string' ? JSON.parse(t.unavailable_time) : t.unavailable_time; } catch (e) {}
+        const shortDay = targetDay.replace('วัน', '');
+        const unavailPeriods = unavail[shortDay] || unavail[targetDay];
+        if (Array.isArray(unavailPeriods)) {
+          for (let p = targetPeriod; p <= newPeriodEnd; p++) {
+            if (unavailPeriods.includes(p)) {
+              conflicts.push({
+                type: 'เวลาไม่สะดวกของครู',
+                icon: 'fa-calendar-xmark',
+                title: `อาจารย์ ${t.teacher_name || slot.teacher_id} ระบุเวลาไม่สะดวก`,
+                detail: `อาจารย์ได้กำหนดเวลาไม่สะดวกสอนใน ${targetDay} คาบ ${p}`
+              });
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    // 2. ตรวจสอบห้องเรียนชน (Room Conflict)
+    if (slot.room_id) {
+      const roomClashes = _schedules.filter(s => {
+        if (s.id === slot.id) return false;
+        if (s.day !== targetDay || s.room_id !== slot.room_id) return false;
+        const overlap = Math.max(s.period_start, targetPeriod) <= Math.min(s.period_end, newPeriodEnd);
+        if (!overlap) return false;
+        const isShared = (s.subject_id === slot.subject_id && s.teacher_id === slot.teacher_id);
+        return !isShared;
+      });
+
+      roomClashes.forEach(s => {
+        const rObj = _rooms.find(r => r.room_id === slot.room_id);
+        const gObj = _groups.find(g => g.group_id === s.group_id);
+        const sObj = _subjects.find(sub => sub.subject_id === s.subject_id);
+        conflicts.push({
+          type: 'ห้องเรียนชนกัน',
+          icon: 'fa-door-open',
+          title: `ห้อง ${rObj?.room_name || slot.room_id} ถูกใช้งานซ้อน`,
+          detail: `ห้องนี้มีวิชา "${sObj?.subject_name || s.subject_id}" ของกลุ่ม "${gObj?.group_name || s.group_id}" ใน ${targetDay} คาบ ${s.period_start}-${s.period_end}`
+        });
+      });
+    }
+
+    // 3. ตรวจสอบกลุ่มเรียนชน (Group Conflict)
+    if (slot.group_id) {
+      const groupClashes = _schedules.filter(s => {
+        if (s.id === slot.id) return false;
+        if (s.day !== targetDay) return false;
+        const isSameGroup = s.group_id === slot.group_id || (slot.group_id_2 && s.group_id === slot.group_id_2);
+        if (!isSameGroup) return false;
+        const overlap = Math.max(s.period_start, targetPeriod) <= Math.min(s.period_end, newPeriodEnd);
+        return overlap;
+      });
+
+      groupClashes.forEach(s => {
+        const gObj = _groups.find(g => g.group_id === slot.group_id);
+        const sObj = _subjects.find(sub => sub.subject_id === s.subject_id);
+        conflicts.push({
+          type: 'กลุ่มเรียนชนกัน',
+          icon: 'fa-users',
+          title: `กลุ่มเรียน ${gObj?.group_name || slot.group_id} มีเรียนวิชาอื่น`,
+          detail: `กลุ่มเรียนมีตารางเรียนวิชา "${sObj?.subject_name || s.subject_id}" ใน ${targetDay} คาบ ${s.period_start}-${s.period_end}`
+        });
+      });
+    }
+
+    return conflicts;
+  }
+
+  async function executeMoveSlot(slot, targetDay, targetPeriod, newPeriodEnd) {
+    try {
+      const oldDay = slot.day;
+      const oldStart = slot.period_start;
+      const oldEnd = slot.period_end;
+
+      // 1. บันทึกลงฐานข้อมูล Supabase
+      const { error } = await db
+        .from(TABLES.SCHEDULES)
+        .update({
+          day: targetDay,
+          period_start: targetPeriod,
+          period_end: newPeriodEnd
+        })
+        .eq('id', slot.id);
+
+      if (error) throw error;
+
+      // 2. อัปเดตในหน่วยความจำ
+      slot.day = targetDay;
+      slot.period_start = targetPeriod;
+      slot.period_end = newPeriodEnd;
+
+      // กรณีวิชาเรียนร่วม/คู่ขนาน (group_id_2) ให้ย้ายคู่ขนานตามไปด้วย
+      const parallelSlot = _schedules.find(s => 
+        s.id !== slot.id && 
+        s.subject_id === slot.subject_id && 
+        s.teacher_id === slot.teacher_id && 
+        s.room_id === slot.room_id && 
+        s.day === oldDay && 
+        s.period_start === oldStart
+      );
+      if (parallelSlot) {
+        parallelSlot.day = targetDay;
+        parallelSlot.period_start = targetPeriod;
+        parallelSlot.period_end = newPeriodEnd;
+        await db.from(TABLES.SCHEDULES).update({
+          day: targetDay,
+          period_start: targetPeriod,
+          period_end: newPeriodEnd
+        }).eq('id', parallelSlot.id);
+      }
+
+      // 3. วาดตารางใหม่และคำนวณข้อขัดแย้ง
+      filterAndRender();
+      calculateConflicts();
+      calculateKpis();
+
+      const subj = _subjects.find(s => s.subject_id === slot.subject_id);
+      showToast('success', 'ย้ายคาบเรียนสำเร็จ', `ย้ายวิชา ${subj?.subject_name || slot.subject_id} ไปยัง ${targetDay} คาบ ${targetPeriod}-${newPeriodEnd} เรียบร้อยแล้ว`);
+    } catch (err) {
+      console.error('Error moving slot:', err);
+      showToast('error', 'ย้ายคาบเรียนไม่สำเร็จ', err.message || 'โปรดลองใหม่อีกครั้ง');
+    }
+  }
+
+  function showDragConflictModal(plan) {
+    const modal = document.getElementById('dragConflictModal');
+    const infoEl = document.getElementById('dragConflictInfo');
+    const listEl = document.getElementById('dragConflictList');
+    if (!modal || !infoEl || !listEl) {
+      const conflictMsg = plan.conflicts.map(c => `• ${c.type}: ${c.detail}`).join('\n');
+      const proceed = confirm(`⚠️ ตรวจพบข้อขัดแย้งในการย้ายคาบเรียน:\n\n${conflictMsg}\n\nคุณต้องการยืนยันการย้ายต่อไปหรือไม่?`);
+      if (proceed) {
+        executeMoveSlot(plan.slot, plan.targetDay, plan.targetPeriod, plan.newPeriodEnd);
+      }
+      return;
+    }
+
+    const s = plan.slot;
+    const subj = _subjects.find(x => x.subject_id === s.subject_id);
+    const grp = _groups.find(x => x.group_id === s.group_id);
+    const tch = _teachers.find(x => x.teacher_id === s.teacher_id);
+    const rm = _rooms.find(x => x.room_id === s.room_id);
+
+    infoEl.innerHTML = `
+      <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+        <span style="font-weight:700; color:#f8fafc; font-size:14px;">${s.subject_id} - ${subj?.subject_name || ''}</span>
+        <span style="background:rgba(255,255,255,0.08); padding:2px 8px; border-radius:4px; color:#cbd5e1; font-size:11px;">${grp?.group_name || s.group_id}</span>
+      </div>
+      <div style="color:var(--text-secondary); font-size:12px; display:flex; flex-direction:column; gap:3px;">
+        <div><strong>ครูผู้สอน:</strong> ${tch?.teacher_name || s.teacher_id} &nbsp;|&nbsp; <strong>ห้องเรียน:</strong> ${rm?.room_name || s.room_id}</div>
+        <div style="color:#fbbf24; margin-top:2px;">
+          <i class="fas fa-arrow-right"></i> ย้ายจาก: <strong>${s.day} คาบ ${s.period_start}-${s.period_end}</strong>
+          ➔ ไปเป็น: <strong>${plan.targetDay} คาบ ${plan.targetPeriod}-${plan.newPeriodEnd}</strong>
+        </div>
+      </div>
+    `;
+
+    listEl.innerHTML = plan.conflicts.map(c => `
+      <div style="padding:10px 12px; border-radius:8px; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.22); display:flex; gap:10px; align-items:flex-start;">
+        <div style="width:28px; height:28px; border-radius:6px; background:rgba(239,68,68,0.2); display:flex; align-items:center; justify-content:center; color:#f87171; flex-shrink:0; margin-top:2px;">
+          <i class="fas ${c.icon}"></i>
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:12.5px; font-weight:700; color:#fca5a5; margin-bottom:2px;">${c.title}</div>
+          <div style="font-size:12px; color:#e2e8f0; opacity:0.9; line-height:1.4;">${c.detail}</div>
+        </div>
+      </div>
+    `).join('');
+
+    modal.classList.remove('hidden');
+  }
+
+  function closeDragConflictModal() {
+    const modal = document.getElementById('dragConflictModal');
+    if (modal) modal.classList.add('hidden');
+    _pendingMovePlan = null;
+  }
+
+  async function confirmForceMoveSlot() {
+    if (!_pendingMovePlan) return;
+    const plan = _pendingMovePlan;
+    closeDragConflictModal();
+    await executeMoveSlot(plan.slot, plan.targetDay, plan.targetPeriod, plan.newPeriodEnd);
+  }
+
 
   function quickAdd(day, period) {
     openAddModal(day, period);
@@ -4161,6 +4470,13 @@ const SCHED = (() => {
     closeAddModal,
     saveManualSlot,
     quickAdd,
+    handleDragStart,
+    handleDragEnd,
+    handleDragOver,
+    handleDragLeave,
+    handleDrop,
+    closeDragConflictModal,
+    confirmForceMoveSlot,
     openSlotDetail,
     closeSlotDetail,
     deleteActiveSlot,

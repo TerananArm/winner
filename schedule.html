@@ -778,6 +778,40 @@
     </div>
   </div>
 
+  <!-- Modal: Drag & Drop Conflict Warning (แจ้งเตือนคาบชนเมื่อเลื่อนลากวาง) -->
+  <div class="modal-overlay hidden" id="dragConflictModal">
+    <div class="modal" style="max-width: 520px; text-align: left; border: 1px solid rgba(239, 68, 68, 0.4); box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
+      <div class="modal-header" style="border-bottom: 1px solid rgba(239, 68, 68, 0.2); padding-bottom: 14px;">
+        <div class="modal-title" style="color: #f87171; display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 700;">
+          <i class="fas fa-triangle-exclamation" style="font-size: 20px;"></i>
+          <span>ตรวจพบข้อขัดแย้งในการย้ายคาบเรียน</span>
+        </div>
+        <button class="modal-close" onclick="SCHED.closeDragConflictModal()"><i class="fas fa-xmark"></i></button>
+      </div>
+      
+      <div style="margin: 16px 0;">
+        <div id="dragConflictInfo" style="padding: 12px 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; font-size: 13px; line-height: 1.6; margin-bottom: 14px;">
+        </div>
+
+        <div style="font-size: 13px; font-weight: 600; color: #fca5a5; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+          <i class="fas fa-circle-exclamation"></i> รายละเอียดจุดที่เกิดการชน (Conflict Details):
+        </div>
+
+        <div id="dragConflictList" style="max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px;">
+        </div>
+      </div>
+
+      <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 14px;">
+        <button class="btn btn-ghost" onclick="SCHED.closeDragConflictModal()" style="font-weight: 600;">
+          <i class="fas fa-arrow-rotate-left"></i> ยกเลิก (ไม่ย้าย)
+        </button>
+        <button class="btn btn-danger" id="btnConfirmDragConflict" onclick="SCHED.confirmForceMoveSlot()" style="background: #dc2626; border-color: #ef4444; color: #fff; font-weight: 600;">
+          <i class="fas fa-triangle-exclamation"></i> ยืนยันย้ายต่อไป (ยอมรับการชน)
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Container -->
   <div class="toast-container" id="toastContainer"></div>
 
