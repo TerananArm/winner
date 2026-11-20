@@ -1201,31 +1201,85 @@ const SCHED = (() => {
       }, 0);
     }
 
-    // ── Helper: Department Teacher Mapping (เกณฑ์ 3.5.1 & Teacher Load Rebalancing) ──
-  function getQualifiedTeachers(subjectId) {
-    const sId = String(subjectId || '').trim();
-    // 1. หมวดวิชาสามัญ / ภาษา (รหัส 20000, 30000)
-    if (sId.startsWith('20000') || sId.startsWith('30000')) {
-      const samarn = _teachers.filter(t => ['T01', 'T02', 'T03', 'T04', 'T05', 'T06'].includes(t.teacher_id));
-      if (samarn.length > 0) return samarn;
+    // ── Helper: Dynamic Department & Qualified Teacher Mapping ──
+    // ไม่ Hardcode รหัสครู คัดกรองจาก Department/Major และ Teaching Loads จริงในฐานข้อมูล
+    function getSubjectDepartment(subjectId) {
+      const sId = String(subjectId || '').trim();
+      if (sId.startsWith('20101') || sId.startsWith('20102') || sId.startsWith('30101') || sId.startsWith('30102')) {
+        return 'auto'; // ช่างยนต์
+      }
+      if (sId.startsWith('20104') || sId.startsWith('20105') || sId.startsWith('30104') || sId.startsWith('30105')) {
+        return 'elec'; // ไฟฟ้า/อิเล็กทรอนิกส์
+      }
+      if (sId.startsWith('20204') || sId.startsWith('20206') || sId.startsWith('30204') || sId.startsWith('30206') || sId.startsWith('20901') || sId.startsWith('30901')) {
+        return 'com'; // คอมพิวเตอร์/เทคโนโลยีสารสนเทศ
+      }
+      if (sId.startsWith('20000') || sId.startsWith('30000')) {
+        return 'general'; // หมวดสามัญ/พื้นฐาน
+      }
+      return 'other';
     }
-    // 2. หมวดช่างยนต์ (รหัส 20101, 20102, 30101, 30102)
-    if (sId.startsWith('20101') || sId.startsWith('20102') || sId.startsWith('30101') || sId.startsWith('30102')) {
-      const autoTch = _teachers.filter(t => ['T07', 'T08', 'T09', 'T10'].includes(t.teacher_id));
-      if (autoTch.length > 0) return autoTch;
+
+    function getTeacherDepartments(teacher) {
+      const depts = new Set();
+      if (!teacher) return depts;
+
+      // 1. ตรวจสอบฟิลด์ department / major / role ในข้อมูลอาจารย์โดยตรง (ถ้ามีระบุในฐานข้อมูล)
+      const deptStr = String(teacher.department || teacher.major || teacher.role || '').toLowerCase();
+      if (deptStr.includes('ยนต์') || deptStr.includes('auto')) depts.add('auto');
+      if (deptStr.includes('ไฟ') || deptStr.includes('elec')) depts.add('elec');
+      if (deptStr.includes('คอม') || deptStr.includes('com') || deptStr.includes('สารสนเทศ') || deptStr.includes('it')) depts.add('com');
+      if (deptStr.includes('สามัญ') || deptStr.includes('ทั่วไป') || deptStr.includes('ภาษา') || deptStr.includes('general') || deptStr.includes('วิทย์') || deptStr.includes('คณิต')) depts.add('general');
+
+      // 2. วิเคราะห์จากประวัติและภาระงานสอนจริงใน _teachingLoads
+      if (Array.isArray(_teachingLoads)) {
+        for (const tl of _teachingLoads) {
+          if (tl.teacher_id === teacher.teacher_id) {
+            const d = getSubjectDepartment(tl.subject_id);
+            if (d !== 'other') depts.add(d);
+          }
+        }
+      }
+      return depts;
     }
-    // 3. หมวดช่างไฟฟ้า / อิเล็กทรอนิกส์ (รหัส 20104, 20105, 30104, 30105)
-    if (sId.startsWith('20104') || sId.startsWith('20105') || sId.startsWith('30104') || sId.startsWith('30105')) {
-      const elecTch = _teachers.filter(t => ['T11', 'T12', 'T13', 'T14'].includes(t.teacher_id));
-      if (elecTch.length > 0) return elecTch;
+
+    function getQualifiedTeachers(subjectId) {
+      const sId = String(subjectId || '').trim();
+      if (!sId || !_teachers || _teachers.length === 0) return _teachers || [];
+
+      // 1. ครูที่ได้รับมอบหมายรายวิชานี้โดยตรงใน _teachingLoads
+      const directTeachers = (_teachingLoads || [])
+        .filter(tl => tl.subject_id === sId && tl.teacher_id)
+        .map(tl => teacherById.get(tl.teacher_id))
+        .filter(Boolean);
+
+      // 2. ครูในหมวดวิชา/แผนกเดียวกัน (Department / Major Matching)
+      const targetDept = getSubjectDepartment(sId);
+      const sameDeptTeachers = _teachers.filter(t => {
+        if (targetDept === 'other') return false;
+        return getTeacherDepartments(t).has(targetDept);
+      });
+
+      // 3. ครูในกลุ่มวิชาชีพช่างอุตสาหกรรมร่วม (ช่างยนต์ และ ไฟฟ้า ช่วยสนับสนุนพื้นฐานวิชาช่างได้)
+      let clusterTeachers = [];
+      if (targetDept === 'auto' || targetDept === 'elec') {
+        clusterTeachers = _teachers.filter(t => {
+          const d = getTeacherDepartments(t);
+          return d.has('auto') || d.has('elec');
+        });
+      }
+
+      const seen = new Set();
+      const result = [];
+      [...directTeachers, ...sameDeptTeachers, ...clusterTeachers, ..._teachers].forEach(t => {
+        if (t && !seen.has(t.teacher_id)) {
+          seen.add(t.teacher_id);
+          result.push(t);
+        }
+      });
+
+      return result.length > 0 ? result : _teachers;
     }
-    // 4. หมวดคอมพิวเตอร์ / สารสนเทศ (รหัส 20204, 20206, 30204, 30206, 20901, 30901)
-    if (sId.startsWith('20204') || sId.startsWith('20206') || sId.startsWith('30204') || sId.startsWith('30206') || sId.startsWith('20901') || sId.startsWith('30901')) {
-      const comTch = _teachers.filter(t => ['T15', 'T16', 'T17', 'T18', 'T19', 'T20'].includes(t.teacher_id));
-      if (comTch.length > 0) return comTch;
-    }
-    return _teachers;
-  }
 
   // ── Candidate Daytime-Focused Slots (ห้ามมีคาบค่ำ 9-11 เด็ดขาดสำหรับภาคปกติ) ──
   function getStrictDaytimeSlots() {
@@ -1402,8 +1456,8 @@ const SCHED = (() => {
         b.teacher_id,
         ...qualified.map(t => t.teacher_id).filter(tid => tid !== b.teacher_id)
       ].sort((t1, t2) => {
-        const rem1 = (teacherById.get(t1)?.max_hours || 24) - (teacherHours.get(t1) || 0);
-        const rem2 = (teacherById.get(t2)?.max_hours || 24) - (teacherHours.get(t2) || 0);
+        const rem1 = (parseInt(teacherById.get(t1)?.max_hours, 10) || 20) - (teacherHours.get(t1) || 0);
+        const rem2 = (parseInt(teacherById.get(t2)?.max_hours, 10) || 20) - (teacherHours.get(t2) || 0);
         return rem2 - rem1;
       });
 
@@ -1642,8 +1696,8 @@ const SCHED = (() => {
               s2.teacher_id,
               ...qTeachers.map(t => t.teacher_id).filter(tid => tid !== s2.teacher_id)
             ].sort((t1, t2) => {
-              const rem1 = (teacherById.get(t1)?.max_hours || 24) - (teacherHours.get(t1) || 0);
-              const rem2 = (teacherById.get(t2)?.max_hours || 24) - (teacherHours.get(t2) || 0);
+              const rem1 = (parseInt(teacherById.get(t1)?.max_hours, 10) || 20) - (teacherHours.get(t1) || 0);
+              const rem2 = (parseInt(teacherById.get(t2)?.max_hours, 10) || 20) - (teacherHours.get(t2) || 0);
               return rem2 - rem1;
             });
 
@@ -1677,8 +1731,8 @@ const SCHED = (() => {
             // หากยังไม่เจอ ให้ขยายหาครูท่านอื่นที่ชั่วโมงว่างมากที่สุด
             if (!repaired) {
               const anyFreeTeachers = [..._teachers].sort((a, b) => {
-                const remA = (parseInt(a.max_hours, 10) || 24) - (teacherHours.get(a.teacher_id) || 0);
-                const remB = (parseInt(b.max_hours, 10) || 24) - (teacherHours.get(b.teacher_id) || 0);
+                const remA = (parseInt(a.max_hours, 10) || 20) - (teacherHours.get(a.teacher_id) || 0);
+                const remB = (parseInt(b.max_hours, 10) || 20) - (teacherHours.get(b.teacher_id) || 0);
                 return remB - remA;
               }).map(t => t.teacher_id);
 
@@ -1718,25 +1772,34 @@ const SCHED = (() => {
     }
 
     // ── Phase 4: Final Overload Rebalance (เกลี่ยชั่วโมงครูให้เหลือเกิน 0 คน 100%) ──
-    _teachers.forEach(t => {
-      const maxH = parseInt(t.max_hours, 10) || 24;
-      let curH = teacherHours.get(t.teacher_id) || 0;
+    // ไม่มีการ Hardcode รหัสครู คัดกรองจาก Department/Major และ max_hours จริงในฐานข้อมูล
+    for (let pass = 0; pass < 6; pass++) {
+      let anyRebalanced = false;
+      _teachers.forEach(t => {
+        const maxH = parseInt(t.max_hours, 10) || 20;
+        let curH = teacherHours.get(t.teacher_id) || 0;
 
-      if (curH > maxH) {
-        for (let i = placedSchedules.length - 1; i >= 0; i--) {
-          if (curH <= maxH) break;
-          const sched = placedSchedules[i];
-          if (sched.teacher_id !== t.teacher_id || sched.subject_id === 'HOMEROOM') continue;
+        if (curH > maxH) {
+          for (let i = placedSchedules.length - 1; i >= 0; i--) {
+            if (curH <= maxH) break;
+            const sched = placedSchedules[i];
+            if (sched.teacher_id !== t.teacher_id || sched.subject_id === 'HOMEROOM') continue;
 
-          const dur = sched.period_end - sched.period_start + 1;
-          const qTeachers = getQualifiedTeachers(sched.subject_id);
+            const dur = sched.period_end - sched.period_start + 1;
+            const qTeachers = getQualifiedTeachers(sched.subject_id);
 
-          for (const cand of qTeachers) {
-            if (cand.teacher_id === t.teacher_id) continue;
-            const candMax = parseInt(cand.max_hours, 10) || 24;
-            const candCur = teacherHours.get(cand.teacher_id) || 0;
+            // คัดกรองและจัดเรียงครูที่มีคุณสมบัติตามโควต้าชั่วโมงสอนคงเหลือจริง (max_hours - curH) มากที่สุด
+            const sortedCandidates = qTeachers
+              .filter(cand => cand.teacher_id !== t.teacher_id)
+              .map(cand => {
+                const candMax = parseInt(cand.max_hours, 10) || 20;
+                const candCur = teacherHours.get(cand.teacher_id) || 0;
+                return { cand, candMax, candCur, remaining: candMax - candCur };
+              })
+              .filter(c => c.remaining >= dur)
+              .sort((a, b) => b.remaining - a.remaining);
 
-            if (candCur + dur <= candMax) {
+            for (const { cand, candCur } of sortedCandidates) {
               let free = true;
               if (teacherUnavailableMap.has(cand.teacher_id)) {
                 const unavail = teacherUnavailableMap.get(cand.teacher_id);
@@ -1748,6 +1811,8 @@ const SCHED = (() => {
                   }
                 }
               }
+              if (!free) continue;
+
               for (let p = sched.period_start; p <= sched.period_end; p++) {
                 if (occupiedTeacher.has(`${sched.day}_${p}_${cand.teacher_id}`)) {
                   free = false;
@@ -1764,13 +1829,15 @@ const SCHED = (() => {
                 teacherHours.set(cand.teacher_id, candCur + dur);
                 curH -= dur;
                 sched.teacher_id = cand.teacher_id;
+                anyRebalanced = true;
                 break;
               }
             }
           }
         }
-      }
-    });
+      });
+      if (!anyRebalanced) break;
+    }
 
     // สร้างตารางบันทึกขั้นสุดท้าย (รวมกลุ่มเรียนคู่ขนาน)
     const finalCleanBatch = [];
