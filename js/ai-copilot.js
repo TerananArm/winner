@@ -44,23 +44,57 @@ const AI_COPILOT = (() => {
     if (!html) return '';
     const tmp = document.createElement('div');
     tmp.innerHTML = html;
-    tmp.querySelectorAll('button, svg, script, style, .badge, .copilot-chip, .copilot-action-card, .status-badge').forEach(el => el.remove());
-    let text = tmp.innerText || tmp.textContent || '';
-    // Strip emojis
-    text = text.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '');
-    // Clean markdown symbols
+
+    // 1. นำองค์ประกอบที่ไม่ต้องอ่านออกเสียงออกทั้งหมด (เช่น รายการข้อย่อย, ตาราง, การ์ด, โค้ด, ปุ่ม)
+    tmp.querySelectorAll(
+      'button, svg, script, style, .badge, .copilot-chip, .copilot-action-card, .status-badge, table, pre, code, ul, ol, .copilot-msg-footer, [style*="display:none"]'
+    ).forEach(el => el.remove());
+
+    // 2. ดึงเฉพาะย่อหน้าหลักข้อความสำคัญ (First Key Paragraph)
+    const paragraphs = Array.from(tmp.querySelectorAll('p'))
+      .map(p => (p.innerText || p.textContent || '').replace(/\s+/g, ' ').trim())
+      .filter(t => t.length > 0);
+
+    let raw = '';
+    if (paragraphs.length > 0) {
+      raw = paragraphs[0];
+      // หากย่อหน้าแรกเป็นหัวข้อสั้นๆ (ลงท้ายด้วย : หรือสั้นกว่า 30 ตัวอักษร) ให้ดึงย่อหน้าที่สองมาร่วมด้วย
+      if ((raw.endsWith(':') || raw.length < 30) && paragraphs.length > 1) {
+        raw += ' ' + paragraphs[1];
+      }
+    } else {
+      raw = (tmp.innerText || tmp.textContent || '').replace(/\s+/g, ' ').trim();
+    }
+
+    // 3. กรอง Emojis, URLs และเครื่องหมาย Markdown ออก
+    let text = raw.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '');
+    text = text.replace(/https?:\/\/\S+/g, '');
     text = text.replace(/[*#`_~>]/g, ' ');
     text = text.replace(/\s+/g, ' ').trim();
-    // Keep speech natural and concise if response is too long
-    if (text.length > 360) {
-      const parts = text.match(/[^.!?\n]+[.!?\n]+/g) || [text];
-      let truncated = '';
-      for (const p of parts) {
-        if ((truncated + p).length <= 320) truncated += p + ' ';
-        else break;
+
+    // 4. สรุปให้สั้นกระชับ เน้นประเด็นสำคัญ (ไม่เกิน 95-105 ตัวอักษร จบใน 1-2 วรรคสั้นๆ)
+    if (text.length > 95) {
+      const sub = text.substring(0, 95);
+      const ends = [
+        sub.lastIndexOf('ครับ') !== -1 ? sub.lastIndexOf('ครับ') + 4 : -1,
+        sub.lastIndexOf('ค่ะ') !== -1 ? sub.lastIndexOf('ค่ะ') + 3 : -1,
+        sub.lastIndexOf('.') !== -1 ? sub.lastIndexOf('.') + 1 : -1,
+        sub.lastIndexOf('!') !== -1 ? sub.lastIndexOf('!') + 1 : -1,
+        sub.lastIndexOf('?') !== -1 ? sub.lastIndexOf('?') + 1 : -1
+      ];
+      const bestSentenceEnd = Math.max(...ends);
+
+      if (bestSentenceEnd > 25) {
+        text = sub.substring(0, bestSentenceEnd).trim();
+      } else {
+        const lastSpace = sub.lastIndexOf(' ');
+        text = (lastSpace > 35 ? sub.substring(0, lastSpace) : sub).trim();
+        if (!/(ครับ|ค่ะ|\.|\!)$/i.test(text)) {
+          text += ' ครับ';
+        }
       }
-      text = truncated.trim() || text.substring(0, 300) + '... ดูรายละเอียดเพิ่มเติมในแชทครับ';
     }
+
     return text;
   }
 
@@ -680,7 +714,7 @@ const AI_COPILOT = (() => {
         if (_voiceEnabled) {
           try {
             sessionStorage.setItem('edusched_pending_speech', JSON.stringify({
-              text: `ถึงหน้า ${navTarget.name} แล้วครับ ${navTarget.desc}`,
+              text: `ถึงหน้า ${navTarget.name} เรียบร้อยแล้วครับ`,
               html: `<p>🧭 <strong>ถึงหน้า ${navTarget.name} แล้วครับ!</strong></p><p>${navTarget.desc}</p>`,
               openPanel: true,
               time: Date.now()
