@@ -315,7 +315,8 @@ const AI_COPILOT = (() => {
     // ─────────────────────────────────────────────────────────
     if (/พิมพ์|ปริ้น|print|pdf/.test(text)) {
       if (typeof SCHED !== 'undefined' && typeof SCHED.printSchedule === 'function') {
-        setTimeout(() => SCHED.printSchedule(), 400);
+        close();
+        setTimeout(() => SCHED.printSchedule(), 350);
         return `<p>🖨️ <strong>เปิดหน้าต่างเตรียมพิมพ์ตารางสอน (Print Preview / Save PDF) เรียบร้อยครับ!</strong> ตารางได้รับการปรับขนาดพอดีหน้ากระดาษแนวนอน A4 แล้ว</p>`;
       }
     }

@@ -463,3 +463,20 @@
     opacity: 1;
   }
 }
+
+/* ── Print Styles: HIDE COMPLETELY in Print / PDF ── */
+@media print {
+  #ai-copilot-container,
+  #aiCopilotTrigger,
+  #aiCopilotPanel,
+  .ai-copilot-trigger,
+  .ai-copilot-panel,
+  .copilot-msg,
+  .copilot-chips-wrap,
+  .ai-copilot-footer {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+}

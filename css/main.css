@@ -922,3 +922,18 @@ body.sidebar-locked {
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
+
+/* ── Print Styles: Global Suppression of Floating Widgets ── */
+@media print {
+  #ai-copilot-container,
+  #aiCopilotTrigger,
+  #aiCopilotPanel,
+  .ai-copilot-trigger,
+  .ai-copilot-panel,
+  .toast-container {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+}

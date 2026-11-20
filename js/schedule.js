@@ -2383,6 +2383,10 @@ const SCHED = (() => {
       showToast('warning', 'กรุณาเลือกข้อมูล', 'กรุณาเลือกกลุ่มเรียน หรืออาจารย์ หรือห้องเรียน ก่อนสั่งพิมพ์ตาราง');
       return;
     }
+    // ปิดหน้าต่าง AI Copilot อัตโนมัติ เพื่อไม่ให้บังตารางในหน้าพิมพ์
+    if (typeof AI_COPILOT !== 'undefined' && typeof AI_COPILOT.close === 'function') {
+      AI_COPILOT.close();
+    }
     updatePrintHeader();
     window.print();
   }
