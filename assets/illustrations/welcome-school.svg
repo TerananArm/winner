@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" fill="none">
+  <defs>
+    <linearGradient id="wg1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fff" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#fff" stop-opacity="0.05"/>
+    </linearGradient>
+    <linearGradient id="wg2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fff" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#fff" stop-opacity="0.1"/>
+    </linearGradient>
+  </defs>
+  <!-- Building -->
+  <rect x="100" y="50" width="120" height="130" rx="8" fill="url(#wg1)" stroke="#fff" stroke-opacity="0.2" stroke-width="1"/>
+  <rect x="80" y="40" width="160" height="15" rx="4" fill="url(#wg1)"/>
+  <!-- Windows grid -->
+  <rect x="115" y="65" width="20" height="18" rx="3" fill="#fff" fill-opacity="0.25"/>
+  <rect x="145" y="65" width="20" height="18" rx="3" fill="#fff" fill-opacity="0.15"/>
+  <rect x="175" y="65" width="20" height="18" rx="3" fill="#fff" fill-opacity="0.3"/>
+  <rect x="115" y="93" width="20" height="18" rx="3" fill="#fff" fill-opacity="0.15"/>
+  <rect x="145" y="93" width="20" height="18" rx="3" fill="#fff" fill-opacity="0.3"/>
+  <rect x="175" y="93" width="20" height="18" rx="3" fill="#fff" fill-opacity="0.2"/>
+  <rect x="115" y="121" width="20" height="18" rx="3" fill="#fff" fill-opacity="0.3"/>
+  <rect x="145" y="121" width="20" height="18" rx="3" fill="#fff" fill-opacity="0.15"/>
+  <rect x="175" y="121" width="20" height="18" rx="3" fill="#fff" fill-opacity="0.25"/>
+  <!-- Door -->
+  <rect x="145" y="152" width="22" height="28" rx="4" fill="#fff" fill-opacity="0.2"/>
+  <!-- Flag -->
+  <line x1="160" y1="10" x2="160" y2="40" stroke="#fff" stroke-opacity="0.3" stroke-width="1.5"/>
+  <path d="M160 12h20v10h-20" fill="#fff" fill-opacity="0.2"/>
+  <!-- Graduation cap floating -->
+  <g transform="translate(250,30)" opacity="0.8">
+    <path d="M0 15L20 5L40 15L20 25Z" fill="url(#wg2)"/>
+    <line x1="20" y1="25" x2="20" y2="38" stroke="#fff" stroke-opacity="0.3" stroke-width="1"/>
+    <circle cx="20" cy="40" r="2" fill="#fff" fill-opacity="0.3"/>
+  </g>
+  <!-- Book floating -->
+  <g transform="translate(40,60)" opacity="0.6">
+    <rect x="0" y="0" width="25" height="30" rx="3" fill="url(#wg1)" stroke="#fff" stroke-opacity="0.15"/>
+    <line x1="5" y1="8" x2="20" y2="8" stroke="#fff" stroke-opacity="0.2" stroke-width="1"/>
+    <line x1="5" y1="13" x2="17" y2="13" stroke="#fff" stroke-opacity="0.15" stroke-width="1"/>
+    <line x1="5" y1="18" x2="19" y2="18" stroke="#fff" stroke-opacity="0.1" stroke-width="1"/>
+  </g>
+  <!-- AI sparkle -->
+  <g transform="translate(260,100)" opacity="0.7">
+    <path d="M10 0L12 8L20 10L12 12L10 20L8 12L0 10L8 8Z" fill="#fff" fill-opacity="0.3"/>
+  </g>
+  <!-- Small sparkles -->
+  <circle cx="70" cy="140" r="2" fill="#fff" fill-opacity="0.3"/>
+  <circle cx="280" cy="160" r="1.5" fill="#fff" fill-opacity="0.25"/>
+  <circle cx="50" cy="30" r="1.5" fill="#fff" fill-opacity="0.2"/>
+</svg>

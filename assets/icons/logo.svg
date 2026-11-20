@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <defs>
+    <linearGradient id="lg1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="50%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#22d3ee"/>
+    </linearGradient>
+  </defs>
+  <!-- Main graduation cap -->
+  <path d="M24 6L4 16l20 10 20-10L24 6z" fill="url(#lg1)" opacity="0.9"/>
+  <path d="M10 19v10c0 4 6.3 7 14 7s14-3 14-7V19" stroke="url(#lg1)" stroke-width="2" fill="none"/>
+  <line x1="40" y1="16" x2="40" y2="32" stroke="url(#lg1)" stroke-width="2"/>
+  <circle cx="40" cy="34" r="2" fill="url(#lg1)" opacity="0.7"/>
+  <!-- AI sparkle -->
+  <g transform="translate(32,4)" opacity="0.8">
+    <path d="M4 0L5 3L8 4L5 5L4 8L3 5L0 4L3 3Z" fill="#22d3ee"/>
+  </g>
+  <g transform="translate(6,8)" opacity="0.5">
+    <path d="M3 0L3.7 2.3L6 3L3.7 3.7L3 6L2.3 3.7L0 3L2.3 2.3Z" fill="#818cf8"/>
+  </g>
+</svg>
