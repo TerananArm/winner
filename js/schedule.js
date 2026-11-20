@@ -1125,6 +1125,11 @@ const SCHED = (() => {
     if (parallelEl) parallelEl.textContent = `${parallelCount} วิชา`;
   }
 
+  function roomCapacityOf(r) {
+    const c = parseInt(r && r.capacity, 10);
+    return c > 0 ? c : 40;
+  }
+
   // ── Helper: Strict Room Matching by Department & Curriculum (เกณฑ์ 3.5.4 & Strict Room Matching) ──
   function getStrictCandidateRooms(subjectId, isLab, requiredSeats) {
     const sId = String(subjectId || '').trim();
