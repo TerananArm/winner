@@ -25,6 +25,8 @@ const AI_COPILOT = (() => {
   let _activeSpeakBtn = null;
   let _recognition = null;
   let _isListening = false;
+  let _lastSpokenText = '';
+  let _lastSpokenHtml = '';
 
   function getThaiVoice() {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null;
@@ -90,6 +92,9 @@ const AI_COPILOT = (() => {
     const clean = cleanTextForSpeech(htmlOrText);
     if (!clean) return;
 
+    _lastSpokenText = clean;
+    _lastSpokenHtml = htmlOrText;
+
     const utterance = new SpeechSynthesisUtterance(clean);
     utterance.lang = 'th-TH';
     utterance.rate = 1.05;
@@ -104,8 +109,16 @@ const AI_COPILOT = (() => {
       btnEl.innerHTML = '<i class="fas fa-stop"></i> <span>หยุดพูด</span>';
     }
 
-    utterance.onend = () => { stopSpeaking(); };
-    utterance.onerror = () => { stopSpeaking(); };
+    utterance.onend = () => { 
+      _lastSpokenText = '';
+      _lastSpokenHtml = '';
+      stopSpeaking(); 
+    };
+    utterance.onerror = () => { 
+      _lastSpokenText = '';
+      _lastSpokenHtml = '';
+      stopSpeaking(); 
+    };
 
     _currentUtterance = utterance;
     window.speechSynthesis.speak(utterance);
@@ -347,6 +360,33 @@ const AI_COPILOT = (() => {
     }
   }
 
+  // ── Preserve & Resume Speech Across Pages ──────────────────
+  function checkAndResumePendingSpeech() {
+    if (typeof window === 'undefined' || typeof sessionStorage === 'undefined') return;
+    try {
+      const saved = sessionStorage.getItem('edusched_pending_speech');
+      if (!saved) return;
+      sessionStorage.removeItem('edusched_pending_speech');
+      const data = JSON.parse(saved);
+      // Resume if saved within last 10 seconds
+      if (data && data.text && (Date.now() - (data.time || 0) < 10000)) {
+        if (data.openPanel) {
+          open();
+          if (data.html) {
+            appendMessage('assistant', data.html, false);
+          }
+        }
+        setTimeout(() => {
+          const lastAssistantMsg = document.querySelector('.copilot-msg.assistant:last-child');
+          const speakBtn = lastAssistantMsg?.querySelector('.copilot-speak-btn');
+          speakText(data.text, speakBtn);
+        }, 450);
+      }
+    } catch (e) {
+      console.warn('checkAndResumePendingSpeech error:', e);
+    }
+  }
+
   // ── Initialize Copilot Widget on DOM Ready ─────────────────
   function init() {
     handleUrlParams();
@@ -418,6 +458,7 @@ const AI_COPILOT = (() => {
     document.body.appendChild(container);
     updateVoiceToggleBtn();
     addGreeting();
+    checkAndResumePendingSpeech();
   }
 
   function addGreeting() {
@@ -636,6 +677,17 @@ const AI_COPILOT = (() => {
           ? `${navTarget.file}?tab=form` 
           : (navTarget.action === 'add' ? `${navTarget.file}?action=add` : navTarget.file);
 
+        if (_voiceEnabled) {
+          try {
+            sessionStorage.setItem('edusched_pending_speech', JSON.stringify({
+              text: `ถึงหน้า ${navTarget.name} แล้วครับ ${navTarget.desc}`,
+              html: `<p>🧭 <strong>ถึงหน้า ${navTarget.name} แล้วครับ!</strong></p><p>${navTarget.desc}</p>`,
+              openPanel: true,
+              time: Date.now()
+            }));
+          } catch (e) {}
+        }
+
         setTimeout(() => {
           if (typeof window !== 'undefined' && window.location) {
             window.location.href = targetUrl;
@@ -700,6 +752,17 @@ const AI_COPILOT = (() => {
           </div>
         `;
       } else {
+        if (_voiceEnabled) {
+          try {
+            sessionStorage.setItem('edusched_pending_speech', JSON.stringify({
+              text: 'ถึงหน้าจัดการตารางสอนแล้วครับ กำลังเริ่มประมวลผลจัดตารางแบบ Zero-Collision ทันทีครับ',
+              html: '<p>🚀 <strong>ถึงหน้าจัดการตารางสอนแล้วครับ!</strong> กำลังเริ่มประมวลผลจัดตารางแบบ Zero-Collision ทันที...</p>',
+              openPanel: true,
+              time: Date.now()
+            }));
+          } catch (e) {}
+        }
+
         setTimeout(() => {
           if (typeof window !== 'undefined' && window.location) {
             window.location.href = 'schedule.html?action=auto';
@@ -1009,4 +1072,44 @@ const AI_COPILOT = (() => {
 
 if (typeof window !== 'undefined') {
   window.AI_COPILOT = AI_COPILOT;
+
+  // ── Preserve Speech Across Page Transitions ─────────────────
+  document.addEventListener('click', (e) => {
+    const link = e.target.closest('a[href]');
+    if (!link) return;
+    const href = link.getAttribute('href');
+    if (href && !href.startsWith('http') && !href.startsWith('#') && !href.startsWith('javascript:')) {
+      if ('speechSynthesis' in window && window.speechSynthesis.speaking) {
+        const lastMsg = document.querySelector('.copilot-msg.assistant:last-child');
+        const text = lastMsg?.innerText || '';
+        if (text) {
+          try {
+            sessionStorage.setItem('edusched_pending_speech', JSON.stringify({
+              text: text,
+              html: lastMsg?.querySelector('.copilot-msg-content')?.innerHTML || '',
+              openPanel: true,
+              time: Date.now()
+            }));
+          } catch (err) {}
+        }
+      }
+    }
+  }, true);
+
+  window.addEventListener('beforeunload', () => {
+    if ('speechSynthesis' in window && window.speechSynthesis.speaking) {
+      const lastMsg = document.querySelector('.copilot-msg.assistant:last-child');
+      const text = lastMsg?.innerText || '';
+      if (text) {
+        try {
+          sessionStorage.setItem('edusched_pending_speech', JSON.stringify({
+            text: text,
+            html: lastMsg?.querySelector('.copilot-msg-content')?.innerHTML || '',
+            openPanel: true,
+            time: Date.now()
+          }));
+        } catch (err) {}
+      }
+    }
+  });
 }
