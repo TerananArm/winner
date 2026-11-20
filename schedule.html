@@ -14,7 +14,6 @@
   <link rel="stylesheet" href="css/schedule.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 
 <body>
@@ -168,14 +167,9 @@
               <i class="fas fa-print"></i> พิมพ์
             </button>
 
-            <!-- ส่งออก PDF -->
-            <button class="sched-action-btn btn-sched-pdf" onclick="SCHED.exportPDF()" title="ส่งออกตารางเป็นไฟล์ PDF โดยตรง" style="background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.4); color: #fca5a5;">
-              <i class="fas fa-file-pdf"></i> PDF
-            </button>
-
             <!-- ส่งออก Excel -->
             <button class="sched-action-btn btn-sched-export" onclick="SCHED.exportExcel()" title="ส่งออกตารางเป็น Excel">
-              <i class="fas fa-file-excel"></i> Excel
+              <i class="fas fa-file-excel"></i> ส่งออก
             </button>
 
             <!-- นำเข้า Excel -->
@@ -208,7 +202,6 @@
             <button class="btn btn-ghost btn-sm" onclick="SCHED.openBenchmarkModal()"><i class="fas fa-chart-column"></i> Benchmark</button>
             <button class="btn btn-ghost btn-sm" onclick="SCHED.openStressTestModal()"><i class="fas fa-bolt"></i> Stress Test</button>
             <button class="btn btn-ghost btn-sm" onclick="SCHED.openPresentationModal()"><i class="fas fa-chalkboard-user"></i> โหมดนำเสนอ</button>
-            <button class="btn btn-ghost btn-sm" onclick="SCHED.exportPDF()"><i class="fas fa-file-pdf" style="color:#ef4444;"></i> ส่งออก PDF</button>
             <button class="btn btn-ghost btn-sm" onclick="SCHED.exportCSV()"><i class="fas fa-file-csv"></i> CSV</button>
             <button class="btn btn-ghost btn-sm" onclick="SCHED.exportICS()"><i class="fas fa-calendar-plus"></i> ปฏิทิน (.ics)</button>
             <button class="btn btn-ghost btn-sm" onclick="SCHED.openMasterModal()"><i class="fas fa-table-cells-large"></i> ตารางสรุปรวม</button>

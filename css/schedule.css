@@ -118,6 +118,9 @@
   justify-content: center;
   gap: 7px;
   height: 38px;
+  min-width: 88px;
+  flex-shrink: 0;
+  box-sizing: border-box;
   padding: 0 16px;
   border-radius: 10px;
   font-size: 13px;
@@ -1264,7 +1267,7 @@
    Guarantees 100% width fit, NO overflow, NO clipping, NO stretch
    ============================================================ */
 @page {
-  size: A4 landscape;
+  size: 297mm 210mm landscape;
   margin: 6mm 8mm;
 }
 
@@ -1278,13 +1281,18 @@
   }
 
   html, body {
-    width: 100% !important;
-    height: auto !important;
+    width: 281mm !important;
+    height: 196mm !important;
+    max-width: 281mm !important;
+    max-height: 196mm !important;
     margin: 0 !important;
     padding: 0 !important;
     background: #ffffff !important;
     color: #000000 !important;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Sarabun", "Segoe UI", sans-serif !important;
+    overflow: hidden !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
   }
 
   /* Hide all UI Chrome */
@@ -1424,11 +1432,14 @@
     max-width: 100% !important;
     table-layout: fixed !important;
     border-collapse: collapse !important;
-    height: 190mm !important;
-    border: 3px solid #000000 !important;
+    height: 180mm !important;
+    max-height: 182mm !important;
+    border: 2.5px solid #000000 !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
-    margin: 0 !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+    margin: 0 auto !important;
   }
 
   /* Exact Column Width Percentages totaling 100% */
