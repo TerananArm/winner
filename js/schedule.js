@@ -21,6 +21,7 @@ const SCHED = (() => {
 
   let _activeSlotDetail = null;
   let _lastUnplacedBlocks = [];
+  let _lastAuditHash = 'a7f9c2e1';
   let _lastAuditData = {
     totalChecked: 0,
     teacherConflicts: [],
@@ -919,20 +920,20 @@ const SCHED = (() => {
     const totalConflicts = teacherConflicts.length + roomConflicts.length + groupConflicts.length + overloadConflicts.length;
 
     // Generate Deterministic Audit Proof Hash (Rubric 3.5.4 ข้อ 5: ความโปร่งใสและตรวจสอบย้อนกลับได้)
+    const fingerprint = _schedules
+      .map(s => `${s.group_id}|${s.day}|${s.period_start}-${s.period_end}|${s.subject_id}|${s.teacher_id}|${s.room_id}`)
+      .sort()
+      .join(';');
+    let fnv = 0x811c9dc5; // FNV-1a 32-bit
+    for (let i = 0; i < fingerprint.length; i++) {
+      fnv ^= fingerprint.charCodeAt(i);
+      fnv = Math.imul(fnv, 0x01000193) >>> 0;
+    }
+    _lastAuditHash = (fnv >>> 0).toString(16).padStart(8, '0');
+
     const hashEl = document.getElementById('sched-audit-hash');
     if (hashEl) {
-      // Fingerprint จริงจากเนื้อหาตาราง (เรียงลำดับก่อน hash เพื่อผลลัพธ์คงที่)
-      const fingerprint = _schedules
-        .map(s => `${s.group_id}|${s.day}|${s.period_start}-${s.period_end}|${s.subject_id}|${s.teacher_id}|${s.room_id}`)
-        .sort()
-        .join(';');
-      let fnv = 0x811c9dc5; // FNV-1a 32-bit
-      for (let i = 0; i < fingerprint.length; i++) {
-        fnv ^= fingerprint.charCodeAt(i);
-        fnv = Math.imul(fnv, 0x01000193) >>> 0;
-      }
-      const hexHash = (fnv >>> 0).toString(16).padStart(8, '0');
-      hashEl.textContent = `${hexHash} (${totalConflicts === 0 ? '0-Conflict Verified' : 'Conflict Detected'})`;
+      hashEl.textContent = `${_lastAuditHash} (${totalConflicts === 0 ? '0-Conflict Verified' : 'Conflict Detected'})`;
       hashEl.style.color = totalConflicts === 0 ? '#38bdf8' : '#f87171';
     }
 
