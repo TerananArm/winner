@@ -6,12 +6,6 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Export to window object for global availability
-window.db = db;
-window.SUPABASE_URL = SUPABASE_URL;
-window.SUPABASE_ANON_KEY = SUPABASE_ANON_KEY;
-window.TABLES = TABLES;
-
 const TABLES = {
   USERS:          'users',
   ROOMS:          'rooms',
@@ -23,6 +17,14 @@ const TABLES = {
   REGISTRATIONS:  'registrations',
   STUDENTS:       'students',
 };
+
+// Export to window object for global availability
+if (typeof window !== 'undefined') {
+  window.db = db;
+  window.SUPABASE_URL = SUPABASE_URL;
+  window.SUPABASE_ANON_KEY = SUPABASE_ANON_KEY;
+  window.TABLES = TABLES;
+}
 
 // ============================================================
 //  SQL SCHEMA — รันใน Supabase SQL Editor
