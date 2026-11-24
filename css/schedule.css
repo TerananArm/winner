@@ -2663,3 +2663,253 @@
   background: rgba(0, 0, 0, 0.06) !important;
   color: inherit !important;
 }
+
+/* ============================================================
+   MODAL STYLES (Split, Move, Merge, Conflict - Dark & Light)
+   ============================================================ */
+.modal-info-box {
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.6;
+  margin-bottom: 16px;
+  color: #f1f5f9;
+}
+.modal-info-box.danger {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.25);
+}
+.modal-info-box.success {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+.modal-info-title {
+  font-weight: 700;
+  color: #f8fafc;
+  font-size: 14.5px;
+  margin-bottom: 4px;
+}
+.modal-info-meta {
+  color: #cbd5e1;
+  font-size: 12.5px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.modal-info-meta strong {
+  color: #f1f5f9;
+}
+.modal-info-meta .time-old {
+  color: #38bdf8;
+  margin-top: 2px;
+}
+.modal-info-meta .time-target {
+  color: #34d399;
+}
+.modal-section-subtitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: #cbd5e1;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Modal Option Buttons */
+.modal-opt-btn {
+  width: 100%;
+  padding: 13px 16px;
+  border-radius: 10px;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.15s ease;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+.modal-opt-btn.indigo {
+  background: rgba(99, 102, 241, 0.12);
+  border: 1.5px solid rgba(99, 102, 241, 0.35);
+}
+.modal-opt-btn.indigo:hover {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: rgba(99, 102, 241, 0.55);
+}
+.modal-opt-btn.indigo .modal-opt-title {
+  font-weight: 700;
+  color: #ffffff;
+  font-size: 13.5px;
+}
+.modal-opt-btn.indigo .modal-opt-desc {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+.modal-opt-btn.indigo i {
+  color: #818cf8;
+}
+
+.modal-opt-btn.green {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1.5px solid rgba(16, 185, 129, 0.3);
+}
+.modal-opt-btn.green:hover {
+  background: rgba(16, 185, 129, 0.18);
+  border-color: rgba(16, 185, 129, 0.45);
+}
+.modal-opt-btn.green .modal-opt-title {
+  font-weight: 700;
+  color: #34d399;
+  font-size: 13.5px;
+}
+.modal-opt-btn.green .modal-opt-desc {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+.modal-opt-btn.green i {
+  color: #34d399;
+}
+
+/* Conflict Card Items */
+.conflict-item-card {
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.22);
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.conflict-item-card .c-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: rgba(239, 68, 68, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #f87171;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.conflict-item-card .c-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #fca5a5;
+  margin-bottom: 2px;
+}
+.conflict-item-card .c-detail {
+  font-size: 12px;
+  color: #e2e8f0;
+  opacity: 0.9;
+  line-height: 1.4;
+}
+
+/* Light Mode Overrides for Modal Elements (High Contrast & Professional) */
+[data-theme="light"] .modal-info-box {
+  background: #f8fafc !important;
+  border: 1.5px solid #e2e8f0 !important;
+  color: #0f172a !important;
+}
+[data-theme="light"] .modal-info-box.danger {
+  background: #fef2f2 !important;
+  border: 1.5px solid #fecaca !important;
+}
+[data-theme="light"] .modal-info-box.success {
+  background: #f0fdf4 !important;
+  border: 1.5px solid #86efac !important;
+}
+[data-theme="light"] .modal-info-title {
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+[data-theme="light"] .modal-info-meta {
+  color: #334155 !important;
+}
+[data-theme="light"] .modal-info-meta strong {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+}
+[data-theme="light"] .modal-info-meta .time-old {
+  color: #0369a1 !important;
+  font-weight: 700 !important;
+}
+[data-theme="light"] .modal-info-meta .time-target {
+  color: #047857 !important;
+  font-weight: 700 !important;
+}
+[data-theme="light"] .modal-section-subtitle {
+  color: #1e293b !important;
+  font-weight: 700 !important;
+}
+
+/* Modal Option Buttons in Light Mode */
+[data-theme="light"] .modal-opt-btn.indigo {
+  background: #eef2ff !important;
+  border: 1.5px solid #a5b4fc !important;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.08) !important;
+}
+[data-theme="light"] .modal-opt-btn.indigo:hover {
+  background: #e0e7ff !important;
+  border-color: #6366f1 !important;
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.16) !important;
+}
+[data-theme="light"] .modal-opt-btn.indigo .modal-opt-title {
+  color: #1e1b4b !important;
+  font-weight: 800 !important;
+  font-size: 14px !important;
+}
+[data-theme="light"] .modal-opt-btn.indigo .modal-opt-desc {
+  color: #4338ca !important;
+  font-weight: 600 !important;
+}
+[data-theme="light"] .modal-opt-btn.indigo i {
+  color: #4f46e5 !important;
+}
+
+[data-theme="light"] .modal-opt-btn.green {
+  background: #f0fdf4 !important;
+  border: 1.5px solid #86efac !important;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.08) !important;
+}
+[data-theme="light"] .modal-opt-btn.green:hover {
+  background: #dcfce7 !important;
+  border-color: #22c55e !important;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.16) !important;
+}
+[data-theme="light"] .modal-opt-btn.green .modal-opt-title {
+  color: #064e3b !important;
+  font-weight: 800 !important;
+  font-size: 14px !important;
+}
+[data-theme="light"] .modal-opt-btn.green .modal-opt-desc {
+  color: #065f46 !important;
+  font-weight: 600 !important;
+}
+[data-theme="light"] .modal-opt-btn.green i {
+  color: #059669 !important;
+}
+
+/* Conflict Card Items in Light Mode */
+[data-theme="light"] .conflict-item-card {
+  background: #fff1f2 !important;
+  border: 1.5px solid #fecdd3 !important;
+}
+[data-theme="light"] .conflict-item-card .c-icon {
+  background: #fee2e2 !important;
+  color: #dc2626 !important;
+}
+[data-theme="light"] .conflict-item-card .c-title {
+  color: #9f1239 !important;
+  font-weight: 800 !important;
+}
+[data-theme="light"] .conflict-item-card .c-detail {
+  color: #4c0519 !important;
+  font-weight: 600 !important;
+}

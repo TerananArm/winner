@@ -297,6 +297,15 @@
   background: #f8fafc !important;
 }
 
+[data-theme="light"] .rri-subject {
+  color: #0f172a !important;
+  font-weight: 600 !important;
+}
+
+[data-theme="light"] .rri-group {
+  color: #475569 !important;
+}
+
 [data-theme="light"] .type-badge.samarn {
   background: #eef2ff !important;
   color: #4338ca !important;

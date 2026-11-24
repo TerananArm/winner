@@ -2832,13 +2832,13 @@ const SCHED = (() => {
     const rm = _rooms.find(x => x.room_id === s.room_id);
 
     infoEl.innerHTML = `
-      <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-        <span style="font-weight:700; color:#f8fafc; font-size:14px;">${s.subject_id} - ${subj?.subject_name || ''}</span>
-        <span style="background:rgba(255,255,255,0.08); padding:2px 8px; border-radius:4px; color:#cbd5e1; font-size:11px;">${grp?.group_name || s.group_id}</span>
+      <div style="display:flex; justify-content:space-between; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
+        <span class="modal-info-title">${s.subject_id} - ${subj?.subject_name || ''}</span>
+        <span class="badge badge-gray" style="font-weight:700;">${grp?.group_name || s.group_id}</span>
       </div>
-      <div style="color:var(--text-secondary); font-size:12px; display:flex; flex-direction:column; gap:3px;">
+      <div class="modal-info-meta">
         <div><strong>ครูผู้สอน:</strong> ${tch?.teacher_name || s.teacher_id} &nbsp;|&nbsp; <strong>ห้องเรียน:</strong> ${rm?.room_name || s.room_id}</div>
-        <div style="color:#fbbf24; margin-top:2px;">
+        <div class="modal-meta-highlight-amber" style="margin-top:2px;">
           <i class="fas fa-arrow-right"></i> ย้ายจาก: <strong>${s.day} คาบ ${s.period_start}-${s.period_end}</strong>
           ➔ ไปเป็น: <strong>${plan.targetDay} คาบ ${plan.targetPeriod}-${plan.newPeriodEnd}</strong>
         </div>
@@ -2846,13 +2846,13 @@ const SCHED = (() => {
     `;
 
     listEl.innerHTML = plan.conflicts.map(c => `
-      <div style="padding:10px 12px; border-radius:8px; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.22); display:flex; gap:10px; align-items:flex-start;">
-        <div style="width:28px; height:28px; border-radius:6px; background:rgba(239,68,68,0.2); display:flex; align-items:center; justify-content:center; color:#f87171; flex-shrink:0; margin-top:2px;">
+      <div class="conflict-item-card">
+        <div class="c-icon">
           <i class="fas ${c.icon}"></i>
         </div>
         <div style="flex:1;">
-          <div style="font-size:12.5px; font-weight:700; color:#fca5a5; margin-bottom:2px;">${c.title}</div>
-          <div style="font-size:12px; color:#e2e8f0; opacity:0.9; line-height:1.4;">${c.detail}</div>
+          <div class="c-title">${c.title}</div>
+          <div class="c-detail">${c.detail}</div>
         </div>
       </div>
     `).join('');
@@ -2886,44 +2886,42 @@ const SCHED = (() => {
     const rm = _rooms.find(x => x.room_id === slot.room_id);
 
     infoEl.innerHTML = `
-      <div style="font-weight:700; color:#f8fafc; font-size:14px; margin-bottom:4px;">
+      <div class="modal-info-title">
         ${slot.subject_id} - ${subj?.subject_name || ''}
       </div>
-      <div style="color:var(--text-secondary); font-size:12px; display:flex; flex-direction:column; gap:2px;">
+      <div class="modal-info-meta">
         <div>กลุ่มเรียน: <strong>${grp?.group_name || slot.group_id}</strong> &nbsp;|&nbsp; ครูผู้สอน: <strong>${tch?.teacher_name || slot.teacher_id}</strong> &nbsp;|&nbsp; ห้อง: <strong>${rm?.room_name || slot.room_id}</strong></div>
-        <div style="color:#38bdf8; margin-top:4px;">
+        <div class="time-old">
           <i class="fas fa-clock"></i> คาบเดิม: <strong>${slot.day} คาบ ${slot.period_start}-${slot.period_end} (${dur} คาบต่อเนื่อง)</strong>
         </div>
-        <div style="color:#34d399;">
+        <div class="time-target">
           <i class="fas fa-location-dot"></i> จุดที่วาง: <strong>${targetDay} เริ่มคาบ ${targetPeriod}</strong>
         </div>
       </div>
     `;
 
     let html = `
-      <button type="button" onclick="SCHED.proceedMoveOrSplit(${dur})" 
-        style="padding:12px 14px; border-radius:10px; background:rgba(99,102,241,0.12); border:1px solid rgba(99,102,241,0.35); text-align:left; cursor:pointer; display:flex; justify-content:space-between; align-items:center; transition:all 0.15s ease;">
+      <button type="button" class="modal-opt-btn indigo" onclick="SCHED.proceedMoveOrSplit(${dur})">
         <div>
-          <div style="font-weight:700; color:#ffffff; font-size:13.5px;"><i class="fas fa-boxes-stacked" style="color:#818cf8; margin-right:6px;"></i> ย้ายทั้งบล็อก (${dur} คาบต่อเนื่อง)</div>
-          <div style="font-size:12px; color:#94a3b8; margin-top:2px;">ย้ายทุกคาบไปวางที่ ${targetDay} คาบ ${targetPeriod}-${targetPeriod + dur - 1}</div>
+          <div class="modal-opt-title"><i class="fas fa-boxes-stacked" style="margin-right:6px;"></i> ย้ายทั้งบล็อก (${dur} คาบต่อเนื่อง)</div>
+          <div class="modal-opt-desc">ย้ายทุกคาบไปวางที่ ${targetDay} คาบ ${targetPeriod}-${targetPeriod + dur - 1}</div>
         </div>
-        <i class="fas fa-chevron-right" style="color:#818cf8;"></i>
+        <i class="fas fa-chevron-right"></i>
       </button>
     `;
 
     for (let k = 1; k < dur; k++) {
       const remainingAtOld = dur - k;
       html += `
-        <button type="button" onclick="SCHED.proceedMoveOrSplit(${k})"
-          style="padding:12px 14px; border-radius:10px; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.3); text-align:left; cursor:pointer; display:flex; justify-content:space-between; align-items:center; transition:all 0.15s ease;">
+        <button type="button" class="modal-opt-btn green" onclick="SCHED.proceedMoveOrSplit(${k})">
           <div>
-            <div style="font-weight:700; color:#34d399; font-size:13.5px;"><i class="fas fa-scissors" style="color:#34d399; margin-right:6px;"></i> แบ่งย้าย ${k} คาบ (เหลือที่เดิม ${remainingAtOld} คาบ)</div>
-            <div style="font-size:12px; color:#94a3b8; margin-top:2px;">
+            <div class="modal-opt-title"><i class="fas fa-scissors" style="margin-right:6px;"></i> แบ่งย้าย ${k} คาบ (เหลือที่เดิม ${remainingAtOld} คาบ)</div>
+            <div class="modal-opt-desc">
               • คาบใหม่: ${targetDay} คาบ ${targetPeriod}-${targetPeriod + k - 1} (${k} คาบ)<br>
               • คาบเดิม: ${slot.day} คาบ ${slot.period_start}-${slot.period_start + remainingAtOld - 1} (${remainingAtOld} คาบ)
             </div>
           </div>
-          <i class="fas fa-chevron-right" style="color:#34d399;"></i>
+          <i class="fas fa-chevron-right"></i>
         </button>
       `;
     }
@@ -3310,13 +3308,13 @@ const SCHED = (() => {
     const totalDur = combEnd - combStart + 1;
 
     infoEl.innerHTML = `
-      <div style="font-weight:700; color:var(--text-primary); font-size:14px; margin-bottom:6px;">
+      <div class="modal-info-title">
         ${slot.subject_id} - ${subj?.subject_name || ''}
       </div>
-      <div style="color:var(--text-secondary); font-size:12.5px; display:flex; flex-direction:column; gap:4px;">
-        <div>จุดที่วาง: <strong style="color:#38bdf8;">${targetDay} คาบ ${targetPeriod}-${newPeriodEnd} (${dropDur} คาบ)</strong></div>
-        <div>พบบล็อกเดิมอยู่ติดกัน: <strong style="color:#34d399;">${targetDay} คาบ ${adjSlot.period_start}-${adjSlot.period_end} (${adjDur} คาบ)</strong></div>
-        <div style="color:#f59e0b; margin-top:4px;">
+      <div class="modal-info-meta">
+        <div>จุดที่วาง: <strong class="time-old">${targetDay} คาบ ${targetPeriod}-${newPeriodEnd} (${dropDur} คาบ)</strong></div>
+        <div>พบบล็อกเดิมอยู่ติดกัน: <strong class="time-target">${targetDay} คาบ ${adjSlot.period_start}-${adjSlot.period_end} (${adjDur} คาบ)</strong></div>
+        <div class="modal-meta-highlight-amber" style="margin-top:4px;">
           <i class="fas fa-link"></i> หากรวมกันจะได้เป็น <strong>${totalDur} คาบต่อเนื่อง</strong> (${targetDay} คาบ ${combStart}-${combEnd})
         </div>
       </div>
@@ -3450,22 +3448,22 @@ const SCHED = (() => {
         let splitButtons = '';
         for (let k = 1; k < dur; k++) {
           splitButtons += `
-            <button type="button" class="btn btn-xs" onclick="SCHED.splitSlotInPlace(${slot.id}, ${k})" 
-              style="background:rgba(99,102,241,0.18); border:1px solid rgba(99,102,241,0.4); color:#c7d2fe; font-size:12px; padding:6px 12px; border-radius:6px; cursor:pointer;">
-              <i class="fas fa-scissors"></i> แบ่งเป็น ${k} คาบ + ${dur - k} คาบ
+            <button type="button" class="btn btn-xs modal-opt-btn indigo" onclick="SCHED.splitSlotInPlace(${slot.id}, ${k})" 
+              style="padding:8px 14px; font-size:12px; border-radius:8px; width:auto; display:inline-flex;">
+              <span class="modal-opt-title"><i class="fas fa-scissors"></i> แบ่งเป็น ${k} คาบ + ${dur - k} คาบ</span>
             </button>
           `;
         }
 
         splitUi = `
-          <div style="margin-top:14px; padding:12px; background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.22); border-radius:8px;">
-            <div style="font-weight:700; color:var(--primary-light); font-size:12.5px; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+          <div class="modal-info-box" style="margin-top:14px; margin-bottom:0;">
+            <div class="modal-info-title" style="color:var(--primary); font-size:13px; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
               <i class="fas fa-arrows-split-up-and-left"></i> แบ่งบล็อกต่อเนื่องนี้ (${dur} คาบ) ออกจากกัน:
             </div>
-            <div style="display:flex; flex-wrap:wrap; gap:6px;">
+            <div style="display:flex; flex-wrap:wrap; gap:8px;">
               ${splitButtons}
             </div>
-            <div style="font-size:11px; color:var(--text-muted); margin-top:6px;">
+            <div style="font-size:11.5px; color:var(--text-muted); margin-top:8px;">
               * เมื่อแบ่งแล้ว แต่ละส่วนจะแยกเป็นบล็อกอิสระ สามารถลากวางแยกวัน/คาบได้ทันที
             </div>
           </div>
@@ -3495,13 +3493,13 @@ const SCHED = (() => {
 
             if (!crossesLunch) {
               mergeItemsHtml += `
-                <div style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.3); padding:10px 12px; border-radius:8px; display:flex; flex-direction:column; gap:6px;">
-                  <div style="font-size:12.5px; color:#34d399; font-weight:600; display:flex; align-items:center; gap:6px;">
+                <div class="modal-info-box success" style="margin-bottom:0; padding:10px 14px; display:flex; flex-direction:column; gap:8px;">
+                  <div class="modal-info-title" style="font-size:12.5px; color:var(--success); display:flex; align-items:center; gap:6px;">
                     <i class="fas fa-link"></i> พบบล็อกติดกัน: ${other.day} คาบ ${other.period_start}-${other.period_end} (${otherDur} คาบ)
                   </div>
                   <div>
                     <button type="button" class="btn btn-xs" onclick="SCHED.mergeAdjacentSlots(${slot.id}, ${other.id})"
-                      style="background:#10b981; color:#ffffff; font-weight:700; font-size:12px; padding:6px 14px; border-radius:6px; cursor:pointer; border:none; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 6px rgba(16,185,129,0.35);">
+                      style="background:#059669; color:#ffffff; font-weight:700; font-size:12px; padding:6px 14px; border-radius:6px; cursor:pointer; border:none; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 6px rgba(5,150,105,0.35);">
                       <i class="fas fa-compress-arrows-alt"></i> รวมเป็นบล็อกเดียวต่อเนื่อง (${totalComb} คาบ)
                     </button>
                   </div>
@@ -3509,8 +3507,8 @@ const SCHED = (() => {
               `;
             } else {
               mergeItemsHtml += `
-                <div style="font-size:12px; color:var(--text-muted); padding:6px 10px; background:rgba(255,255,255,0.03); border-radius:6px;">
-                  <i class="fas fa-circle-exclamation" style="color:#f59e0b; margin-right:4px;"></i> พบบล็อกติดกันใน ${other.day} แต่ไม่สามารถรวมได้เนื่องจากติดคาบพักกลางวัน
+                <div style="font-size:12px; color:var(--text-muted); padding:6px 10px; background:rgba(0,0,0,0.04); border-radius:6px;">
+                  <i class="fas fa-circle-exclamation" style="color:var(--warning); margin-right:4px;"></i> พบบล็อกติดกันใน ${other.day} แต่ไม่สามารถรวมได้เนื่องจากติดคาบพักกลางวัน
                 </div>
               `;
             }
@@ -3528,13 +3526,13 @@ const SCHED = (() => {
             if (canAppendLunch && canAppendEnd && canAppendConflicts.length === 0) {
               const totalComb = dur + otherDur;
               mergeItemsHtml += `
-                <div style="background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.3); padding:10px 12px; border-radius:8px; display:flex; flex-direction:column; gap:6px;">
-                  <div style="font-size:12.5px; color:#38bdf8; font-weight:600; display:flex; align-items:center; gap:6px;">
+                <div class="modal-info-box" style="margin-bottom:0; padding:10px 14px; display:flex; flex-direction:column; gap:8px;">
+                  <div class="modal-info-title" style="font-size:12.5px; color:var(--cyan); display:flex; align-items:center; gap:6px;">
                     <i class="fas fa-calendar-day"></i> พบบล็อกใน ${other.day} คาบ ${other.period_start}-${other.period_end} (${otherDur} คาบ)
                   </div>
                   <div>
                     <button type="button" class="btn btn-xs" onclick="SCHED.mergeSlotsIntoCurrent(${slot.id}, ${other.id})"
-                      style="background:#0284c7; color:#ffffff; font-weight:700; font-size:12px; padding:6px 14px; border-radius:6px; cursor:pointer; border:none; display:inline-flex; align-items:center; gap:6px;">
+                      style="background:#0284c7; color:#ffffff; font-weight:700; font-size:12px; padding:6px 14px; border-radius:6px; cursor:pointer; border:none; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 6px rgba(2,132,199,0.35);">
                       <i class="fas fa-angles-down"></i> ดึงมารวมต่อท้ายที่นี่ (${dur} + ${otherDur} = ${totalComb} คาบ)
                     </button>
                   </div>
@@ -3542,8 +3540,8 @@ const SCHED = (() => {
               `;
             } else {
               mergeItemsHtml += `
-                <div style="font-size:12px; color:var(--text-muted); padding:6px 10px; background:rgba(255,255,255,0.03); border-radius:6px;">
-                  <i class="fas fa-info-circle" style="color:#38bdf8; margin-right:4px;"></i> พบวิชานี้อีก ${otherDur} คาบใน <strong>${other.day}</strong> คาบ ${other.period_start}-${other.period_end} (สามารถลากมาวางต่อกันเพื่อรวมคาบได้)
+                <div style="font-size:12px; color:var(--text-muted); padding:6px 10px; background:rgba(0,0,0,0.04); border-radius:6px;">
+                  <i class="fas fa-info-circle" style="color:var(--cyan); margin-right:4px;"></i> พบวิชานี้อีก ${otherDur} คาบใน <strong>${other.day}</strong> คาบ ${other.period_start}-${other.period_end} (สามารถลากมาวางต่อกันเพื่อรวมคาบได้)
                 </div>
               `;
             }
@@ -3552,8 +3550,8 @@ const SCHED = (() => {
 
         if (mergeItemsHtml) {
           mergeUi = `
-            <div style="margin-top:14px; padding:12px; background:rgba(16,185,129,0.05); border:1px solid rgba(16,185,129,0.22); border-radius:8px;">
-              <div style="font-weight:700; color:#34d399; font-size:12.5px; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+            <div class="modal-info-box success" style="margin-top:14px; margin-bottom:0;">
+              <div class="modal-info-title" style="color:var(--success); font-size:13px; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
                 <i class="fas fa-link"></i> ตัวเลือกรวมคาบเรียน (Merge Periods):
               </div>
               <div style="display:flex; flex-direction:column; gap:8px;">
@@ -3569,10 +3567,10 @@ const SCHED = (() => {
     if (bodyEl) {
       bodyEl.innerHTML = `
         <div style="display:flex;flex-direction:column;gap:10px;">
-          <div><strong style="color:var(--text-primary);">รหัสวิชา:</strong> <span style="color:#93c5fd;font-weight:700;">${slot.subject_id}</span> — ${subj.subject_name}</div>
-          <div><strong style="color:var(--text-primary);">วัน/เวลา:</strong> ${slot.day} · คาบ ${slot.period_start} - ${slot.period_end} (${dur} คาบ)</div>
-          <div><strong style="color:var(--text-primary);">ห้องเรียน:</strong> ${room.room_name || slot.room_id} (${slot.room_id})</div>
-          <div><strong style="color:var(--text-primary);">ครูผู้สอน:</strong> ${teacher.teacher_name || slot.teacher_id} (${slot.teacher_id})</div>
+          <div><strong style="color:var(--text-primary);">รหัสวิชา:</strong> <span class="slot-course-code" style="font-weight:800;font-size:14px;">${slot.subject_id}</span> — <span style="font-weight:600;color:var(--text-primary);">${subj.subject_name}</span></div>
+          <div><strong style="color:var(--text-primary);">วัน/เวลา:</strong> <span style="color:var(--text-secondary);">${slot.day} · คาบ ${slot.period_start} - ${slot.period_end} (${dur} คาบ)</span></div>
+          <div><strong style="color:var(--text-primary);">ห้องเรียน:</strong> <span style="color:var(--cyan);font-weight:600;">${room.room_name || slot.room_id} (${slot.room_id})</span></div>
+          <div><strong style="color:var(--text-primary);">ครูผู้สอน:</strong> <span style="color:var(--text-secondary);font-weight:600;">${teacher.teacher_name || slot.teacher_id} (${slot.teacher_id})</span></div>
           <div><strong style="color:var(--text-primary);">กลุ่มเรียน:</strong> ${formatGroupLabel(group)}</div>
           ${splitUi}
           ${mergeUi}

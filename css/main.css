@@ -1081,8 +1081,8 @@ body.sidebar-locked {
 
   /* Text */
   --text-primary:   #0f172a;
-  --text-secondary: #475569;
-  --text-muted:     #94a3b8;
+  --text-secondary: #334155;
+  --text-muted:     #475569;
 
   /* Borders */
   --border:       rgba(0, 0, 0, 0.09);
@@ -1495,7 +1495,8 @@ body.sidebar-locked {
 
 /* Sidebar navigation in light mode */
 [data-theme="light"] .sidebar-nav a {
-  color: #475569 !important;
+  color: #1e293b !important;
+  font-weight: 600 !important;
 }
 
 [data-theme="light"] .sidebar-nav a:hover {
@@ -1505,14 +1506,35 @@ body.sidebar-locked {
 
 [data-theme="light"] .sidebar-nav a.active {
   background: #eef2ff !important;
-  color: #4f46e5 !important;
+  color: #4338ca !important;
   border-color: #c7d2fe !important;
   font-weight: 700 !important;
 }
 
 [data-theme="light"] .nav-section-label {
-  color: #94a3b8 !important;
+  color: #475569 !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.05em !important;
+}
+
+/* Page Headers & Typography in light mode */
+[data-theme="light"] .page-title {
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+
+[data-theme="light"] .page-sub {
+  color: #475569 !important;
+  font-weight: 500 !important;
+}
+
+[data-theme="light"] .form-label {
+  color: #0f172a !important;
   font-weight: 700 !important;
+}
+
+[data-theme="light"] .form-hint {
+  color: #475569 !important;
 }
 
 /* Cards & Headers in light mode */
@@ -1522,10 +1544,11 @@ body.sidebar-locked {
 
 [data-theme="light"] .card-title {
   color: #0f172a !important;
+  font-weight: 800 !important;
 }
 
 [data-theme="light"] .card-desc {
-  color: #64748b !important;
+  color: #475569 !important;
 }
 
 /* User profile dropdown menu in light mode */
@@ -1544,11 +1567,34 @@ body.sidebar-locked {
 }
 
 [data-theme="light"] .user-menu-sub {
-  color: #64748b !important;
+  color: #475569 !important;
 }
 
 [data-theme="light"] .role-switch-title {
-  color: #94a3b8 !important;
+  color: #475569 !important;
+  font-weight: 700 !important;
+}
+
+[data-theme="light"] .modal-close {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #475569 !important;
+}
+
+[data-theme="light"] .modal-close:hover {
+  background: #fee2e2 !important;
+  border-color: #f87171 !important;
+  color: #dc2626 !important;
+}
+
+[data-theme="light"] .stat-val {
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+
+[data-theme="light"] .stat-lbl {
+  color: #475569 !important;
+  font-weight: 600 !important;
 }
 
 [data-theme="light"] .role-switch-btn {
