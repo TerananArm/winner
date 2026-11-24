@@ -632,7 +632,53 @@ const SCHED = (() => {
   }
 
   // ── Render View ───────────────────────────────────────────
+  function updateLockedScopeBadge() {
+    const leftFilters = document.querySelector('.sched-left-filters');
+    if (!leftFilters) return;
+
+    let badge = document.getElementById('userLockedScopeBadge');
+    const u = (window.AUTH && window.AUTH.getUser) ? window.AUTH.getUser() : null;
+
+    if (!u || u.role === 'admin') {
+      if (badge) badge.remove();
+      return;
+    }
+
+    if (!badge) {
+      badge = document.createElement('div');
+      badge.id = 'userLockedScopeBadge';
+      leftFilters.appendChild(badge);
+    }
+
+    if (u.role === 'teacher') {
+      badge.className = 'user-locked-scope-badge';
+      badge.style.cssText = 'display:flex;align-items:center;gap:12px;padding:8px 16px;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.35);border-radius:12px;';
+      badge.innerHTML = `
+        <div style="width:36px;height:36px;border-radius:10px;background:rgba(59,130,246,0.2);display:flex;align-items:center;justify-content:center;color:#60a5fa;font-size:16px;">
+          <i class="fas fa-chalkboard-user"></i>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">ตารางสอนของฉัน (My Schedule)</div>
+          <div style="font-size:14px;font-weight:700;color:var(--text-primary);">${u.name} (รหัส: ${u.teacher_id || 'T01'})</div>
+        </div>
+      `;
+    } else if (u.role === 'student') {
+      badge.className = 'user-locked-scope-badge';
+      badge.style.cssText = 'display:flex;align-items:center;gap:12px;padding:8px 16px;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.35);border-radius:12px;';
+      badge.innerHTML = `
+        <div style="width:36px;height:36px;border-radius:10px;background:rgba(16,185,129,0.2);display:flex;align-items:center;justify-content:center;color:#34d399;font-size:16px;">
+          <i class="fas fa-user-graduate"></i>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">ตารางเรียนของฉัน (My Timetable)</div>
+          <div style="font-size:14px;font-weight:700;color:var(--text-primary);">กลุ่มเรียน: ${u.group_id || '672190102'}</div>
+        </div>
+      `;
+    }
+  }
+
   function render() {
+    updateLockedScopeBadge();
     const emptyPanel = document.getElementById('sched-empty-panel');
     const tableEl = document.getElementById('timetable-grid');
 

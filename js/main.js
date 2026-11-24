@@ -503,12 +503,53 @@ const AUTH = {
     document.body.classList.remove('role-admin', 'role-teacher', 'role-student');
     document.body.classList.add(`role-${u.role}`);
 
+    const isAdmin = (u.role === 'admin');
+    const currentFile = window.location.pathname.split('/').pop() || 'index.html';
+
+    // หากเป็นครูหรือนักเรียนที่พยายามเปิดหน้าอื่นที่ไม่ใช่ตารางสอน ให้พากลับไปหน้าตารางของตนเองทันที
+    if (!isAdmin && currentFile !== 'schedule.html' && currentFile !== 'login.html') {
+      window.location.replace('schedule.html');
+      return;
+    }
+
+    // ปรับเปลี่ยนชื่อเมนูและไอคอนในแถบด้านข้าง (Sidebar) ให้ตรงตามบทบาท
+    const schedLink = document.querySelector('.sidebar-nav a[href="schedule.html"]');
+    if (schedLink) {
+      if (u.role === 'teacher') {
+        schedLink.innerHTML = `<span class="nav-icon"><i class="fas fa-chalkboard-user" style="color:#60a5fa;font-size:16px;"></i></span>ตารางสอนของฉัน`;
+      } else if (u.role === 'student') {
+        schedLink.innerHTML = `<span class="nav-icon"><i class="fas fa-user-graduate" style="color:#34d399;font-size:16px;"></i></span>ตารางเรียนของฉัน`;
+      } else {
+        schedLink.innerHTML = `<span class="nav-icon"><img src="assets/icons/schedule.svg" alt="" class="nav-svg-icon"></span>ตารางสอน`;
+      }
+    }
+
+    // ปรับหัวเรื่องในหน้าตารางสอน (schedule.html)
+    const pageTitle = document.querySelector('.sched-title');
+    const pageSub = document.querySelector('.sched-subtitle');
+    const backBtn = document.querySelector('.sched-header-section .back-btn, .sched-back-btn');
+    if (pageTitle && pageSub) {
+      if (u.role === 'teacher') {
+        pageTitle.textContent = 'ตารางสอนของฉัน';
+        pageSub.textContent = `ตารางสอนประจำสัปดาห์ของ ${u.name} (รหัส: ${u.teacher_id || 'T01'})`;
+        if (backBtn) backBtn.style.display = 'none';
+      } else if (u.role === 'student') {
+        pageTitle.textContent = 'ตารางเรียนของฉัน';
+        pageSub.textContent = `ตารางเรียนประจำสัปดาห์ของกลุ่มเรียน ${u.group_id || '672190102'}`;
+        if (backBtn) backBtn.style.display = 'none';
+      } else {
+        pageTitle.textContent = 'จัดการตารางสอน';
+        pageSub.textContent = 'จัดการตารางเรียนและตารางสอนทั้งหมด';
+        if (backBtn) backBtn.style.display = 'flex';
+      }
+    }
+
     // จัดการข้อความแจ้งเตือนสำหรับ student / teacher (โหมดอ่านอย่างเดียว ดูตารางเท่านั้น)
     const existingBanner = document.getElementById('roleNotificationBanner');
     if (existingBanner) existingBanner.remove();
 
     const mainContent = document.querySelector('.page-content');
-    if (mainContent && (u.role === 'student' || u.role === 'teacher')) {
+    if (mainContent && !isAdmin) {
       const banner = document.createElement('div');
       banner.id = 'roleNotificationBanner';
       banner.className = `role-banner ${u.role === 'student' ? 'role-banner-student' : 'role-banner-teacher'}`;
@@ -516,7 +557,7 @@ const AUTH = {
         banner.innerHTML = `
           <i class="fas fa-eye" style="font-size:16px;"></i>
           <div style="flex:1;">
-            <strong>โหมดนักเรียน/นักศึกษา (ดูตารางอย่างเดียว - Read Only):</strong> แสดงตารางเรียนกลุ่ม <strong>${u.group_id || '672190102'}</strong> (เฉพาะผู้ดูแลระบบเท่านั้นที่สามารถจัดหรือแก้ไขตารางได้)
+            <strong>ตารางเรียนของฉัน (โหมดดูตาราง):</strong> กลุ่มเรียน <strong>${u.group_id || '672190102'}</strong> (เฉพาะ Admin เท่านั้นที่สามารถจัดหรือแก้ไขตารางได้)
           </div>
           <button class="btn btn-xs btn-ghost" onclick="AUTH.quickSwitch('admin')" style="font-size:11.5px;padding:4px 8px;">สลับเป็น Admin</button>
         `;
@@ -524,7 +565,7 @@ const AUTH = {
         banner.innerHTML = `
           <i class="fas fa-eye" style="font-size:16px;"></i>
           <div style="flex:1;">
-            <strong>โหมดครูผู้สอน (ดูตารางอย่างเดียว - Read Only):</strong> แสดงตารางสอนของ <strong>${u.name} (${u.teacher_id || 'T01'})</strong> (เฉพาะผู้ดูแลระบบเท่านั้นที่สามารถจัดหรือแก้ไขตารางได้)
+            <strong>ตารางสอนของฉัน (โหมดดูตาราง):</strong> อาจารย์ <strong>${u.name} (${u.teacher_id || 'T01'})</strong> (เฉพาะ Admin เท่านั้นที่สามารถจัดหรือแก้ไขตารางได้)
           </div>
           <button class="btn btn-xs btn-ghost" onclick="AUTH.quickSwitch('admin')" style="font-size:11.5px;padding:4px 8px;">สลับเป็น Admin</button>
         `;

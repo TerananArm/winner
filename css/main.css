@@ -1472,17 +1472,13 @@ body:not(.role-admin) .empty-add-hint {
   color: #60a5fa;
 }
 
-/* Simplified sidebar for student role: ดูเฉพาะตารางเรียน, แดชบอร์ด, รายวิชา, ห้องเรียน, คู่มือ */
-body.role-student .sidebar-nav a[href="groups.html"],
-body.role-student .sidebar-nav a[href="students.html"],
-body.role-student .sidebar-nav a[href="teachers.html"],
-body.role-student .sidebar-nav a[href="teaching-load.html"],
-body.role-student .sidebar-nav a[href="registration.html"] {
+/* เมื่อเป็นครูหรือนักเรียน ให้มีเมนูแค่ตารางสอน/ตารางเรียนของตัวเองเท่านั้น (ซ่อนเมนูอื่นทั้งหมดใน Sidebar) */
+body:not(.role-admin) .sidebar-nav a:not([href="schedule.html"]),
+body:not(.role-admin) .sidebar-nav .nav-section-label {
   display: none !important;
 }
 
-/* Simplified sidebar for teacher role: ดูตารางสอนและภาระงานสอน ซ่อนเมนูตั้งค่าระบบ */
-body.role-teacher .sidebar-nav a[href="registration.html"],
-body.role-teacher .sidebar-nav a[href="groups.html"] {
+/* ซ่อนตัวเลือกมุมมองและฟิลเตอร์ในหน้า schedule เมื่อไม่ใช่ Admin (แสดงเฉพาะตารางของตนเอง) */
+body:not(.role-admin) .sched-left-filters .sched-filter-item {
   display: none !important;
 }
