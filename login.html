@@ -27,7 +27,7 @@
     .login-card {
       width: 100%;
       max-width: 480px;
-      background: rgba(13, 20, 36, 0.88);
+      background: rgba(13, 20, 36, 0.90);
       backdrop-filter: blur(28px);
       -webkit-backdrop-filter: blur(28px);
       border: 1px solid var(--border-light);
@@ -35,19 +35,20 @@
       padding: 36px 32px;
       box-shadow: 0 25px 60px rgba(0, 0, 0, 0.55);
       animation: scaleIn 0.3s var(--ease);
+      transition: all 0.25s ease;
     }
 
     [data-theme="light"] .login-card {
-      background: rgba(255, 255, 255, 0.94);
-      border-color: rgba(0, 0, 0, 0.1);
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
+      background: rgba(255, 255, 255, 0.96);
+      border-color: #cbd5e1;
+      box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.04);
     }
 
     .login-brand {
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin-bottom: 24px;
+      margin-bottom: 22px;
       text-align: center;
     }
 
@@ -68,8 +69,8 @@
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
       gap: 8px;
-      margin-bottom: 24px;
-      background: rgba(0, 0, 0, 0.18);
+      margin-bottom: 20px;
+      background: rgba(0, 0, 0, 0.25);
       padding: 5px;
       border-radius: 14px;
       border: 1px solid var(--border);
@@ -77,7 +78,7 @@
 
     [data-theme="light"] .role-tabs {
       background: #f1f5f9;
-      border-color: rgba(0, 0, 0, 0.06);
+      border-color: #e2e8f0;
     }
 
     .role-tab-btn {
@@ -109,20 +110,185 @@
     [data-theme="light"] .role-tab-btn.active {
       background: #ffffff;
       color: var(--primary);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+      font-weight: 700;
     }
 
-    .quick-eval-box {
-      margin-top: 20px;
-      padding: 14px;
+    /* Input with icons & toggle */
+    .input-wrap {
+      position: relative;
+    }
+
+    .input-wrap .input-icon-left {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 13.5px;
+      pointer-events: none;
+    }
+
+    .input-wrap .pwd-toggle-btn {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 14px;
+      padding: 4px 6px;
+      border-radius: 4px;
+      transition: color var(--t) var(--ease);
+    }
+
+    .input-wrap .pwd-toggle-btn:hover {
+      color: var(--text-primary);
+    }
+
+    .form-input-auth {
+      width: 100%;
+      padding: 10px 40px 10px 38px;
+      height: 42px;
+      background: #111827;
+      border: 1.5px solid #1f293d;
+      color: #f1f5f9;
+      border-radius: 10px;
+      font-size: 13.5px;
+      font-weight: 500;
+      outline: none;
+      transition: all var(--t) var(--ease);
+      box-sizing: border-box;
+    }
+
+    .form-input-auth:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18);
+    }
+
+    [data-theme="light"] .form-input-auth {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+      color: #0f172a;
+    }
+
+    [data-theme="light"] .form-input-auth:focus {
+      background: #ffffff;
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+    }
+
+    /* Live Error Alert */
+    .login-alert-box {
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 12.5px;
+      line-height: 1.45;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 14px;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .login-alert-error {
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      color: #fca5a5;
+    }
+
+    [data-theme="light"] .login-alert-error {
+      background: #fef2f2;
+      border-color: #fecaca;
+      color: #b91c1c;
+    }
+
+    .login-alert-success {
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      color: #86efac;
+    }
+
+    [data-theme="light"] .login-alert-success {
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+      color: #15803d;
+    }
+
+    /* Official System Guide Info Box */
+    .login-guide-card {
+      margin-top: 22px;
+      padding: 14px 16px;
       border-radius: 12px;
       background: rgba(99, 102, 241, 0.06);
       border: 1px solid rgba(99, 102, 241, 0.2);
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.5;
     }
 
-    [data-theme="light"] .quick-eval-box {
+    [data-theme="light"] .login-guide-card {
       background: #f8fafc;
-      border-color: rgba(99, 102, 241, 0.15);
+      border-color: #e2e8f0;
+      color: #475569;
+    }
+
+    .guide-title {
+      font-weight: 700;
+      color: var(--primary-light);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+    }
+
+    [data-theme="light"] .guide-title {
+      color: #4338ca;
+    }
+
+    .guide-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .guide-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .guide-code {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-family: monospace;
+      color: var(--primary-light);
+    }
+
+    [data-theme="light"] .guide-code {
+      background: #eef2ff;
+      color: #4338ca;
+      font-weight: 700;
+    }
+
+    /* Active Session Banner */
+    .active-session-banner {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 14px 16px;
+      border-radius: 12px;
+      margin-bottom: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    [data-theme="light"] .active-session-banner {
+      background: #f0fdf4;
+      border-color: #bbf7d0;
     }
 
     .top-login-bar {
@@ -133,6 +299,16 @@
       align-items: center;
       gap: 12px;
       z-index: 20;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-6px); }
+      40%, 80% { transform: translateX(6px); }
+    }
+
+    .shake-card {
+      animation: shake 0.4s ease;
     }
   </style>
 </head>
@@ -145,25 +321,41 @@
     <div class="orb orb-3"></div>
   </div>
 
-  <!-- Top bar with theme toggle & back link -->
+  <!-- Top bar with theme toggle -->
   <div class="top-login-bar">
     <button class="theme-toggle-btn" id="themeToggleBtn" onclick="THEME.toggleTheme()" title="สลับโหมดสว่าง/มืด (Light/Dark Mode)">
       <i class="fas fa-sun"></i>
     </button>
-    <a href="schedule.html" class="btn btn-ghost" style="font-size:12.5px;padding:8px 14px;border-radius:10px;">
-      <i class="fas fa-calendar-days" style="margin-right:6px;"></i> เข้าสู่ระบบตารางสอนทันที
-    </a>
   </div>
 
   <div class="login-container">
-    <div class="login-card">
+    <div class="login-card" id="loginCard">
       <!-- Brand Logo -->
       <div class="login-brand">
         <div class="login-logo-icon">
           <img src="assets/icons/logo.svg" alt="EduSched AI" style="width:34px;height:34px;">
         </div>
         <h1 style="font-size:22px;font-weight:800;color:var(--text-primary);letter-spacing:-0.5px;">EduSched AI</h1>
-        <p style="font-size:13px;color:var(--text-muted);margin-top:2px;">ระบบเข้าสู่ระบบเพื่อจัดการและดูตารางเรียน/ตารางสอน</p>
+        <p style="font-size:13px;color:var(--text-muted);margin-top:2px;">ระบบเข้าสู่ระบบงานตารางสอนและบริการข้อมูลการศึกษา</p>
+      </div>
+
+      <!-- Active Session Notice (If already authenticated) -->
+      <div id="activeSessionNotice" class="active-session-banner hidden">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:18px;" id="asIcon">👑</span>
+          <div style="flex:1;">
+            <div style="font-weight:700;font-size:13px;color:var(--text-primary);" id="asName">ชื่อผู้ใช้</div>
+            <div style="font-size:11.5px;color:var(--text-muted);" id="asRole">สิทธิ์การใช้งาน</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:4px;">
+          <a href="schedule.html" class="btn btn-sm btn-primary" style="flex:1;justify-content:center;padding:7px;font-size:12px;font-weight:700;">
+            <i class="fas fa-calendar-days" style="margin-right:5px;"></i> ไปยังตารางสอน
+          </a>
+          <button type="button" class="btn btn-sm btn-ghost" onclick="AUTH.logout()" style="padding:7px 12px;font-size:12px;color:var(--danger);">
+            <i class="fas fa-arrow-right-from-bracket" style="margin-right:4px;"></i> ออกจากระบบ
+          </button>
+        </div>
       </div>
 
       <!-- Role Tabs -->
@@ -182,31 +374,39 @@
         </button>
       </div>
 
-      <!-- Login Form -->
+      <!-- Live Error / Success Alert Box -->
+      <div id="loginAlert" class="login-alert-box hidden"></div>
+
+      <!-- Production Login Form -->
       <form id="loginForm" onsubmit="handleLoginSubmit(event)" style="display:flex;flex-direction:column;gap:14px;">
         <div>
-          <label class="form-label" id="lblUsername" style="font-size:12.5px;font-weight:600;">ชื่อผู้ดูแลระบบ (Username)</label>
-          <div style="position:relative;">
-            <input type="text" class="form-input" id="inputUsername" placeholder="admin" value="admin" required
-              style="padding-left:38px;" />
-            <i class="fas fa-user" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:13px;"></i>
+          <label class="form-label" id="lblUsername" style="font-size:12.5px;font-weight:600;margin-bottom:6px;display:block;">
+            ชื่อผู้ดูแลระบบ (Username)
+          </label>
+          <div class="input-wrap">
+            <input type="text" class="form-input-auth" id="inputUsername" placeholder="กรอกชื่อผู้ใช้ admin" required autocomplete="username" />
+            <i class="fas fa-user input-icon-left" id="userIcon"></i>
           </div>
         </div>
 
         <div>
-          <label class="form-label" style="font-size:12.5px;font-weight:600;">รหัสผ่าน (Password)</label>
-          <div style="position:relative;">
-            <input type="password" class="form-input" id="inputPassword" placeholder="••••••••" value="admin123" required
-              style="padding-left:38px;" />
-            <i class="fas fa-lock" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:13px;"></i>
+          <label class="form-label" style="font-size:12.5px;font-weight:600;margin-bottom:6px;display:block;">
+            รหัสผ่าน (Password)
+          </label>
+          <div class="input-wrap">
+            <input type="password" class="form-input-auth" id="inputPassword" placeholder="กรอกรหัสผ่านของคุณ" required autocomplete="current-password" />
+            <i class="fas fa-lock input-icon-left"></i>
+            <button type="button" class="pwd-toggle-btn" id="pwdToggleBtn" onclick="togglePasswordVisibility()" title="แสดง/ซ่อนรหัสผ่าน">
+              <i class="fas fa-eye" id="pwdToggleIcon"></i>
+            </button>
           </div>
         </div>
 
-        <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text-muted);">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text-muted);margin-top:2px;">
           <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
-            <input type="checkbox" checked style="accent-color:var(--primary);" /> จดจำการเข้าสู่ระบบ
+            <input type="checkbox" id="chkRemember" checked style="accent-color:var(--primary);cursor:pointer;" /> จดจำการเข้าสู่ระบบ
           </label>
-          <span id="roleHintBadge" class="badge-admin" style="font-size:11px;padding:3px 8px;border-radius:6px;font-weight:600;">
+          <span id="roleHintBadge" class="badge-admin" style="font-size:11px;padding:3px 8px;border-radius:6px;font-weight:700;">
             สิทธิ์: Administrator
           </span>
         </div>
@@ -217,24 +417,22 @@
         </button>
       </form>
 
-      <!-- Quick 1-Click Login Box (For competition judges & tests) -->
-      <div class="quick-eval-box">
-        <div style="font-size:11.5px;font-weight:700;color:var(--primary-light);margin-bottom:8px;display:flex;align-items:center;gap:6px;">
-          <i class="fas fa-bolt"></i> เข้าสู่ระบบด่วน 1-Click (สำหรับกรรมการ / ทดสอบ):
+      <!-- Official System Guide Info Box -->
+      <div class="login-guide-card">
+        <div class="guide-title">
+          <i class="fas fa-circle-info"></i> ข้อมูลการเข้าสู่ระบบใช้งานจริง:
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
-          <button type="button" class="btn btn-xs btn-ghost" onclick="quickLogin('admin')"
-            style="font-size:11.5px;padding:8px 4px;font-weight:600;border-color:rgba(239,68,68,0.3);color:#f87171;">
-            👑 Admin
-          </button>
-          <button type="button" class="btn btn-xs btn-ghost" onclick="quickLogin('teacher')"
-            style="font-size:11.5px;padding:8px 4px;font-weight:600;border-color:rgba(59,130,246,0.3);color:#60a5fa;">
-            👨‍🏫 ครูสมชาย
-          </button>
-          <button type="button" class="btn btn-xs btn-ghost" onclick="quickLogin('student')"
-            style="font-size:11.5px;padding:8px 4px;font-weight:600;border-color:rgba(16,185,129,0.3);color:#34d399;">
-            🎓 นักเรียน 2 ทส 2
-          </button>
+        <div class="guide-item">
+          <span style="font-size:13px;">👑</span>
+          <div><strong>ผู้ดูแลระบบ:</strong> บัญชี <span class="guide-code">admin</span> จัดการตารางสอน โครงสร้างวิชาการ และระบบทั้งหมด</div>
+        </div>
+        <div class="guide-item">
+          <span style="font-size:13px;">👨‍🏫</span>
+          <div><strong>ครูผู้สอน:</strong> ใช้รหัสประจำตัวครู เช่น <span class="guide-code">T01</span>, <span class="guide-code">T02</span> (รหัสผ่านเริ่มต้น: รหัสครู หรือ 123456)</div>
+        </div>
+        <div class="guide-item">
+          <span style="font-size:13px;">🎓</span>
+          <div><strong>นักเรียน:</strong> ใช้รหัสนักศึกษา 11 หลัก เช่น <span class="guide-code">67204010101</span> หรือรหัสกลุ่มเรียน <span class="guide-code">672040101</span> (รหัสเริ่มต้น: รหัสนักศึกษา หรือ 123456)</div>
         </div>
       </div>
     </div>
@@ -258,59 +456,143 @@
       const inputU = document.getElementById('inputUsername');
       const inputP = document.getElementById('inputPassword');
       const hint = document.getElementById('roleHintBadge');
+      const userIcon = document.getElementById('userIcon');
+
+      hideAlert();
+
+      // Clear values when switching role
+      inputU.value = '';
+      inputP.value = '';
 
       if (role === 'admin') {
         lbl.textContent = 'ชื่อผู้ดูแลระบบ (Username)';
-        inputU.value = 'admin';
-        inputU.placeholder = 'admin';
-        inputP.value = 'admin123';
+        inputU.placeholder = 'กรอกชื่อผู้ใช้ admin';
         hint.className = 'badge-admin';
         hint.textContent = 'สิทธิ์: Administrator';
+        if (userIcon) userIcon.className = 'fas fa-user-shield input-icon-left';
       } else if (role === 'teacher') {
-        lbl.textContent = 'รหัสประจำตัวครู (Teacher ID)';
-        inputU.value = 'T01';
-        inputU.placeholder = 'T01, T02, ...';
-        inputP.value = 'teacher123';
+        lbl.textContent = 'รหัสประจำตัวครู หรือ ชื่ออาจารย์';
+        inputU.placeholder = 'เช่น T01, T02, T03...';
         hint.className = 'badge-teacher';
         hint.textContent = 'สิทธิ์: ครูผู้สอน (Teacher)';
+        if (userIcon) userIcon.className = 'fas fa-chalkboard-user input-icon-left';
       } else if (role === 'student') {
-        lbl.textContent = 'รหัสกลุ่มเรียน / รหัสนักศึกษา (Group / Student ID)';
-        inputU.value = '672190102';
-        inputU.placeholder = '672190102';
-        inputP.value = 'student123';
+        lbl.textContent = 'รหัสนักศึกษา 11 หลัก หรือ รหัสกลุ่มเรียน';
+        inputU.placeholder = 'เช่น 67204010101 หรือ 672040101';
         hint.className = 'badge-student';
         hint.textContent = 'สิทธิ์: นักเรียน (Student)';
+        if (userIcon) userIcon.className = 'fas fa-user-graduate input-icon-left';
+      }
+
+      inputU.focus();
+    }
+
+    function togglePasswordVisibility() {
+      const pwdInput = document.getElementById('inputPassword');
+      const icon = document.getElementById('pwdToggleIcon');
+      if (!pwdInput) return;
+
+      if (pwdInput.type === 'password') {
+        pwdInput.type = 'text';
+        if (icon) icon.className = 'fas fa-eye-slash';
+      } else {
+        pwdInput.type = 'password';
+        if (icon) icon.className = 'fas fa-eye';
       }
     }
 
-    function quickLogin(role) {
-      if (window.AUTH) {
-        window.AUTH.quickSwitch(role);
-        showToast('success', 'เข้าสู่ระบบสำเร็จ', `เข้าใช้งานในฐานะ ${role.toUpperCase()}`);
-        setTimeout(() => {
-          window.location.href = 'schedule.html';
-        }, 300);
-      }
-    }
+    function showAlert(type, message) {
+      const box = document.getElementById('loginAlert');
+      if (!box) return;
+      box.className = `login-alert-box ${type === 'success' ? 'login-alert-success' : 'login-alert-error'}`;
+      box.innerHTML = `
+        <i class="fas ${type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation'}" style="font-size:16px;margin-top:1px;"></i>
+        <div style="flex:1;">${message}</div>
+      `;
+      box.classList.remove('hidden');
 
-    function handleLoginSubmit(e) {
-      e.preventDefault();
-      const u = document.getElementById('inputUsername')?.value;
-      const p = document.getElementById('inputPassword')?.value;
-      if (window.AUTH) {
-        const ok = window.AUTH.login(u, p, currentRole);
-        if (ok) {
-          setTimeout(() => {
-            window.location.href = 'schedule.html';
-          }, 300);
+      if (type === 'error') {
+        const card = document.getElementById('loginCard');
+        if (card) {
+          card.classList.remove('shake-card');
+          void card.offsetWidth; // Trigger reflow
+          card.classList.add('shake-card');
         }
       }
     }
 
-    // Auto-update theme icon on load
+    function hideAlert() {
+      const box = document.getElementById('loginAlert');
+      if (box) box.classList.add('hidden');
+    }
+
+    async function handleLoginSubmit(e) {
+      e.preventDefault();
+      hideAlert();
+
+      const u = document.getElementById('inputUsername')?.value;
+      const p = document.getElementById('inputPassword')?.value;
+      const btn = document.getElementById('loginSubmitBtn');
+
+      if (!u || !p) {
+        showAlert('error', 'กรุณากรอกชื่อผู้ใช้และรหัสผ่านให้ครบถ้วน');
+        return;
+      }
+
+      // Show Loading State
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fas fa-circle-notch fa-spin" style="margin-right:6px;"></i> กำลังตรวจสอบสิทธิ์กับฐานข้อมูล...`;
+      }
+
+      try {
+        if (window.AUTH && typeof window.AUTH.login === 'function') {
+          const res = await window.AUTH.login(u, p, currentRole);
+
+          if (res && res.success) {
+            showAlert('success', `${res.message || 'เข้าสู่ระบบสำเร็จ'} กำลังนำท่านเข้าสู่ระบบ...`);
+            setTimeout(() => {
+              window.location.href = (res.user && res.user.role === 'admin') ? 'index.html' : 'schedule.html';
+            }, 600);
+            return;
+          } else {
+            showAlert('error', res.message || 'เข้าสู่ระบบไม่สำเร็จ กรุณาตรวจสอบข้อมูล');
+          }
+        } else {
+          showAlert('error', 'ระบบตรวจสอบสิทธิ์ยังไม่พร้อมใช้งาน กรุณารีเฟรชหน้าเว็บ');
+        }
+      } catch (err) {
+        console.error('Login error:', err);
+        showAlert('error', 'เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล กรุณาลองใหม่อีกครั้ง');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = `<i class="fas fa-right-to-bracket" style="margin-right:6px;"></i> เข้าสู่ระบบ`;
+        }
+      }
+    }
+
+    // On Load: Check if already authenticated & apply theme
     document.addEventListener('DOMContentLoaded', () => {
       if (window.THEME) {
         window.THEME.updateToggleIcon(window.THEME.getTheme());
+      }
+
+      if (window.AUTH) {
+        const currentUser = window.AUTH.getUser();
+        if (currentUser) {
+          const notice = document.getElementById('activeSessionNotice');
+          const asName = document.getElementById('asName');
+          const asRole = document.getElementById('asRole');
+          const asIcon = document.getElementById('asIcon');
+
+          if (notice && asName && asRole) {
+            asName.textContent = currentUser.name;
+            asRole.textContent = `เข้าสู่ระบบในฐานะ: ${currentUser.title || currentUser.role.toUpperCase()}`;
+            if (asIcon) asIcon.textContent = currentUser.badgeIcon || '👑';
+            notice.classList.remove('hidden');
+          }
+        }
       }
     });
   </script>
