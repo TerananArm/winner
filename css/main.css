@@ -1137,41 +1137,51 @@ body.sidebar-locked {
   background: rgba(0, 0, 0, 0.18) !important;
 }
 
-/* Light theme for Timetable Grid */
+/* Light theme for Timetable Grid & Schedules */
 [data-theme="light"] .timetable-grid-wrapper,
+[data-theme="light"] .timetable-main-card,
 [data-theme="light"] .timetable-grid {
   background: #ffffff !important;
-  border-color: rgba(0, 0, 0, 0.1) !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04) !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
 }
 
 [data-theme="light"] .timetable-grid thead th {
-  background: #f8fafc !important;
+  background: #f1f5f9 !important;
   color: #334155 !important;
-  border-color: rgba(0, 0, 0, 0.08) !important;
+  border-color: #cbd5e1 !important;
 }
 
 [data-theme="light"] .timetable-grid tbody td {
   background: #ffffff !important;
-  border-color: rgba(0, 0, 0, 0.07) !important;
+  border-color: #e2e8f0 !important;
   color: #0f172a !important;
 }
 
-[data-theme="light"] .timetable-grid tbody td.day-col {
+[data-theme="light"] .timetable-grid tbody td.day-col,
+[data-theme="light"] .timetable-grid th.col-time-day,
+[data-theme="light"] .timetable-grid td.col-day-name {
   background: #f8fafc !important;
   color: #0f172a !important;
-  font-weight: 700;
+  font-weight: 700 !important;
+  border-color: #cbd5e1 !important;
 }
 
 [data-theme="light"] .timetable-grid .assembly-column,
 [data-theme="light"] .timetable-grid .lunch-column {
-  background: #f1f5f9 !important;
+  background: #f8fafc !important;
   color: #64748b !important;
+  border-color: #cbd5e1 !important;
 }
 
 [data-theme="light"] .assembly-vertical-text,
 [data-theme="light"] .lunch-vertical-text {
   color: #64748b !important;
+  font-weight: 600 !important;
+}
+
+[data-theme="light"] .timetable-grid tbody td.empty-slot {
+  background: #ffffff !important;
 }
 
 [data-theme="light"] .timetable-grid tbody td.empty-slot:hover {
@@ -1179,35 +1189,178 @@ body.sidebar-locked {
 }
 
 [data-theme="light"] .timetable-grid tbody td.occupied-slot {
-  background: #f8fafc !important;
-  border-color: rgba(0, 0, 0, 0.1) !important;
+  background: #f0f7ff !important;
+  border-color: #bfdbfe !important;
+  box-shadow: inset 0 0 0 1px #dbeafe !important;
 }
 
 [data-theme="light"] .timetable-grid tbody td.occupied-slot:hover {
-  background: rgba(79, 70, 229, 0.08) !important;
+  background: #e0f2fe !important;
+  border-color: #38bdf8 !important;
+  box-shadow: inset 0 0 0 1.5px #0284c7 !important;
+}
+
+[data-theme="light"] .slot-course-code {
+  color: #1e1b4b !important;
+  font-weight: 800 !important;
+}
+
+[data-theme="light"] .slot-room-code {
+  color: #2563eb !important;
+  font-weight: 600 !important;
+}
+
+[data-theme="light"] .slot-teacher-code {
+  color: #475569 !important;
+  font-weight: 600 !important;
+}
+
+[data-theme="light"] .slot-homeroom-text {
+  color: #b45309 !important;
+  font-weight: 800 !important;
 }
 
 [data-theme="light"] .sched-controls-row,
-[data-theme="light"] .sched-stat-card {
+[data-theme="light"] .sched-stat-card,
+[data-theme="light"] .kpi-card {
   background: #ffffff !important;
-  border-color: rgba(0, 0, 0, 0.08) !important;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03) !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04) !important;
+}
+
+[data-theme="light"] .kpi-card:hover {
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06) !important;
+}
+
+[data-theme="light"] .kpi-val {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .kpi-lbl {
+  color: #64748b !important;
 }
 
 [data-theme="light"] .sched-select-input {
   background: #ffffff !important;
   color: #0f172a !important;
-  border-color: rgba(0, 0, 0, 0.15) !important;
+  border-color: #cbd5e1 !important;
 }
 
 [data-theme="light"] .sched-title {
   color: #0f172a !important;
 }
 
+[data-theme="light"] .sched-subtitle {
+  color: #64748b !important;
+}
+
 [data-theme="light"] .sched-back-btn {
   background: #f1f5f9 !important;
   color: #0f172a !important;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid #cbd5e1 !important;
+}
+
+/* Sidebar navigation in light mode */
+[data-theme="light"] .sidebar-nav a {
+  color: #475569 !important;
+}
+
+[data-theme="light"] .sidebar-nav a:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .sidebar-nav a.active {
+  background: #eef2ff !important;
+  color: #4f46e5 !important;
+  border-color: #c7d2fe !important;
+  font-weight: 700 !important;
+}
+
+[data-theme="light"] .nav-section-label {
+  color: #94a3b8 !important;
+  font-weight: 700 !important;
+}
+
+/* Cards & Headers in light mode */
+[data-theme="light"] .card-header {
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="light"] .card-title {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .card-desc {
+  color: #64748b !important;
+}
+
+/* User profile dropdown menu in light mode */
+[data-theme="light"] .user-profile-menu {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12) !important;
+}
+
+[data-theme="light"] .user-menu-header {
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="light"] .user-menu-name {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .user-menu-sub {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .role-switch-title {
+  color: #94a3b8 !important;
+}
+
+[data-theme="light"] .role-switch-btn {
+  background: #f8fafc !important;
+  color: #334155 !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="light"] .role-switch-btn:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+[data-theme="light"] .role-switch-btn.active {
+  background: #eef2ff !important;
+  border-color: #c7d2fe !important;
+  color: #4f46e5 !important;
+  font-weight: 700 !important;
+}
+
+[data-theme="light"] .user-menu-footer {
+  border-top: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="light"] .user-logout-btn {
+  color: #dc2626 !important;
+}
+
+[data-theme="light"] .user-logout-btn:hover {
+  background: #fef2f2 !important;
+}
+
+/* Role indicator banners */
+[data-theme="light"] .role-banner-student {
+  background: #f0fdf4 !important;
+  border-color: #bbf7d0 !important;
+  color: #059669 !important;
+}
+
+[data-theme="light"] .role-banner-teacher {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
 }
 
 /* ============================================================

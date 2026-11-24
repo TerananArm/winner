@@ -569,3 +569,69 @@
     pointer-events: none !important;
   }
 }
+
+/* ============================================================
+   LIGHT THEME OVERRIDES FOR AI COPILOT
+   ============================================================ */
+[data-theme="light"] .ai-copilot-panel {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.12), 0 0 30px rgba(99, 102, 241, 0.1) !important;
+}
+
+[data-theme="light"] .ai-copilot-header {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.08)) !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="light"] .ai-copilot-title {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .ai-copilot-subtitle {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .ai-copilot-body {
+  background: #f8fafc !important;
+}
+
+[data-theme="light"] .ai-msg-bubble.assistant,
+[data-theme="light"] .ai-message-assistant {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #1e293b !important;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04) !important;
+}
+
+[data-theme="light"] .ai-copilot-footer {
+  background: #ffffff !important;
+  border-top: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="light"] .ai-copilot-input,
+[data-theme="light"] .ai-input {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .ai-copilot-input:focus,
+[data-theme="light"] .ai-input:focus {
+  background: #ffffff !important;
+  border-color: #4f46e5 !important;
+}
+
+[data-theme="light"] .ai-quick-btn,
+[data-theme="light"] .ai-chip {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #475569 !important;
+}
+
+[data-theme="light"] .ai-quick-btn:hover,
+[data-theme="light"] .ai-chip:hover {
+  background: #eef2ff !important;
+  border-color: #c7d2fe !important;
+  color: #4338ca !important;
+}

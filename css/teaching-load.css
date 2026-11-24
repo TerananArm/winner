@@ -156,3 +156,18 @@
 @media (max-width: 600px) {
   .tl-stats { grid-template-columns: 1fr; }
 }
+
+
+/* ============================================================
+   LIGHT THEME OVERRIDES FOR TEACHING LOAD PAGE
+   ============================================================ */
+[data-theme="light"] .tl-stat-item {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04) !important;
+}
+
+[data-theme="light"] .tl-stat-item:hover {
+  border-color: #cbd5e1 !important;
+  background: #f8fafc !important;
+}

@@ -55,3 +55,18 @@
   .dash-bottom-grid { grid-template-columns: 1fr; }
   .quick-actions-grid { grid-template-columns: 1fr 1fr; }
 }
+
+/* ============================================================
+   LIGHT THEME OVERRIDES FOR DASHBOARD PAGE
+   ============================================================ */
+[data-theme="light"] .status-row {
+  border-bottom-color: #e2e8f0;
+}
+
+[data-theme="light"] .status-row .label {
+  color: #475569;
+}
+
+[data-theme="light"] .status-row .val {
+  color: #0f172a;
+}

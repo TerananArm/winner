@@ -99,91 +99,112 @@
           </div>
         </div>
 
-        <!-- ── Controls Row matching user screenshot ── -->
+        <!-- ── Controls Card Toolbar ── -->
         <div class="sched-controls-row">
-          <!-- Left: View & Group Selectors -->
-          <div class="sched-left-filters">
-            <div class="sched-filter-item">
-              <label class="sched-filter-label" for="sched-view-type">มุมมอง (View)</label>
-              <select class="sched-select-input" id="sched-view-type" onchange="SCHED.onViewTypeChange()">
-                <option value="student">กลุ่มเรียน (Student Group)</option>
-                <option value="student_lookup">🔍 ค้นหารายบุคคล (Student Lookup)</option>
-                <option value="teacher">ครูผู้สอน (Teacher)</option>
-                <option value="room">ห้องเรียน (Room)</option>
-                <option value="subject">รายวิชา (Subject)</option>
-              </select>
+          <!-- Top Tier: Filter & Target Selection -->
+          <div class="sched-controls-top">
+            <div class="sched-left-filters">
+              <div class="sched-filter-item">
+                <label class="sched-filter-label" for="sched-view-type">
+                  <i class="fas fa-layer-group"></i> มุมมอง (View)
+                </label>
+                <select class="sched-select-input" id="sched-view-type" onchange="SCHED.onViewTypeChange()">
+                  <option value="student">กลุ่มเรียน (Student Group)</option>
+                  <option value="student_lookup">🔍 ค้นหารายบุคคล (Student Lookup)</option>
+                  <option value="teacher">ครูผู้สอน (Teacher)</option>
+                  <option value="room">ห้องเรียน (Room)</option>
+                  <option value="subject">รายวิชา (Subject)</option>
+                </select>
+              </div>
+
+              <div class="sched-filter-item" id="sched-target-wrapper">
+                <label class="sched-filter-label" id="sched-target-label" for="sched-target-select">
+                  <i class="fas fa-bullseye"></i> กลุ่มเรียน (Group)
+                </label>
+                <select class="sched-select-input" id="sched-target-select" onchange="SCHED.onTargetChange()"
+                  style="min-width: 240px;">
+                  <option value="">-- เลือกกลุ่มเรียน --</option>
+                </select>
+              </div>
+
+              <!-- Student Individual Lookup Box -->
+              <div class="sched-filter-item hidden" id="sched-student-lookup-wrap">
+                <label class="sched-filter-label" for="sched-student-search">
+                  <i class="fas fa-user-tag"></i> ค้นหารหัสนักเรียน / ชื่อ
+                </label>
+                <div style="position:relative;">
+                  <input type="text" class="sched-select-input" id="sched-student-search"
+                    placeholder="พิมพ์รหัสหรือชื่อนักเรียน..." oninput="SCHED.onStudentSearch(this.value)"
+                    style="min-width: 260px; padding-left: 34px;" />
+                  <i class="fas fa-search"
+                    style="position:absolute; left:12px; top:12px; color:#64748b; font-size:12px;"></i>
+                  <div id="sched-student-results" class="student-search-results hidden"></div>
+                </div>
+              </div>
             </div>
 
-            <div class="sched-filter-item" id="sched-target-wrapper">
-              <label class="sched-filter-label" id="sched-target-label" for="sched-target-select">กลุ่มเรียน
-                (Group)</label>
-              <select class="sched-select-input" id="sched-target-select" onchange="SCHED.onTargetChange()"
-                style="min-width: 220px;">
-                <option value="">-- เลือกกลุ่มเรียน --</option>
-              </select>
-            </div>
-
-            <!-- Student Individual Lookup Box -->
-            <div class="sched-filter-item hidden" id="sched-student-lookup-wrap">
-              <label class="sched-filter-label" for="sched-student-search">ค้นหารหัสนักเรียน / ชื่อ</label>
-              <div style="position:relative;">
-                <input type="text" class="sched-select-input" id="sched-student-search"
-                  placeholder="พิมพ์รหัสหรือชื่อนักเรียน..." oninput="SCHED.onStudentSearch(this.value)"
-                  style="min-width: 260px; padding-left: 32px;" />
-                <i class="fas fa-search"
-                  style="position:absolute; left:12px; top:12px; color:#64748b; font-size:12px;"></i>
-                <div id="sched-student-results" class="student-search-results hidden"></div>
+            <!-- Top Right: Seed Staging -->
+            <div class="sched-top-right admin-only">
+              <div class="sched-seed-wrapper" title="Seed สุ่มรูปแบบการจัดตาราง">
+                <i class="fas fa-dice" style="color:var(--primary-light); font-size:13px;"></i>
+                <span class="seed-title">Seed</span>
+                <input type="number" id="sched-seed" value="1" min="1" max="99999" class="seed-num-input"
+                  oninput="SCHED.onSeedChange()" onchange="SCHED.onSeedChange()" />
               </div>
             </div>
           </div>
 
-          <!-- Right: Clean & Organized Action Buttons -->
+          <!-- Subtle Divider Line -->
+          <div class="sched-controls-divider admin-only"></div>
+
+          <!-- Bottom Tier: Actions Toolbar Organized Logically -->
           <div class="sched-right-actions">
-            <!-- จัดตารางอัตโนมัติ (AI) - พระเอกหลัก -->
-            <button class="sched-action-btn btn-sched-ai admin-only" id="btn-auto-sched"
-              onclick="SCHED.startAiScheduleWithProgress()" title="ประมวลผลจัดตารางสอนอัตโนมัติตามข้อมูลจริง">
-              <i class="fas fa-wand-magic-sparkles"></i> จัดตารางอัตโนมัติ (AI)
-            </button>
+            <!-- Group 1: Creation & AI -->
+            <div class="sched-action-group sched-create-group admin-only">
+              <!-- จัดตารางอัตโนมัติ (AI) -->
+              <button class="sched-action-btn btn-sched-ai" id="btn-auto-sched"
+                onclick="SCHED.startAiScheduleWithProgress()" title="ประมวลผลจัดตารางสอนอัตโนมัติตามข้อมูลจริง">
+                <i class="fas fa-wand-magic-sparkles"></i> จัดตารางอัตโนมัติ (AI)
+              </button>
 
-            <!-- + เพิ่มรายวิชา -->
-            <button class="sched-action-btn btn-sched-add admin-only" onclick="SCHED.openAddModal()" title="เพิ่มรายวิชาในตาราง">
-              <i class="fas fa-plus"></i> เพิ่มรายวิชา
-            </button>
-
-            <!-- Seed สุ่ม -->
-            <div class="sched-seed-wrapper admin-only" title="Seed สุ่มรูปแบบการจัดตาราง">
-              <span class="seed-title">Seed</span>
-              <input type="number" id="sched-seed" value="1" min="1" max="99999" class="seed-num-input"
-                oninput="SCHED.onSeedChange()" onchange="SCHED.onSeedChange()" />
+              <!-- + เพิ่มรายวิชา -->
+              <button class="sched-action-btn btn-sched-add" onclick="SCHED.openAddModal()" title="เพิ่มรายวิชาในตาราง">
+                <i class="fas fa-plus"></i> เพิ่มรายวิชา
+              </button>
             </div>
 
-            <!-- พิมพ์ตาราง -->
-            <button class="sched-action-btn btn-sched-print" onclick="SCHED.printSchedule()" title="พิมพ์ตารางสอน">
-              <i class="fas fa-print"></i> พิมพ์
-            </button>
+            <div class="sched-action-divider admin-only"></div>
 
-            <!-- ตารางสรุปรวม -->
-            <button class="sched-action-btn btn-sched-export" onclick="SCHED.openMasterModal()"
-              title="ดูตารางสรุปรวมทั้งหมด">
-              <i class="fas fa-table-cells-large"></i> ตารางรวม
-            </button>
+            <!-- Group 2: Document & Utility Tools -->
+            <div class="sched-action-group sched-utility-group">
+              <!-- พิมพ์ตาราง -->
+              <button class="sched-action-btn btn-sched-print" onclick="SCHED.printSchedule()" title="พิมพ์ตารางสอน">
+                <i class="fas fa-print"></i> พิมพ์
+              </button>
 
-            <!-- ส่งออก Excel -->
-            <button class="sched-action-btn btn-sched-export" onclick="SCHED.exportExcel()"
-              title="ส่งออกตารางเป็น Excel">
-              <i class="fas fa-file-excel"></i> ส่งออก
-            </button>
+              <!-- ตารางสรุปรวม -->
+              <button class="sched-action-btn btn-sched-export btn-sched-master" onclick="SCHED.openMasterModal()"
+                title="ดูตารางสรุปรวมทั้งหมด">
+                <i class="fas fa-table-cells-large"></i> ตารางรวม
+              </button>
 
-            <!-- นำเข้า Excel -->
-            <button class="sched-action-btn btn-sched-import admin-only" onclick="SCHED.openImportModal()"
-              title="นำเข้าข้อมูลจาก Excel">
-              <i class="fas fa-file-import"></i> นำเข้า
-            </button>
+              <!-- ส่งออก Excel -->
+              <button class="sched-action-btn btn-sched-export btn-sched-excel" onclick="SCHED.exportExcel()"
+                title="ส่งออกตารางเป็น Excel">
+                <i class="fas fa-file-excel excel-icon"></i> ส่งออก
+              </button>
 
-            <!-- ล้างตาราง -->
-            <button class="sched-action-btn btn-sched-clear admin-only" onclick="SCHED.openClearModal()" title="ล้างตารางสอน">
-              <i class="fas fa-trash-can"></i> ล้างตาราง
-            </button>
+              <!-- นำเข้า Excel -->
+              <button class="sched-action-btn btn-sched-import admin-only" onclick="SCHED.openImportModal()"
+                title="นำเข้าข้อมูลจาก Excel">
+                <i class="fas fa-file-import import-icon"></i> นำเข้า
+              </button>
+
+              <!-- ล้างตาราง -->
+              <button class="sched-action-btn btn-sched-clear admin-only" onclick="SCHED.openClearModal()" title="ล้างตารางสอน">
+                <i class="fas fa-trash-can"></i> ล้างตาราง
+              </button>
+            </div>
 
             <!-- Hidden file input for Excel import -->
             <input type="file" id="excel-file-input" accept=".xlsx,.xls,.csv" style="display:none;"

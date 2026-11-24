@@ -259,3 +259,21 @@
   .subject-detail-row { flex-direction: column; }
   .reg-type-summary { grid-template-columns: 1fr 1fr; }
 }
+
+
+/* ============================================================
+   LIGHT THEME OVERRIDES FOR REGISTRATION PAGE
+   ============================================================ */
+[data-theme="light"] .reg-legend {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04) !important;
+}
+
+[data-theme="light"] .legend-label {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .legend-desc {
+  color: #64748b !important;
+}
