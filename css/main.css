@@ -1405,16 +1405,50 @@ body.sidebar-locked {
 
 /* ============================================================
    ROLE-BASED PERMISSION CLASSES
+   ครูและนักเรียนดูตารางได้อย่างเดียว (Read-Only) Admin จัดการเต็มรูปแบบ
    ============================================================ */
 body.role-student .admin-only,
-body.role-student .teacher-only,
-body.role-teacher .admin-only {
+body.role-teacher .admin-only,
+body:not(.role-admin) .admin-only {
   display: none !important;
 }
 
-body.role-student .student-readonly {
-  pointer-events: none !important;
-  opacity: 0.85 !important;
+/* ซ่อนเครื่องมือแก้ไข, ฟอร์ม และปุ่มจัดการข้อมูลทั้งหมดเมื่อไม่ได้เป็น Admin */
+body:not(.role-admin) #section-form,
+body:not(.role-admin) .btn-sched-ai,
+body:not(.role-admin) .btn-sched-add,
+body:not(.role-admin) .btn-sched-clear,
+body:not(.role-admin) .btn-sched-import,
+body:not(.role-admin) .sched-seed-wrapper,
+body:not(.role-admin) button[onclick*="confirmClearSchedule"],
+body:not(.role-admin) button[onclick*="startAiSchedule"],
+body:not(.role-admin) button[onclick*="openClearModal"],
+body:not(.role-admin) button[onclick*="openAddModal"],
+body:not(.role-admin) button[onclick*="openImportModal"],
+body:not(.role-admin) button[onclick*="save"],
+body:not(.role-admin) button[onclick*="Save"],
+body:not(.role-admin) button[onclick*="confirmDelete"],
+body:not(.role-admin) button[onclick*="delete"],
+body:not(.role-admin) button[onclick*="Delete"],
+body:not(.role-admin) label[title*="นำเข้า"],
+body:not(.role-admin) button[title*="นำเข้า"],
+body:not(.role-admin) .col-actions,
+body:not(.role-admin) .action-btns {
+  display: none !important;
+}
+
+/* เมื่อเป็นนักเรียน/ครู ปิดการลากวางหรือแก้ไขใดๆ */
+body:not(.role-admin) .occupied-slot {
+  cursor: pointer !important;
+  user-select: none !important;
+}
+
+body:not(.role-admin) .empty-slot {
+  cursor: default !important;
+}
+
+body:not(.role-admin) .empty-add-hint {
+  display: none !important;
 }
 
 /* Role indicator alert banner for student / teacher */
@@ -1438,8 +1472,17 @@ body.role-student .student-readonly {
   color: #60a5fa;
 }
 
-/* Simplified sidebar for student role */
+/* Simplified sidebar for student role: ดูเฉพาะตารางเรียน, แดชบอร์ด, รายวิชา, ห้องเรียน, คู่มือ */
+body.role-student .sidebar-nav a[href="groups.html"],
+body.role-student .sidebar-nav a[href="students.html"],
+body.role-student .sidebar-nav a[href="teachers.html"],
 body.role-student .sidebar-nav a[href="teaching-load.html"],
 body.role-student .sidebar-nav a[href="registration.html"] {
+  display: none !important;
+}
+
+/* Simplified sidebar for teacher role: ดูตารางสอนและภาระงานสอน ซ่อนเมนูตั้งค่าระบบ */
+body.role-teacher .sidebar-nav a[href="registration.html"],
+body.role-teacher .sidebar-nav a[href="groups.html"] {
   display: none !important;
 }

@@ -684,7 +684,8 @@ const SCHED = (() => {
       }
 
       // Periods 1 to 4 (Morning: 08:00 - 12:00)
-      const isStudent = (window.AUTH && window.AUTH.getUser && window.AUTH.getUser().role === 'student');
+      const isAdmin = (window.AUTH && window.AUTH.getUser && window.AUTH.getUser().role === 'admin');
+      const isReadOnly = !isAdmin;
       let p = 1;
       while (p <= 4) {
         const slot = schedules.find(s => (s.day === day || s.day === dayShort) && s.period_start === p);
@@ -695,8 +696,8 @@ const SCHED = (() => {
         } else {
           const coveredBy = schedules.find(s => (s.day === day || s.day === dayShort) && s.period_start < p && s.period_end >= p);
           if (!coveredBy) {
-            const emptyAttrs = isStudent ? '' : `ondragover="SCHED.handleDragOver(event, '${day}', ${p})" ondragleave="SCHED.handleDragLeave(event)" ondrop="SCHED.handleDrop(event, '${day}', ${p})" onclick="SCHED.quickAdd('${day}', ${p})"`;
-            html += `<td class="empty-slot" data-day="${day}" data-period="${p}" ${emptyAttrs}><span class="empty-add-hint">${isStudent ? '' : '<i class="fas fa-plus"></i>'}</span></td>`;
+            const emptyAttrs = isReadOnly ? '' : `ondragover="SCHED.handleDragOver(event, '${day}', ${p})" ondragleave="SCHED.handleDragLeave(event)" ondrop="SCHED.handleDrop(event, '${day}', ${p})" onclick="SCHED.quickAdd('${day}', ${p})"`;
+            html += `<td class="empty-slot" data-day="${day}" data-period="${p}" ${emptyAttrs}><span class="empty-add-hint">${isReadOnly ? '' : '<i class="fas fa-plus"></i>'}</span></td>`;
           }
           p++;
         }
@@ -722,8 +723,8 @@ const SCHED = (() => {
         } else {
           const coveredBy = schedules.find(s => (s.day === day || s.day === dayShort) && s.period_start < p && s.period_end >= p);
           if (!coveredBy) {
-            const emptyAttrs = isStudent ? '' : `ondragover="SCHED.handleDragOver(event, '${day}', ${p})" ondragleave="SCHED.handleDragLeave(event)" ondrop="SCHED.handleDrop(event, '${day}', ${p})" onclick="SCHED.quickAdd('${day}', ${p})"`;
-            html += `<td class="empty-slot" data-day="${day}" data-period="${p}" ${emptyAttrs}><span class="empty-add-hint">${isStudent ? '' : '<i class="fas fa-plus"></i>'}</span></td>`;
+            const emptyAttrs = isReadOnly ? '' : `ondragover="SCHED.handleDragOver(event, '${day}', ${p})" ondragleave="SCHED.handleDragLeave(event)" ondrop="SCHED.handleDrop(event, '${day}', ${p})" onclick="SCHED.quickAdd('${day}', ${p})"`;
+            html += `<td class="empty-slot" data-day="${day}" data-period="${p}" ${emptyAttrs}><span class="empty-add-hint">${isReadOnly ? '' : '<i class="fas fa-plus"></i>'}</span></td>`;
           }
           p++;
         }
@@ -738,7 +739,8 @@ const SCHED = (() => {
   // ── Render Slot Cell Content (Exact 3-line format) ──────────
   function renderSlotCell(slot, colspan = 1) {
     const isHomeroom = slot.subject_id === 'HOMEROOM';
-    const isStudent = (window.AUTH && window.AUTH.getUser && window.AUTH.getUser().role === 'student');
+    const isAdmin = (window.AUTH && window.AUTH.getUser && window.AUTH.getUser().role === 'admin');
+    const isReadOnly = !isAdmin;
 
     let line1 = slot.subject_id;
     let line2 = slot.room_id || '';
@@ -751,11 +753,11 @@ const SCHED = (() => {
       line3 = slot.teacher_id || '';
     }
 
-    const dragAttrs = isStudent
+    const dragAttrs = isReadOnly
       ? `data-slot-id="${slot.id}" data-day="${slot.day}" data-period="${slot.period_start}"`
       : `draggable="true" ondragstart="SCHED.handleDragStart(event, ${slot.id})" ondragend="SCHED.handleDragEnd(event)" ondragover="SCHED.handleDragOver(event, '${slot.day}', ${slot.period_start})" ondragleave="SCHED.handleDragLeave(event)" ondrop="SCHED.handleDrop(event, '${slot.day}', ${slot.period_start})" data-slot-id="${slot.id}" data-day="${slot.day}" data-period="${slot.period_start}"`;
 
-    const cellTitle = isStudent ? 'คลิกเพื่อดูรายละเอียดรายวิชา' : 'ลากเพื่อย้ายคาบ หรือคลิกเพื่อดูรายละเอียด';
+    const cellTitle = isReadOnly ? 'คลิกเพื่อดูรายละเอียดรายวิชา (โหมดอ่านอย่างเดียว)' : 'ลากเพื่อย้ายคาบ หรือคลิกเพื่อดูรายละเอียด';
 
     if (isHomeroom) {
       return `
@@ -2525,6 +2527,12 @@ const SCHED = (() => {
     document.querySelectorAll('.slot-is-dragging').forEach(el => el.classList.remove('slot-is-dragging'));
     document.querySelectorAll('.drag-over-cell').forEach(el => el.classList.remove('drag-over-cell'));
 
+    const isAdmin = (window.AUTH && window.AUTH.getUser && window.AUTH.getUser().role === 'admin');
+    if (!isAdmin) {
+      showToast('warning', 'ไม่มีสิทธิ์ดำเนินการ', 'เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่สามารถย้ายตารางสอนได้');
+      return;
+    }
+
     const rawId = event.dataTransfer ? event.dataTransfer.getData('text/plain') : _draggedSlotId;
     const slotId = parseInt(rawId || _draggedSlotId, 10);
     if (!slotId) return;
@@ -3014,6 +3022,11 @@ const SCHED = (() => {
   }
 
   async function splitSlotInPlace(slotId, firstPartHours) {
+    const isAdmin = (window.AUTH && window.AUTH.getUser && window.AUTH.getUser().role === 'admin');
+    if (!isAdmin) {
+      showToast('warning', 'ไม่มีสิทธิ์ดำเนินการ', 'เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่สามารถแบ่งคาบเรียนได้');
+      return;
+    }
     const slot = _schedules.find(s => s.id === slotId);
     if (!slot) return;
     const dur = slot.period_end - slot.period_start + 1;
@@ -3077,6 +3090,11 @@ const SCHED = (() => {
 
   // ── Merge Slots (ฟังก์ชันรวมคาบเรียนที่ติดกัน หรือรวมคาบจากวันอื่น) ──
   async function mergeAdjacentSlots(slotIdA, slotIdB) {
+    const isAdmin = (window.AUTH && window.AUTH.getUser && window.AUTH.getUser().role === 'admin');
+    if (!isAdmin) {
+      showToast('warning', 'ไม่มีสิทธิ์ดำเนินการ', 'เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่สามารถรวมคาบเรียนได้');
+      return;
+    }
     const slotA = _schedules.find(s => s.id === slotIdA);
     const slotB = _schedules.find(s => s.id === slotIdB);
     if (!slotA || !slotB) {
@@ -3160,6 +3178,11 @@ const SCHED = (() => {
   }
 
   async function mergeSlotsIntoCurrent(targetSlotId, sourceSlotId) {
+    const isAdmin = (window.AUTH && window.AUTH.getUser && window.AUTH.getUser().role === 'admin');
+    if (!isAdmin) {
+      showToast('warning', 'ไม่มีสิทธิ์ดำเนินการ', 'เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่สามารถรวมคาบเรียนได้');
+      return;
+    }
     const targetSlot = _schedules.find(s => s.id === targetSlotId);
     const sourceSlot = _schedules.find(s => s.id === sourceSlotId);
     if (!targetSlot || !sourceSlot) {
@@ -3347,6 +3370,8 @@ const SCHED = (() => {
 
 
   function quickAdd(day, period) {
+    const isAdmin = (window.AUTH && window.AUTH.getUser && window.AUTH.getUser().role === 'admin');
+    if (!isAdmin) return;
     openAddModal(day, period);
   }
 
@@ -3355,12 +3380,13 @@ const SCHED = (() => {
     if (!slot) return;
     _activeSlotDetail = slot;
 
-    const isStudent = (window.AUTH && window.AUTH.getUser && window.AUTH.getUser().role === 'student');
+    const isAdmin = (window.AUTH && window.AUTH.getUser && window.AUTH.getUser().role === 'admin');
+    const isReadOnly = !isAdmin;
 
-    // ซ่อนปุ่มลบคาบสำหรับนักเรียน
+    // ซ่อนปุ่มลบคาบสำหรับผู้ที่ไม่ได้เป็น Admin (ทั้งครูและนักเรียน ดูได้อย่างเดียว)
     const delBtn = document.querySelector('#slotDetailModal .btn-danger');
     if (delBtn) {
-      delBtn.style.display = isStudent ? 'none' : 'inline-flex';
+      delBtn.style.display = isReadOnly ? 'none' : 'inline-flex';
     }
 
     const subj = _subjects.find(s => s.subject_id === slot.subject_id) || { subject_name: slot.subject_id };
@@ -3372,7 +3398,7 @@ const SCHED = (() => {
     let splitUi = '';
     let mergeUi = '';
 
-    if (!isStudent && slot.subject_id !== 'HOMEROOM') {
+    if (!isReadOnly && slot.subject_id !== 'HOMEROOM') {
       // 1. ตัวเลือกแบ่งคาบ (Split Periods)
       if (dur > 1) {
         let splitButtons = '';
@@ -3520,9 +3546,9 @@ const SCHED = (() => {
 
   async function deleteActiveSlot() {
     if (!_activeSlotDetail) return;
-    const isStudent = (window.AUTH && window.AUTH.getUser && window.AUTH.getUser().role === 'student');
-    if (isStudent) {
-      showToast('warning', 'ไม่มีสิทธิ์ดำเนินการ', 'นักเรียนสามารถดูตารางเรียนได้แบบอ่านอย่างเดียว');
+    const isAdmin = (window.AUTH && window.AUTH.getUser && window.AUTH.getUser().role === 'admin');
+    if (!isAdmin) {
+      showToast('warning', 'ไม่มีสิทธิ์ดำเนินการ', 'เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่สามารถลบคาบเรียนได้');
       return;
     }
     const id = _activeSlotDetail.id;

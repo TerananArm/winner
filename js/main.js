@@ -503,7 +503,7 @@ const AUTH = {
     document.body.classList.remove('role-admin', 'role-teacher', 'role-student');
     document.body.classList.add(`role-${u.role}`);
 
-    // จัดการข้อความแจ้งเตือนสำหรับ student / teacher
+    // จัดการข้อความแจ้งเตือนสำหรับ student / teacher (โหมดอ่านอย่างเดียว ดูตารางเท่านั้น)
     const existingBanner = document.getElementById('roleNotificationBanner');
     if (existingBanner) existingBanner.remove();
 
@@ -514,17 +514,17 @@ const AUTH = {
       banner.className = `role-banner ${u.role === 'student' ? 'role-banner-student' : 'role-banner-teacher'}`;
       if (u.role === 'student') {
         banner.innerHTML = `
-          <i class="fas fa-user-graduate" style="font-size:16px;"></i>
+          <i class="fas fa-eye" style="font-size:16px;"></i>
           <div style="flex:1;">
-            <strong>โหมดนักเรียน/นักศึกษา:</strong> เข้าใช้งานในกลุ่มเรียน <strong>${u.group_id || '672190102'}</strong> (แสดงผลตารางเรียนแบบอ่านอย่างเดียว)
+            <strong>โหมดนักเรียน/นักศึกษา (ดูตารางอย่างเดียว - Read Only):</strong> แสดงตารางเรียนกลุ่ม <strong>${u.group_id || '672190102'}</strong> (เฉพาะผู้ดูแลระบบเท่านั้นที่สามารถจัดหรือแก้ไขตารางได้)
           </div>
           <button class="btn btn-xs btn-ghost" onclick="AUTH.quickSwitch('admin')" style="font-size:11.5px;padding:4px 8px;">สลับเป็น Admin</button>
         `;
       } else if (u.role === 'teacher') {
         banner.innerHTML = `
-          <i class="fas fa-chalkboard-user" style="font-size:16px;"></i>
+          <i class="fas fa-eye" style="font-size:16px;"></i>
           <div style="flex:1;">
-            <strong>โหมดครูผู้สอน:</strong> เข้าใช้งานในนาม <strong>${u.name} (รหัส: ${u.teacher_id || 'T01'})</strong>
+            <strong>โหมดครูผู้สอน (ดูตารางอย่างเดียว - Read Only):</strong> แสดงตารางสอนของ <strong>${u.name} (${u.teacher_id || 'T01'})</strong> (เฉพาะผู้ดูแลระบบเท่านั้นที่สามารถจัดหรือแก้ไขตารางได้)
           </div>
           <button class="btn btn-xs btn-ghost" onclick="AUTH.quickSwitch('admin')" style="font-size:11.5px;padding:4px 8px;">สลับเป็น Admin</button>
         `;
