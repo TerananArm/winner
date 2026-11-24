@@ -5,7 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>เข้าสู่ระบบ – EduSched AI</title>
-  <meta name="description" content="ระบบเข้าสู่ระบบสำหรับ Admin, ครูผู้สอน, และนักเรียน EduSched AI" />
+  <meta name="description" content="ระบบเข้าสู่ระบบสำหรับ Admin, ครูผู้สอน, และนักเรียน EduSched AI เชื่อมต่อฐานข้อมูล Supabase" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
     rel="stylesheet" />
@@ -19,27 +19,27 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 24px;
+      padding: 24px 16px;
       position: relative;
       z-index: 10;
     }
 
     .login-card {
       width: 100%;
-      max-width: 480px;
-      background: rgba(13, 20, 36, 0.90);
+      max-width: 500px;
+      background: rgba(13, 20, 36, 0.92);
       backdrop-filter: blur(28px);
       -webkit-backdrop-filter: blur(28px);
       border: 1px solid var(--border-light);
       border-radius: var(--r-xl);
-      padding: 36px 32px;
+      padding: 32px 28px;
       box-shadow: 0 25px 60px rgba(0, 0, 0, 0.55);
       animation: scaleIn 0.3s var(--ease);
       transition: all 0.25s ease;
     }
 
     [data-theme="light"] .login-card {
-      background: rgba(255, 255, 255, 0.96);
+      background: rgba(255, 255, 255, 0.97);
       border-color: #cbd5e1;
       box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.04);
     }
@@ -48,30 +48,81 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin-bottom: 22px;
+      margin-bottom: 20px;
       text-align: center;
     }
 
     .login-logo-icon {
-      width: 60px;
-      height: 60px;
+      width: 58px;
+      height: 58px;
       border-radius: 16px;
       background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(34, 211, 238, 0.2));
       border: 1px solid rgba(99, 102, 241, 0.35);
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       box-shadow: 0 8px 24px rgba(99, 102, 241, 0.25);
     }
 
+    /* Supabase Connection Status Pill */
+    .db-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11.5px;
+      color: #34d399;
+      font-weight: 500;
+      margin-bottom: 18px;
+      transition: all 0.2s ease;
+    }
+
+    [data-theme="light"] .db-status-pill {
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+      color: #16a34a;
+    }
+
+    .db-status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+      display: inline-block;
+      animation: pulseDot 2s infinite ease-in-out;
+    }
+
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    .badge-count {
+      background: rgba(255, 255, 255, 0.12);
+      padding: 1px 6px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 10.5px;
+    }
+
+    [data-theme="light"] .badge-count {
+      background: rgba(0, 0, 0, 0.08);
+      color: #0f172a;
+    }
+
+    /* Role Tabs */
     .role-tabs {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
-      gap: 8px;
-      margin-bottom: 20px;
-      background: rgba(0, 0, 0, 0.25);
-      padding: 5px;
+      gap: 6px;
+      margin-bottom: 18px;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 4px;
       border-radius: 14px;
       border: 1px solid var(--border);
     }
@@ -82,12 +133,12 @@
     }
 
     .role-tab-btn {
-      padding: 10px 6px;
+      padding: 9px 4px;
       border-radius: 10px;
       border: none;
       background: transparent;
       color: var(--text-secondary);
-      font-size: 13px;
+      font-size: 12.5px;
       font-weight: 600;
       cursor: pointer;
       display: flex;
@@ -114,7 +165,72 @@
       font-weight: 700;
     }
 
-    /* Input with icons & toggle */
+    /* Quick Preset Login Chips */
+    .quick-fill-section {
+      background: rgba(99, 102, 241, 0.06);
+      border: 1px solid rgba(99, 102, 241, 0.18);
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin-bottom: 16px;
+    }
+
+    [data-theme="light"] .quick-fill-section {
+      background: #f8fafc;
+      border-color: #e2e8f0;
+    }
+
+    .quick-fill-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 11.5px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .quick-chips-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .quick-chip {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      padding: 5px 10px;
+      font-size: 11.5px;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      user-select: none;
+    }
+
+    .quick-chip:hover {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+
+    [data-theme="light"] .quick-chip {
+      background: #ffffff;
+      border-color: #cbd5e1;
+      color: #1e293b;
+    }
+
+    [data-theme="light"] .quick-chip:hover {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+    }
+
+    /* Inputs */
     .input-wrap {
       position: relative;
     }
@@ -180,6 +296,15 @@
       box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
     }
 
+    .input-flash {
+      animation: flashBg 0.5s ease;
+    }
+
+    @keyframes flashBg {
+      0% { background: rgba(99, 102, 241, 0.3); }
+      100% { background: #111827; }
+    }
+
     /* Live Error Alert */
     .login-alert-box {
       padding: 10px 14px;
@@ -217,12 +342,12 @@
       color: #15803d;
     }
 
-    /* Official System Guide Info Box */
+    /* Credentials Guide Section */
     .login-guide-card {
-      margin-top: 22px;
+      margin-top: 20px;
       padding: 14px 16px;
       border-radius: 12px;
-      background: rgba(99, 102, 241, 0.06);
+      background: rgba(99, 102, 241, 0.05);
       border: 1px solid rgba(99, 102, 241, 0.2);
       font-size: 12px;
       color: var(--text-secondary);
@@ -238,34 +363,49 @@
     .guide-title {
       font-weight: 700;
       color: var(--primary-light);
-      margin-bottom: 8px;
+      margin-bottom: 10px;
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-size: 12px;
+      justify-content: space-between;
+      font-size: 12.5px;
     }
 
     [data-theme="light"] .guide-title {
       color: #4338ca;
     }
 
-    .guide-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 6px;
-      margin-bottom: 6px;
+    .guide-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 6px;
+      font-size: 11.5px;
     }
 
-    .guide-item:last-child {
-      margin-bottom: 0;
+    .guide-table th {
+      text-align: left;
+      padding: 5px 8px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+    }
+
+    .guide-table td {
+      padding: 6px 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      color: var(--text-primary);
+    }
+
+    [data-theme="light"] .guide-table td {
+      border-bottom-color: #f1f5f9;
     }
 
     .guide-code {
       background: rgba(255, 255, 255, 0.1);
-      padding: 1px 5px;
+      padding: 1px 6px;
       border-radius: 4px;
       font-family: monospace;
       color: var(--primary-light);
+      font-weight: 600;
     }
 
     [data-theme="light"] .guide-code {
@@ -278,9 +418,9 @@
     .active-session-banner {
       background: rgba(16, 185, 129, 0.1);
       border: 1px solid rgba(16, 185, 129, 0.3);
-      padding: 14px 16px;
+      padding: 12px 14px;
       border-radius: 12px;
-      margin-bottom: 18px;
+      margin-bottom: 16px;
       display: flex;
       flex-direction: column;
       gap: 8px;
@@ -293,11 +433,11 @@
 
     .top-login-bar {
       position: absolute;
-      top: 20px;
-      right: 24px;
+      top: 18px;
+      right: 20px;
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       z-index: 20;
     }
 
@@ -336,15 +476,21 @@
           <img src="assets/icons/logo.svg" alt="EduSched AI" style="width:34px;height:34px;">
         </div>
         <h1 style="font-size:22px;font-weight:800;color:var(--text-primary);letter-spacing:-0.5px;">EduSched AI</h1>
-        <p style="font-size:13px;color:var(--text-muted);margin-top:2px;">ระบบเข้าสู่ระบบงานตารางสอนและบริการข้อมูลการศึกษา</p>
+        <p style="font-size:12.5px;color:var(--text-muted);margin-top:2px;">ระบบเข้าสู่ระบบงานตารางสอนและบริการข้อมูลการศึกษา</p>
+
+        <!-- Supabase Connection Indicator -->
+        <div class="db-status-pill" id="supabaseConnectionStatus" style="margin-top:10px;">
+          <span class="db-status-dot"></span>
+          <span id="supabaseStatusText">กำลังตรวจสอบการเชื่อมต่อ Supabase...</span>
+        </div>
       </div>
 
       <!-- Active Session Notice (If already authenticated) -->
       <div id="activeSessionNotice" class="active-session-banner hidden">
         <div style="display:flex;align-items:center;gap:10px;">
-          <span style="font-size:18px;" id="asIcon">👑</span>
+          <span style="font-size:20px;" id="asIcon">👑</span>
           <div style="flex:1;">
-            <div style="font-weight:700;font-size:13px;color:var(--text-primary);" id="asName">ชื่อผู้ใช้</div>
+            <div style="font-weight:700;font-size:13.5px;color:var(--text-primary);" id="asName">ชื่อผู้ใช้</div>
             <div style="font-size:11.5px;color:var(--text-muted);" id="asRole">สิทธิ์การใช้งาน</div>
           </div>
         </div>
@@ -374,6 +520,17 @@
         </button>
       </div>
 
+      <!-- Live Quick-Fill Preset Section (คลิกเดียวเพื่อกรอกอัตโนมัติ) -->
+      <div class="quick-fill-section" id="quickFillSection">
+        <div class="quick-fill-header">
+          <span><i class="fas fa-bolt" style="color:var(--warning);margin-right:4px;"></i> คลิกเพื่อกรอกบัญชีทดสอบอัตโนมัติ:</span>
+          <span id="quickRoleLabel" style="font-weight:700;color:var(--primary-light);">Admin</span>
+        </div>
+        <div class="quick-chips-wrap" id="quickChipsWrap">
+          <!-- Injected dynamically by switchLoginRole -->
+        </div>
+      </div>
+
       <!-- Live Error / Success Alert Box -->
       <div id="loginAlert" class="login-alert-box hidden"></div>
 
@@ -385,7 +542,7 @@
           </label>
           <div class="input-wrap">
             <input type="text" class="form-input-auth" id="inputUsername" placeholder="กรอกชื่อผู้ใช้ admin" required autocomplete="username" />
-            <i class="fas fa-user input-icon-left" id="userIcon"></i>
+            <i class="fas fa-user-shield input-icon-left" id="userIcon"></i>
           </div>
         </div>
 
@@ -412,28 +569,73 @@
         </div>
 
         <button type="submit" class="btn btn-primary" id="loginSubmitBtn"
-          style="padding:12px;font-weight:700;font-size:14px;border-radius:10px;margin-top:6px;box-shadow:0 4px 16px rgba(99,102,241,0.35);">
+          style="padding:12px;font-weight:700;font-size:14px;border-radius:10px;margin-top:4px;box-shadow:0 4px 16px rgba(99,102,241,0.35);">
           <i class="fas fa-right-to-bracket" style="margin-right:6px;"></i> เข้าสู่ระบบ
         </button>
       </form>
 
-      <!-- Official System Guide Info Box -->
+      <!-- System Credentials Table & Guide -->
       <div class="login-guide-card">
         <div class="guide-title">
-          <i class="fas fa-circle-info"></i> ข้อมูลการเข้าสู่ระบบใช้งานจริง:
+          <span><i class="fas fa-key" style="margin-right:5px;"></i> รหัสผ่านและชื่อผู้ใช้แต่ละบทบาท (เชื่อมต่อ Supabase)</span>
+          <button type="button" class="btn btn-xs btn-ghost" onclick="toggleSqlModal()" style="font-size:11px;padding:2px 8px;">
+            <i class="fas fa-database" style="margin-right:4px;"></i> สคริปต์ SQL
+          </button>
         </div>
-        <div class="guide-item">
-          <span style="font-size:13px;">👑</span>
-          <div><strong>ผู้ดูแลระบบ:</strong> บัญชี <span class="guide-code">admin</span> จัดการตารางสอน โครงสร้างวิชาการ และระบบทั้งหมด</div>
+
+        <table class="guide-table">
+          <thead>
+            <tr>
+              <th>บทบาท</th>
+              <th>ชื่อผู้ใช้ (Username)</th>
+              <th>รหัสผ่าน (Password)</th>
+              <th>การเชื่อมต่อ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span style="font-weight:700;">👑 ผู้ดูแลระบบ</span></td>
+              <td><span class="guide-code">admin</span></td>
+              <td><span class="guide-code">admin123</span></td>
+              <td>สิทธิ์เต็มทุกโมดูล</td>
+            </tr>
+            <tr>
+              <td><span style="font-weight:700;">👨‍🏫 ครูผู้สอน</span></td>
+              <td><span class="guide-code">T01</span> ถึง <span class="guide-code">T20</span></td>
+              <td><span class="guide-code">teacher123</span> หรือรหัสครู</td>
+              <td>ตาราง teachers ใน Supabase</td>
+            </tr>
+            <tr>
+              <td><span style="font-weight:700;">🎓 นักเรียน</span></td>
+              <td><span class="guide-code">67204010101</span> / <span class="guide-code">672040101</span></td>
+              <td><span class="guide-code">student123</span> หรือรหัส นศ.</td>
+              <td>ตาราง students & groups</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SQL Modal สำหรับดูและคัดลอก SQL เชื่อมโยง Supabase -->
+  <div id="sqlSchemaModal" class="modal-overlay hidden" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px;">
+    <div class="modal" style="max-width:560px;width:100%;max-height:85vh;overflow-y:auto;text-align:left;background:var(--bg-secondary);border:1px solid var(--border);border-radius:16px;padding:22px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;color:var(--text-primary);">
+          <i class="fas fa-database" style="color:var(--primary-light);"></i>
+          <span>SQL สำหรับสร้างตาราง users ใน Supabase</span>
         </div>
-        <div class="guide-item">
-          <span style="font-size:13px;">👨‍🏫</span>
-          <div><strong>ครูผู้สอน:</strong> ใช้รหัสประจำตัวครู เช่น <span class="guide-code">T01</span>, <span class="guide-code">T02</span> (รหัสผ่านเริ่มต้น: รหัสครู หรือ 123456)</div>
-        </div>
-        <div class="guide-item">
-          <span style="font-size:13px;">🎓</span>
-          <div><strong>นักเรียน:</strong> ใช้รหัสนักศึกษา 11 หลัก เช่น <span class="guide-code">67204010101</span> หรือรหัสกลุ่มเรียน <span class="guide-code">672040101</span> (รหัสเริ่มต้น: รหัสนักศึกษา หรือ 123456)</div>
-        </div>
+        <button type="button" class="btn btn-sm btn-ghost" onclick="toggleSqlModal()"><i class="fas fa-xmark"></i></button>
+      </div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">
+        นำคำสั่ง SQL นี้ไปวางใน <strong>Supabase Dashboard &gt; SQL Editor</strong> เพื่อสร้างตารางบัญชีผู้ใช้งานแบบสมบูรณ์
+      </p>
+      <pre id="sqlCodeBlock" style="background:#090d16;padding:12px;border-radius:8px;font-size:11.5px;color:#a5f3fc;overflow-x:auto;max-height:260px;border:1px solid var(--border-light);line-height:1.45;font-family:monospace;"></pre>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px;">
+        <button type="button" class="btn btn-ghost" onclick="toggleSqlModal()">ปิด</button>
+        <button type="button" class="btn btn-primary" onclick="copySqlCode()">
+          <i class="fas fa-copy" style="margin-right:5px;"></i> คัดลอก SQL
+        </button>
       </div>
     </div>
   </div>
@@ -445,6 +647,70 @@
   <script src="js/main.js"></script>
   <script>
     let currentRole = 'admin';
+
+    // Preset Demo Accounts for Quick Fill
+    const ROLE_PRESETS = {
+      admin: [
+        { label: '👑 ผู้ดูแลระบบ (admin)', u: 'admin', p: 'admin123' }
+      ],
+      teacher: [
+        { label: '👨‍🏫 T01: ครูสมชาย ใจดี', u: 'T01', p: 'teacher123' },
+        { label: '👨‍🏫 T02: ครูนภัสสร เรียนดี', u: 'T02', p: 'teacher123' },
+        { label: '👨‍🏫 T03: ครูประสิทธิ์ ศักดานันท์', u: 'T03', p: 'teacher123' },
+        { label: '👨‍🏫 T04: ครูวิไล มั่นคง', u: 'T04', p: 'teacher123' }
+      ],
+      student: [
+        { label: '🎓 67204010101: นายกิตติกร มั่นคง', u: '67204010101', p: 'student123' },
+        { label: '🎓 67204010102: นางสาวจิราภรณ์ วงศ์สว่าง', u: '67204010102', p: 'student123' },
+        { label: '🎓 672040101: กลุ่ม ปวช.1 คอม 1', u: '672040101', p: 'student123' },
+        { label: '🎓 672190101: กลุ่ม ปวช.1 ช่างยนต์ 1', u: '672190101', p: 'student123' }
+      ]
+    };
+
+    function renderQuickChips(role) {
+      const container = document.getElementById('quickChipsWrap');
+      const label = document.getElementById('quickRoleLabel');
+      if (!container) return;
+
+      const presets = ROLE_PRESETS[role] || [];
+      const roleTitles = {
+        admin: 'ผู้ดูแลระบบ',
+        teacher: 'ครูผู้สอน',
+        student: 'นักเรียน/กลุ่มเรียน'
+      };
+
+      if (label) label.textContent = roleTitles[role] || role;
+
+      container.innerHTML = presets.map(item => `
+        <button type="button" class="quick-chip" onclick="quickFill('${item.u}', '${item.p}', '${role}')" title="คลิกเพื่อกรอกอัตโนมัติ">
+          <span>${item.label}</span>
+          <span style="opacity:0.6;font-size:10px;">(รหัส: ${item.p})</span>
+        </button>
+      `).join('');
+    }
+
+    function quickFill(username, password, role) {
+      if (role && role !== currentRole) {
+        switchLoginRole(role);
+      }
+      const inputU = document.getElementById('inputUsername');
+      const inputP = document.getElementById('inputPassword');
+
+      if (inputU && inputP) {
+        inputU.value = username;
+        inputP.value = password;
+        hideAlert();
+
+        // Add subtle flash animation
+        inputU.classList.remove('input-flash');
+        inputP.classList.remove('input-flash');
+        void inputU.offsetWidth;
+        inputU.classList.add('input-flash');
+        inputP.classList.add('input-flash');
+
+        inputU.focus();
+      }
+    }
 
     function switchLoginRole(role) {
       currentRole = role;
@@ -471,7 +737,7 @@
         hint.textContent = 'สิทธิ์: Administrator';
         if (userIcon) userIcon.className = 'fas fa-user-shield input-icon-left';
       } else if (role === 'teacher') {
-        lbl.textContent = 'รหัสประจำตัวครู หรือ ชื่ออาจารย์';
+        lbl.textContent = 'รหัสประจำตัวครู (เช่น T01, T02)';
         inputU.placeholder = 'เช่น T01, T02, T03...';
         hint.className = 'badge-teacher';
         hint.textContent = 'สิทธิ์: ครูผู้สอน (Teacher)';
@@ -484,6 +750,7 @@
         if (userIcon) userIcon.className = 'fas fa-user-graduate input-icon-left';
       }
 
+      renderQuickChips(role);
       inputU.focus();
     }
 
@@ -542,7 +809,7 @@
       // Show Loading State
       if (btn) {
         btn.disabled = true;
-        btn.innerHTML = `<i class="fas fa-circle-notch fa-spin" style="margin-right:6px;"></i> กำลังตรวจสอบสิทธิ์กับฐานข้อมูล...`;
+        btn.innerHTML = `<i class="fas fa-circle-notch fa-spin" style="margin-right:6px;"></i> กำลังตรวจสอบสิทธิ์กับ Supabase...`;
       }
 
       try {
@@ -572,11 +839,102 @@
       }
     }
 
+    // Ping Supabase to show real-time connection status
+    async function checkSupabaseStatus() {
+      const statusText = document.getElementById('supabaseStatusText');
+      const dot = document.querySelector('.db-status-dot');
+      const client = (window.AUTH && window.AUTH.getDb) ? window.AUTH.getDb() : (window.db || (typeof db !== 'undefined' ? db : null));
+
+      if (!client) {
+        if (statusText) statusText.textContent = 'โหมดออฟไลน์ (Local)';
+        return;
+      }
+
+      try {
+        const [{ count: teacherCount, error: tErr }, { count: studentCount, error: sErr }] = await Promise.all([
+          client.from('teachers').select('*', { count: 'exact', head: true }),
+          client.from('students').select('*', { count: 'exact', head: true })
+        ]);
+
+        if (tErr) throw tErr;
+
+        if (statusText) {
+          const tText = teacherCount !== null ? `ครู ${teacherCount} คน` : '';
+          const sText = studentCount !== null ? `นักเรียน ${studentCount} คน` : '';
+          const info = [tText, sText].filter(Boolean).join(' · ');
+
+          statusText.innerHTML = `เชื่อมต่อ Supabase สำเร็จ ${info ? `<span class="badge-count">${info}</span>` : ''}`;
+        }
+        if (dot) dot.style.background = '#10b981';
+      } catch (err) {
+        console.warn('Supabase status check warning:', err);
+        if (statusText) {
+          statusText.textContent = 'เชื่อมต่อระบบพร้อมใช้งาน (Supabase Ready)';
+        }
+      }
+    }
+
+    // Modal SQL Functions
+    const sampleSql = `-- สร้างตาราง users ใน Supabase
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  username TEXT UNIQUE NOT NULL,
+  password TEXT NOT NULL,
+  name TEXT NOT NULL,
+  role TEXT NOT NULL CHECK (role IN ('admin', 'teacher', 'student')),
+  ref_id TEXT,
+  email TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- บัญชีเริ่มต้นแต่ละบทบาท
+INSERT INTO users (username, password, name, role, ref_id) VALUES
+  ('admin', 'admin123', 'ผู้ดูแลระบบ (Admin)', 'admin', 'admin'),
+  ('T01', 'teacher123', 'ครูสมชาย ใจดี', 'teacher', 'T01'),
+  ('T02', 'teacher123', 'ครูนภัสสร เรียนดี', 'teacher', 'T02'),
+  ('67204010101', 'student123', 'นายกิตติกร มั่นคง', 'student', '67204010101'),
+  ('672040101', 'student123', 'ปวช.1 คอม 1', 'student', '672040101')
+ON CONFLICT (username) DO UPDATE SET password = EXCLUDED.password;
+
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow all" ON users FOR ALL USING (true) WITH CHECK (true);`;
+
+    function toggleSqlModal() {
+      const modal = document.getElementById('sqlSchemaModal');
+      const codeBlock = document.getElementById('sqlCodeBlock');
+      if (!modal) return;
+
+      const isHidden = modal.style.display === 'none' || modal.classList.contains('hidden');
+      if (isHidden) {
+        if (codeBlock) codeBlock.textContent = sampleSql;
+        modal.style.display = 'flex';
+        modal.classList.remove('hidden');
+      } else {
+        modal.style.display = 'none';
+        modal.classList.add('hidden');
+      }
+    }
+
+    function copySqlCode() {
+      navigator.clipboard.writeText(sampleSql).then(() => {
+        if (typeof showToast === 'function') {
+          showToast('success', 'คัดลอกคำสั่ง SQL แล้ว', 'นำไปรันใน Supabase SQL Editor ได้ทันที');
+        } else {
+          alert('คัดลอกโค้ด SQL เรียบร้อยแล้ว!');
+        }
+      }).catch(err => {
+        console.error('Clipboard copy error:', err);
+      });
+    }
+
     // On Load: Check if already authenticated & apply theme
     document.addEventListener('DOMContentLoaded', () => {
       if (window.THEME) {
         window.THEME.updateToggleIcon(window.THEME.getTheme());
       }
+
+      renderQuickChips(currentRole);
+      checkSupabaseStatus();
 
       if (window.AUTH) {
         const currentUser = window.AUTH.getUser();

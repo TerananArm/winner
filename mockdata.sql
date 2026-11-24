@@ -502,6 +502,36 @@ INSERT INTO schedules (subject_id, teacher_id, room_id, group_id, day, period_st
 ('30204-2003','T12','LAB-COM3','672990101','วันศุกร์',1,6,'1','2568');
 
 -- ────────────────────────────────────────────────────────────
+-- 8. USERS (บัญชีผู้ใช้งานแต่ละบทบาท)
+-- ────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  username TEXT UNIQUE NOT NULL,
+  password TEXT NOT NULL,
+  name TEXT NOT NULL,
+  role TEXT NOT NULL CHECK (role IN ('admin', 'teacher', 'student')),
+  ref_id TEXT,
+  group_id TEXT,
+  email TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all" ON users;
+CREATE POLICY "Allow all" ON users FOR ALL USING (true) WITH CHECK (true);
+
+INSERT INTO users (username, password, name, role, ref_id, group_id, email) VALUES
+('admin', 'admin123', 'ผู้ดูแลระบบ (Admin)', 'admin', 'admin', NULL, 'admin@edusched.ac.th'),
+('T01', 'teacher123', 'ครูสมชาย ใจดี', 'teacher', 'T01', NULL, 't01@edusched.ac.th'),
+('T02', 'teacher123', 'ครูนภัสสร เรียนดี', 'teacher', 'T02', NULL, 't02@edusched.ac.th'),
+('T03', 'teacher123', 'ครูประสิทธิ์ ศักดานันท์', 'teacher', 'T03', NULL, 't03@edusched.ac.th'),
+('T04', 'teacher123', 'ครูวิไล มั่นคง', 'teacher', 'T04', NULL, 't04@edusched.ac.th'),
+('67204010101', 'student123', 'นายกิตติกร มั่นคง', 'student', '67204010101', '672040101', '67204010101@edusched.ac.th'),
+('67204010102', 'student123', 'นางสาวจิราภรณ์ วงศ์สว่าง', 'student', '67204010102', '672040101', '67204010102@edusched.ac.th'),
+('672040101', 'student123', 'ปวช.1 คอมพิวเตอร์ธุรกิจ 1', 'student', '672040101', '672040101', 'group672040101@edusched.ac.th')
+ON CONFLICT (username) DO UPDATE SET password = EXCLUDED.password, name = EXCLUDED.name;
+
+-- ────────────────────────────────────────────────────────────
 -- VERIFY — ตรวจนับข้อมูลทุก table
 -- ────────────────────────────────────────────────────────────
 SELECT 'subjects'       AS table_name, COUNT(*) AS total_rows FROM subjects
@@ -512,4 +542,5 @@ UNION ALL SELECT 'students',       COUNT(*) FROM students
 UNION ALL SELECT 'registrations',  COUNT(*) FROM registrations
 UNION ALL SELECT 'teaching_loads', COUNT(*) FROM teaching_loads
 UNION ALL SELECT 'schedules',      COUNT(*) FROM schedules
+UNION ALL SELECT 'users',          COUNT(*) FROM users
 ORDER BY table_name;
