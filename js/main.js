@@ -112,11 +112,25 @@ function showToast(type = 'info', title = '', message = '') {
 }
 
 
+// Helper ตรวจสอบชื่อไฟล์หน้าปัจจุบัน รองรับทั้ง Clean URLs (.html ถูกตัดออกบน Vercel) และ URL ปกติ
+function getNormalizedCurrentPage() {
+  if (typeof window === 'undefined' || !window.location) return 'index.html';
+  let path = (window.location.pathname || '').split('/').pop() || 'index.html';
+  if (!path || path === '/') path = 'index.html';
+  path = path.split('?')[0].split('#')[0];
+  if (!path.endsWith('.html')) path += '.html';
+  return path.toLowerCase();
+}
+window.getNormalizedCurrentPage = getNormalizedCurrentPage;
+
 // Sidebar responsive toggle & mobile menu setup
 document.addEventListener('DOMContentLoaded', () => {
-  const currentPath = window.location.pathname.split('/').pop() || 'index.html';
+  const currentPath = getNormalizedCurrentPage();
   document.querySelectorAll('.sidebar-nav .nav-item').forEach(item => {
-    const href = item.getAttribute('href');
+    let href = item.getAttribute('href') || '';
+    if (href && !href.endsWith('.html') && !href.includes('#') && !href.startsWith('http')) {
+      href += '.html';
+    }
     if (href === currentPath) {
       item.classList.add('active');
     }
@@ -743,7 +757,9 @@ const AUTH = {
    */
   applyPermissions(user) {
     const u = (user !== undefined) ? user : this.getUser();
-    const currentFile = window.location.pathname.split('/').pop() || 'index.html';
+    const currentFile = typeof getNormalizedCurrentPage === 'function'
+      ? getNormalizedCurrentPage()
+      : ((window.location.pathname || '').split('/').pop() || 'index.html');
 
     // หากยังไม่ได้เข้าสู่ระบบ และไม่ได้อยู่ในหน้า login.html ให้พาไปยังหน้า login.html ทันที
     if (!u) {
