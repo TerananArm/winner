@@ -55,6 +55,8 @@ const SCHED = (() => {
     const roomParam = urlParams.get('room');
     const studentParam = urlParams.get('student') || urlParams.get('student_code');
 
+    const currentUser = (window.AUTH && window.AUTH.getUser) ? window.AUTH.getUser() : null;
+
     if (studentParam) {
       _viewType = 'student_lookup';
       _targetId = studentParam;
@@ -75,10 +77,42 @@ const SCHED = (() => {
       _targetId = roomParam;
       const viewSelect = document.getElementById('sched-view-type');
       if (viewSelect) viewSelect.value = 'room';
+    } else if (currentUser) {
+      // ปรับมุมมองอัตโนมัติตามบทบาทผู้ใช้
+      if (currentUser.role === 'teacher' && currentUser.teacher_id) {
+        _viewType = 'teacher';
+        _targetId = currentUser.teacher_id;
+        const viewSelect = document.getElementById('sched-view-type');
+        if (viewSelect) viewSelect.value = 'teacher';
+      } else if (currentUser.role === 'student' && currentUser.group_id) {
+        _viewType = 'student';
+        _targetId = currentUser.group_id;
+        const viewSelect = document.getElementById('sched-view-type');
+        if (viewSelect) viewSelect.value = 'student';
+      }
     }
 
     populateTargetDropdown();
     render();
+
+    // ฟัง Event เมื่อผู้ใช้สลับบทบาท (Quick Switch)
+    window.addEventListener('edusched:authChange', (e) => {
+      const u = e.detail;
+      if (!u) return;
+      if (u.role === 'teacher' && u.teacher_id) {
+        _viewType = 'teacher';
+        _targetId = u.teacher_id;
+        const viewSelect = document.getElementById('sched-view-type');
+        if (viewSelect) viewSelect.value = 'teacher';
+      } else if (u.role === 'student' && u.group_id) {
+        _viewType = 'student';
+        _targetId = u.group_id;
+        const viewSelect = document.getElementById('sched-view-type');
+        if (viewSelect) viewSelect.value = 'student';
+      }
+      populateTargetDropdown();
+      render();
+    });
   }
 
   async function loadAllData() {
@@ -650,6 +684,7 @@ const SCHED = (() => {
       }
 
       // Periods 1 to 4 (Morning: 08:00 - 12:00)
+      const isStudent = (window.AUTH && window.AUTH.getUser && window.AUTH.getUser().role === 'student');
       let p = 1;
       while (p <= 4) {
         const slot = schedules.find(s => (s.day === day || s.day === dayShort) && s.period_start === p);
@@ -660,7 +695,8 @@ const SCHED = (() => {
         } else {
           const coveredBy = schedules.find(s => (s.day === day || s.day === dayShort) && s.period_start < p && s.period_end >= p);
           if (!coveredBy) {
-            html += `<td class="empty-slot" data-day="${day}" data-period="${p}" ondragover="SCHED.handleDragOver(event, '${day}', ${p})" ondragleave="SCHED.handleDragLeave(event)" ondrop="SCHED.handleDrop(event, '${day}', ${p})" onclick="SCHED.quickAdd('${day}', ${p})"><span class="empty-add-hint"><i class="fas fa-plus"></i></span></td>`;
+            const emptyAttrs = isStudent ? '' : `ondragover="SCHED.handleDragOver(event, '${day}', ${p})" ondragleave="SCHED.handleDragLeave(event)" ondrop="SCHED.handleDrop(event, '${day}', ${p})" onclick="SCHED.quickAdd('${day}', ${p})"`;
+            html += `<td class="empty-slot" data-day="${day}" data-period="${p}" ${emptyAttrs}><span class="empty-add-hint">${isStudent ? '' : '<i class="fas fa-plus"></i>'}</span></td>`;
           }
           p++;
         }
@@ -686,7 +722,8 @@ const SCHED = (() => {
         } else {
           const coveredBy = schedules.find(s => (s.day === day || s.day === dayShort) && s.period_start < p && s.period_end >= p);
           if (!coveredBy) {
-            html += `<td class="empty-slot" data-day="${day}" data-period="${p}" ondragover="SCHED.handleDragOver(event, '${day}', ${p})" ondragleave="SCHED.handleDragLeave(event)" ondrop="SCHED.handleDrop(event, '${day}', ${p})" onclick="SCHED.quickAdd('${day}', ${p})"><span class="empty-add-hint"><i class="fas fa-plus"></i></span></td>`;
+            const emptyAttrs = isStudent ? '' : `ondragover="SCHED.handleDragOver(event, '${day}', ${p})" ondragleave="SCHED.handleDragLeave(event)" ondrop="SCHED.handleDrop(event, '${day}', ${p})" onclick="SCHED.quickAdd('${day}', ${p})"`;
+            html += `<td class="empty-slot" data-day="${day}" data-period="${p}" ${emptyAttrs}><span class="empty-add-hint">${isStudent ? '' : '<i class="fas fa-plus"></i>'}</span></td>`;
           }
           p++;
         }
@@ -701,6 +738,7 @@ const SCHED = (() => {
   // ── Render Slot Cell Content (Exact 3-line format) ──────────
   function renderSlotCell(slot, colspan = 1) {
     const isHomeroom = slot.subject_id === 'HOMEROOM';
+    const isStudent = (window.AUTH && window.AUTH.getUser && window.AUTH.getUser().role === 'student');
 
     let line1 = slot.subject_id;
     let line2 = slot.room_id || '';
@@ -713,11 +751,15 @@ const SCHED = (() => {
       line3 = slot.teacher_id || '';
     }
 
-    const dragAttrs = `draggable="true" ondragstart="SCHED.handleDragStart(event, ${slot.id})" ondragend="SCHED.handleDragEnd(event)" ondragover="SCHED.handleDragOver(event, '${slot.day}', ${slot.period_start})" ondragleave="SCHED.handleDragLeave(event)" ondrop="SCHED.handleDrop(event, '${slot.day}', ${slot.period_start})" data-slot-id="${slot.id}" data-day="${slot.day}" data-period="${slot.period_start}"`;
+    const dragAttrs = isStudent
+      ? `data-slot-id="${slot.id}" data-day="${slot.day}" data-period="${slot.period_start}"`
+      : `draggable="true" ondragstart="SCHED.handleDragStart(event, ${slot.id})" ondragend="SCHED.handleDragEnd(event)" ondragover="SCHED.handleDragOver(event, '${slot.day}', ${slot.period_start})" ondragleave="SCHED.handleDragLeave(event)" ondrop="SCHED.handleDrop(event, '${slot.day}', ${slot.period_start})" data-slot-id="${slot.id}" data-day="${slot.day}" data-period="${slot.period_start}"`;
+
+    const cellTitle = isStudent ? 'คลิกเพื่อดูรายละเอียดรายวิชา' : 'ลากเพื่อย้ายคาบ หรือคลิกเพื่อดูรายละเอียด';
 
     if (isHomeroom) {
       return `
-        <td colspan="${colspan}" class="occupied-slot" ${dragAttrs} onclick="SCHED.openSlotDetail(${slot.id})" title="กิจกรรมแถว/แนะแนว (ลากวางเพื่อย้ายคาบ)">
+        <td colspan="${colspan}" class="occupied-slot" ${dragAttrs} onclick="SCHED.openSlotDetail(${slot.id})" title="${cellTitle}">
           <div class="slot-inner">
             <div class="slot-course-code slot-homeroom-text">HOMEROOM</div>
             <div class="slot-room-code">${line2}</div>
@@ -727,7 +769,7 @@ const SCHED = (() => {
     }
 
     return `
-      <td colspan="${colspan}" class="occupied-slot" ${dragAttrs} onclick="SCHED.openSlotDetail(${slot.id})" title="ลากเพื่อย้ายคาบ หรือคลิกเพื่อดูรายละเอียด">
+      <td colspan="${colspan}" class="occupied-slot" ${dragAttrs} onclick="SCHED.openSlotDetail(${slot.id})" title="${cellTitle}">
         <div class="slot-inner">
           <div class="slot-course-code">${line1}</div>
           <div class="slot-room-code">${line2}</div>
@@ -2529,6 +2571,35 @@ const SCHED = (() => {
       };
       showDragConflictModal(_pendingMovePlan);
     } else {
+      // ตรวจสอบว่าตำแหน่งที่วาง อยู่ติดกับบล็อกวิชาเดียวกันและกลุ่มเดียวกันหรือไม่
+      const adjSlot = _schedules.find(s => 
+        s.id !== slot.id && 
+        s.day === targetDay && 
+        s.subject_id === slot.subject_id && 
+        s.group_id === slot.group_id && 
+        s.subject_id !== 'HOMEROOM' &&
+        (s.period_end + 1 === targetPeriod || newPeriodEnd + 1 === s.period_start)
+      );
+
+      if (adjSlot) {
+        const combStart = Math.min(adjSlot.period_start, targetPeriod);
+        const combEnd = Math.max(adjSlot.period_end, newPeriodEnd);
+        const crossesLunch = (combStart <= 4 && combEnd > 4);
+        if (!crossesLunch && combEnd <= 11) {
+          showMergeModal({
+            slot,
+            targetDay,
+            targetPeriod,
+            newPeriodEnd,
+            adjSlot,
+            combStart,
+            combEnd,
+            isSplit: false
+          });
+          return;
+        }
+      }
+
       // ไม่มีข้อขัดแย้ง -> ดำเนินการย้ายคาบทันที
       await executeMoveSlot(slot, targetDay, targetPeriod, newPeriodEnd);
     }
@@ -2845,6 +2916,37 @@ const SCHED = (() => {
       };
       showDragConflictModal(_pendingMovePlan);
     } else {
+      // ตรวจสอบว่าตำแหน่งที่วาง อยู่ติดกับบล็อกวิชาเดียวกันและกลุ่มเดียวกันหรือไม่
+      const adjSlot = _schedules.find(s => 
+        s.id !== slot.id && 
+        s.day === targetDay && 
+        s.subject_id === slot.subject_id && 
+        s.group_id === slot.group_id && 
+        s.subject_id !== 'HOMEROOM' &&
+        (s.period_end + 1 === targetPeriod || newPeriodEnd + 1 === s.period_start)
+      );
+
+      if (adjSlot) {
+        const combStart = Math.min(adjSlot.period_start, targetPeriod);
+        const combEnd = Math.max(adjSlot.period_end, newPeriodEnd);
+        const crossesLunch = (combStart <= 4 && combEnd > 4);
+        if (!crossesLunch && combEnd <= 11) {
+          showMergeModal({
+            slot,
+            targetDay,
+            targetPeriod,
+            newPeriodEnd,
+            adjSlot,
+            combStart,
+            combEnd,
+            isSplit: (moveHours < dur),
+            moveHours,
+            dur
+          });
+          return;
+        }
+      }
+
       if (moveHours === dur) {
         await executeMoveSlot(slot, targetDay, targetPeriod, newPeriodEnd);
       } else {
@@ -2973,6 +3075,265 @@ const SCHED = (() => {
     }
   }
 
+  // ── Merge Slots (ฟังก์ชันรวมคาบเรียนที่ติดกัน หรือรวมคาบจากวันอื่น) ──
+  async function mergeAdjacentSlots(slotIdA, slotIdB) {
+    const slotA = _schedules.find(s => s.id === slotIdA);
+    const slotB = _schedules.find(s => s.id === slotIdB);
+    if (!slotA || !slotB) {
+      showToast('error', 'ไม่พบคู่คาบเรียนที่ต้องการรวม');
+      return;
+    }
+
+    if (slotA.day !== slotB.day) {
+      showToast('warning', 'รวมคาบไม่สำเร็จ', 'คาบเรียนที่จะรวมเป็นบล็อกต่อเนื่องต้องอยู่ในวันเดียวกัน');
+      return;
+    }
+
+    const minStart = Math.min(slotA.period_start, slotB.period_start);
+    const maxEnd = Math.max(slotA.period_end, slotB.period_end);
+
+    const isAdjacent = (slotA.period_end + 1 === slotB.period_start) || (slotB.period_end + 1 === slotA.period_start);
+    if (!isAdjacent) {
+      showToast('warning', 'รวมคาบไม่สำเร็จ', 'คาบเรียนทั้งสองบล็อกไม่ได้อยู่ติดกัน');
+      return;
+    }
+
+    if (minStart <= 4 && maxEnd > 4) {
+      showToast('warning', 'ไม่สามารถรวมคาบได้', 'ไม่สามารถรวมคาบเรียนข้ามช่วงพักกลางวัน (คาบ 5) ได้');
+      return;
+    }
+
+    try {
+      // 1. ขยาย slotA ในฐานข้อมูล
+      const { error: updErr } = await db
+        .from(TABLES.SCHEDULES)
+        .update({
+          period_start: minStart,
+          period_end: maxEnd
+        })
+        .eq('id', slotA.id);
+
+      if (updErr) throw updErr;
+
+      // 2. ลบ slotB ออกจากฐานข้อมูล
+      const { error: delErr } = await db
+        .from(TABLES.SCHEDULES)
+        .delete()
+        .eq('id', slotB.id);
+
+      if (delErr) throw delErr;
+
+      // จัดการวิชาคู่ขนาน/เรียนร่วม
+      const parallelSlotB = _schedules.find(s => 
+        s.id !== slotB.id && 
+        s.subject_id === slotB.subject_id && 
+        s.teacher_id === slotB.teacher_id && 
+        s.room_id === slotB.room_id && 
+        s.day === slotB.day && 
+        s.period_start === slotB.period_start
+      );
+      if (parallelSlotB) {
+        await db.from(TABLES.SCHEDULES).delete().eq('id', parallelSlotB.id);
+        const pIdx = _schedules.findIndex(s => s.id === parallelSlotB.id);
+        if (pIdx >= 0) _schedules.splice(pIdx, 1);
+      }
+
+      slotA.period_start = minStart;
+      slotA.period_end = maxEnd;
+      const bIdx = _schedules.findIndex(s => s.id === slotB.id);
+      if (bIdx >= 0) _schedules.splice(bIdx, 1);
+
+      closeSlotDetail();
+      render();
+
+      const totalHours = maxEnd - minStart + 1;
+      const subj = _subjects.find(s => s.subject_id === slotA.subject_id);
+      showToast(
+        'success',
+        'รวมคาบเรียนสำเร็จ',
+        `รวมวิชา ${subj?.subject_name || slotA.subject_id} เป็นบล็อกเดียวต่อเนื่อง ${totalHours} คาบ (${slotA.day} คาบ ${minStart}-${maxEnd}) เรียบร้อยแล้ว`
+      );
+    } catch (err) {
+      console.error('Error merging adjacent slots:', err);
+      showToast('error', 'รวมคาบเรียนไม่สำเร็จ', err.message || 'โปรดลองใหม่อีกครั้ง');
+    }
+  }
+
+  async function mergeSlotsIntoCurrent(targetSlotId, sourceSlotId) {
+    const targetSlot = _schedules.find(s => s.id === targetSlotId);
+    const sourceSlot = _schedules.find(s => s.id === sourceSlotId);
+    if (!targetSlot || !sourceSlot) {
+      showToast('error', 'ไม่พบคู่คาบเรียนที่ต้องการรวม');
+      return;
+    }
+
+    const sDur = sourceSlot.period_end - sourceSlot.period_start + 1;
+    const appendStart = targetSlot.period_end + 1;
+    const newEnd = targetSlot.period_end + sDur;
+
+    if (newEnd > 11) {
+      showToast('warning', 'ไม่สามารถรวมคาบได้', `คาบที่ต่อท้ายจะเกินคาบ 11 (สิ้นสุดคาบที่ ${newEnd})`);
+      return;
+    }
+
+    if (targetSlot.period_start <= 4 && newEnd > 4) {
+      showToast('warning', 'ไม่สามารถรวมคาบได้', 'ไม่สามารถรวมคาบเรียนข้ามช่วงพักกลางวัน (คาบ 5) ได้');
+      return;
+    }
+
+    const conflicts = checkMoveConflicts(targetSlot, targetSlot.day, appendStart, newEnd);
+    if (conflicts.length > 0) {
+      showToast('warning', 'ไม่สามารถรวมคาบได้', `ช่วงเวลาคาบ ${appendStart}-${newEnd} ใน${targetSlot.day} มีข้อขัดแย้ง (${conflicts[0].title})`);
+      return;
+    }
+
+    try {
+      const { error: updErr } = await db
+        .from(TABLES.SCHEDULES)
+        .update({ period_end: newEnd })
+        .eq('id', targetSlot.id);
+
+      if (updErr) throw updErr;
+
+      const { error: delErr } = await db
+        .from(TABLES.SCHEDULES)
+        .delete()
+        .eq('id', sourceSlot.id);
+
+      if (delErr) throw delErr;
+
+      targetSlot.period_end = newEnd;
+      const sIdx = _schedules.findIndex(s => s.id === sourceSlot.id);
+      if (sIdx >= 0) _schedules.splice(sIdx, 1);
+
+      closeSlotDetail();
+      render();
+
+      const totalHours = newEnd - targetSlot.period_start + 1;
+      const subj = _subjects.find(s => s.subject_id === targetSlot.subject_id);
+      showToast(
+        'success',
+        'รวมคาบเรียนสำเร็จ',
+        `ดึงคาบจาก ${sourceSlot.day} มารวมต่อท้ายวิชา ${subj?.subject_name || targetSlot.subject_id} รวมเป็น ${totalHours} คาบต่อเนื่อง (คาบ ${targetSlot.period_start}-${newEnd}) เรียบร้อยแล้ว`
+      );
+    } catch (err) {
+      console.error('Error merging slot into current:', err);
+      showToast('error', 'รวมคาบเรียนไม่สำเร็จ', err.message || 'โปรดลองใหม่อีกครั้ง');
+    }
+  }
+
+  // ── Drag & Drop Merge Modal Handlers ──
+  let _pendingMergePlan = null;
+
+  function showMergeModal(plan) {
+    _pendingMergePlan = plan;
+    const modal = document.getElementById('mergeAdjacentModal');
+    const infoEl = document.getElementById('mergeAdjacentInfo');
+    if (!modal || !infoEl) {
+      proceedMergeFromDrop(false);
+      return;
+    }
+
+    const { slot, targetDay, targetPeriod, newPeriodEnd, adjSlot, combStart, combEnd } = plan;
+    const subj = _subjects.find(s => s.subject_id === slot.subject_id);
+    const dropDur = newPeriodEnd - targetPeriod + 1;
+    const adjDur = adjSlot.period_end - adjSlot.period_start + 1;
+    const totalDur = combEnd - combStart + 1;
+
+    infoEl.innerHTML = `
+      <div style="font-weight:700; color:var(--text-primary); font-size:14px; margin-bottom:6px;">
+        ${slot.subject_id} - ${subj?.subject_name || ''}
+      </div>
+      <div style="color:var(--text-secondary); font-size:12.5px; display:flex; flex-direction:column; gap:4px;">
+        <div>จุดที่วาง: <strong style="color:#38bdf8;">${targetDay} คาบ ${targetPeriod}-${newPeriodEnd} (${dropDur} คาบ)</strong></div>
+        <div>พบบล็อกเดิมอยู่ติดกัน: <strong style="color:#34d399;">${targetDay} คาบ ${adjSlot.period_start}-${adjSlot.period_end} (${adjDur} คาบ)</strong></div>
+        <div style="color:#f59e0b; margin-top:4px;">
+          <i class="fas fa-link"></i> หากรวมกันจะได้เป็น <strong>${totalDur} คาบต่อเนื่อง</strong> (${targetDay} คาบ ${combStart}-${combEnd})
+        </div>
+      </div>
+    `;
+
+    modal.classList.remove('hidden');
+  }
+
+  function closeMergeModal() {
+    const modal = document.getElementById('mergeAdjacentModal');
+    if (modal) modal.classList.add('hidden');
+    _pendingMergePlan = null;
+  }
+
+  async function proceedMergeFromDrop(shouldMerge) {
+    if (!_pendingMergePlan) return;
+    const plan = _pendingMergePlan;
+    closeMergeModal();
+
+    if (shouldMerge) {
+      try {
+        if (plan.isSplit) {
+          const keepHours = plan.dur - plan.moveHours;
+          const newOldEnd = plan.slot.period_start + keepHours - 1;
+
+          const { error: updErr1 } = await db
+            .from(TABLES.SCHEDULES)
+            .update({ period_end: newOldEnd })
+            .eq('id', plan.slot.id);
+          if (updErr1) throw updErr1;
+
+          const { error: updErr2 } = await db
+            .from(TABLES.SCHEDULES)
+            .update({
+              period_start: plan.combStart,
+              period_end: plan.combEnd
+            })
+            .eq('id', plan.adjSlot.id);
+          if (updErr2) throw updErr2;
+
+          plan.slot.period_end = newOldEnd;
+          plan.adjSlot.period_start = plan.combStart;
+          plan.adjSlot.period_end = plan.combEnd;
+        } else {
+          const { error: updErr } = await db
+            .from(TABLES.SCHEDULES)
+            .update({
+              period_start: plan.combStart,
+              period_end: plan.combEnd
+            })
+            .eq('id', plan.adjSlot.id);
+          if (updErr) throw updErr;
+
+          const { error: delErr } = await db
+            .from(TABLES.SCHEDULES)
+            .delete()
+            .eq('id', plan.slot.id);
+          if (delErr) throw delErr;
+
+          plan.adjSlot.period_start = plan.combStart;
+          plan.adjSlot.period_end = plan.combEnd;
+          const idx = _schedules.findIndex(s => s.id === plan.slot.id);
+          if (idx >= 0) _schedules.splice(idx, 1);
+        }
+
+        render();
+        const totalDur = plan.combEnd - plan.combStart + 1;
+        const subj = _subjects.find(s => s.subject_id === plan.slot.subject_id);
+        showToast(
+          'success',
+          'รวมคาบเรียนสำเร็จ',
+          `รวมวิชา ${subj?.subject_name || plan.slot.subject_id} เป็นบล็อกเดียวต่อเนื่อง ${totalDur} คาบ (${plan.targetDay} คาบ ${plan.combStart}-${plan.combEnd}) เรียบร้อยแล้ว`
+        );
+      } catch (err) {
+        console.error('Error proceeding merge from drop:', err);
+        showToast('error', 'รวมคาบเรียนไม่สำเร็จ', err.message || 'โปรดลองใหม่อีกครั้ง');
+      }
+    } else {
+      if (plan.isSplit) {
+        await executeSplitAndMove(plan.slot, plan.targetDay, plan.targetPeriod, plan.moveHours);
+      } else {
+        await executeMoveSlot(plan.slot, plan.targetDay, plan.targetPeriod, plan.newPeriodEnd);
+      }
+    }
+  }
+
   async function confirmForceMoveSlot() {
     if (!_pendingMovePlan) return;
     const plan = _pendingMovePlan;
@@ -2994,6 +3355,14 @@ const SCHED = (() => {
     if (!slot) return;
     _activeSlotDetail = slot;
 
+    const isStudent = (window.AUTH && window.AUTH.getUser && window.AUTH.getUser().role === 'student');
+
+    // ซ่อนปุ่มลบคาบสำหรับนักเรียน
+    const delBtn = document.querySelector('#slotDetailModal .btn-danger');
+    if (delBtn) {
+      delBtn.style.display = isStudent ? 'none' : 'inline-flex';
+    }
+
     const subj = _subjects.find(s => s.subject_id === slot.subject_id) || { subject_name: slot.subject_id };
     const room = _rooms.find(r => r.room_id === slot.room_id) || { room_name: slot.room_id };
     const teacher = _teachers.find(t => t.teacher_id === slot.teacher_id) || { teacher_name: slot.teacher_id };
@@ -3001,42 +3370,140 @@ const SCHED = (() => {
 
     const dur = slot.period_end - slot.period_start + 1;
     let splitUi = '';
-    if (dur > 1 && slot.subject_id !== 'HOMEROOM') {
-      let splitButtons = '';
-      for (let k = 1; k < dur; k++) {
-        splitButtons += `
-          <button type="button" class="btn btn-xs" onclick="SCHED.splitSlotInPlace(${slot.id}, ${k})" 
-            style="background:rgba(99,102,241,0.18); border:1px solid rgba(99,102,241,0.4); color:#c7d2fe; font-size:12px; padding:6px 12px; border-radius:6px; cursor:pointer;">
-            <i class="fas fa-scissors"></i> แบ่งเป็น ${k} คาบ + ${dur - k} คาบ
-          </button>
+    let mergeUi = '';
+
+    if (!isStudent && slot.subject_id !== 'HOMEROOM') {
+      // 1. ตัวเลือกแบ่งคาบ (Split Periods)
+      if (dur > 1) {
+        let splitButtons = '';
+        for (let k = 1; k < dur; k++) {
+          splitButtons += `
+            <button type="button" class="btn btn-xs" onclick="SCHED.splitSlotInPlace(${slot.id}, ${k})" 
+              style="background:rgba(99,102,241,0.18); border:1px solid rgba(99,102,241,0.4); color:#c7d2fe; font-size:12px; padding:6px 12px; border-radius:6px; cursor:pointer;">
+              <i class="fas fa-scissors"></i> แบ่งเป็น ${k} คาบ + ${dur - k} คาบ
+            </button>
+          `;
+        }
+
+        splitUi = `
+          <div style="margin-top:14px; padding:12px; background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.22); border-radius:8px;">
+            <div style="font-weight:700; color:var(--primary-light); font-size:12.5px; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+              <i class="fas fa-arrows-split-up-and-left"></i> แบ่งบล็อกต่อเนื่องนี้ (${dur} คาบ) ออกจากกัน:
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:6px;">
+              ${splitButtons}
+            </div>
+            <div style="font-size:11px; color:var(--text-muted); margin-top:6px;">
+              * เมื่อแบ่งแล้ว แต่ละส่วนจะแยกเป็นบล็อกอิสระ สามารถลากวางแยกวัน/คาบได้ทันที
+            </div>
+          </div>
         `;
       }
 
-      splitUi = `
-        <div style="margin-top:14px; padding:12px; background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.22); border-radius:8px;">
-          <div style="font-weight:700; color:#818cf8; font-size:12.5px; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
-            <i class="fas fa-arrows-split-up-and-left"></i> แบ่งบล็อกต่อเนื่องนี้ (${dur} คาบ) ออกจากกัน:
-          </div>
-          <div style="display:flex; flex-wrap:wrap; gap:6px;">
-            ${splitButtons}
-          </div>
-          <div style="font-size:11px; color:#94a3b8; margin-top:6px;">
-            * เมื่อแบ่งแล้ว แต่ละส่วนจะแยกเป็นบล็อกอิสระ สามารถลากวางแยกวัน/คาบได้ทันที
-          </div>
-        </div>
-      `;
+      // 2. ตัวเลือกรวมคาบ (Merge Periods)
+      const sameCourseSlots = _schedules.filter(s => 
+        s.id !== slot.id && 
+        s.subject_id === slot.subject_id && 
+        s.group_id === slot.group_id
+      );
+
+      if (sameCourseSlots.length > 0) {
+        let mergeItemsHtml = '';
+
+        sameCourseSlots.forEach(other => {
+          const otherDur = other.period_end - other.period_start + 1;
+          const isSameDay = (other.day === slot.day);
+          const isAdjacent = isSameDay && (other.period_end + 1 === slot.period_start || slot.period_end + 1 === other.period_start);
+
+          if (isAdjacent) {
+            const minStart = Math.min(slot.period_start, other.period_start);
+            const maxEnd = Math.max(slot.period_end, other.period_end);
+            const totalComb = maxEnd - minStart + 1;
+            const crossesLunch = (minStart <= 4 && maxEnd > 4);
+
+            if (!crossesLunch) {
+              mergeItemsHtml += `
+                <div style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.3); padding:10px 12px; border-radius:8px; display:flex; flex-direction:column; gap:6px;">
+                  <div style="font-size:12.5px; color:#34d399; font-weight:600; display:flex; align-items:center; gap:6px;">
+                    <i class="fas fa-link"></i> พบบล็อกติดกัน: ${other.day} คาบ ${other.period_start}-${other.period_end} (${otherDur} คาบ)
+                  </div>
+                  <div>
+                    <button type="button" class="btn btn-xs" onclick="SCHED.mergeAdjacentSlots(${slot.id}, ${other.id})"
+                      style="background:#10b981; color:#ffffff; font-weight:700; font-size:12px; padding:6px 14px; border-radius:6px; cursor:pointer; border:none; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 6px rgba(16,185,129,0.35);">
+                      <i class="fas fa-compress-arrows-alt"></i> รวมเป็นบล็อกเดียวต่อเนื่อง (${totalComb} คาบ)
+                    </button>
+                  </div>
+                </div>
+              `;
+            } else {
+              mergeItemsHtml += `
+                <div style="font-size:12px; color:var(--text-muted); padding:6px 10px; background:rgba(255,255,255,0.03); border-radius:6px;">
+                  <i class="fas fa-circle-exclamation" style="color:#f59e0b; margin-right:4px;"></i> พบบล็อกติดกันใน ${other.day} แต่ไม่สามารถรวมได้เนื่องจากติดคาบพักกลางวัน
+                </div>
+              `;
+            }
+          } else {
+            const appendStart = slot.period_end + 1;
+            const newEnd = slot.period_end + otherDur;
+            const canAppendLunch = !(slot.period_start <= 4 && newEnd > 4);
+            const canAppendEnd = newEnd <= 11;
+
+            let canAppendConflicts = [];
+            if (canAppendLunch && canAppendEnd) {
+              canAppendConflicts = checkMoveConflicts(slot, slot.day, appendStart, newEnd);
+            }
+
+            if (canAppendLunch && canAppendEnd && canAppendConflicts.length === 0) {
+              const totalComb = dur + otherDur;
+              mergeItemsHtml += `
+                <div style="background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.3); padding:10px 12px; border-radius:8px; display:flex; flex-direction:column; gap:6px;">
+                  <div style="font-size:12.5px; color:#38bdf8; font-weight:600; display:flex; align-items:center; gap:6px;">
+                    <i class="fas fa-calendar-day"></i> พบบล็อกใน ${other.day} คาบ ${other.period_start}-${other.period_end} (${otherDur} คาบ)
+                  </div>
+                  <div>
+                    <button type="button" class="btn btn-xs" onclick="SCHED.mergeSlotsIntoCurrent(${slot.id}, ${other.id})"
+                      style="background:#0284c7; color:#ffffff; font-weight:700; font-size:12px; padding:6px 14px; border-radius:6px; cursor:pointer; border:none; display:inline-flex; align-items:center; gap:6px;">
+                      <i class="fas fa-angles-down"></i> ดึงมารวมต่อท้ายที่นี่ (${dur} + ${otherDur} = ${totalComb} คาบ)
+                    </button>
+                  </div>
+                </div>
+              `;
+            } else {
+              mergeItemsHtml += `
+                <div style="font-size:12px; color:var(--text-muted); padding:6px 10px; background:rgba(255,255,255,0.03); border-radius:6px;">
+                  <i class="fas fa-info-circle" style="color:#38bdf8; margin-right:4px;"></i> พบวิชานี้อีก ${otherDur} คาบใน <strong>${other.day}</strong> คาบ ${other.period_start}-${other.period_end} (สามารถลากมาวางต่อกันเพื่อรวมคาบได้)
+                </div>
+              `;
+            }
+          }
+        });
+
+        if (mergeItemsHtml) {
+          mergeUi = `
+            <div style="margin-top:14px; padding:12px; background:rgba(16,185,129,0.05); border:1px solid rgba(16,185,129,0.22); border-radius:8px;">
+              <div style="font-weight:700; color:#34d399; font-size:12.5px; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                <i class="fas fa-link"></i> ตัวเลือกรวมคาบเรียน (Merge Periods):
+              </div>
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                ${mergeItemsHtml}
+              </div>
+            </div>
+          `;
+        }
+      }
     }
 
     const bodyEl = document.getElementById('slot-detail-body');
     if (bodyEl) {
       bodyEl.innerHTML = `
         <div style="display:flex;flex-direction:column;gap:10px;">
-          <div><strong style="color:#ffffff;">รหัสวิชา:</strong> <span style="color:#93c5fd;">${slot.subject_id}</span> — ${subj.subject_name}</div>
-          <div><strong style="color:#ffffff;">วัน/เวลา:</strong> ${slot.day} · คาบ ${slot.period_start} - ${slot.period_end} (${dur} คาบ)</div>
-          <div><strong style="color:#ffffff;">ห้องเรียน:</strong> ${room.room_name || slot.room_id} (${slot.room_id})</div>
-          <div><strong style="color:#ffffff;">ครูผู้สอน:</strong> ${teacher.teacher_name || slot.teacher_id} (${slot.teacher_id})</div>
-          <div><strong style="color:#ffffff;">กลุ่มเรียน:</strong> ${formatGroupLabel(group)}</div>
+          <div><strong style="color:var(--text-primary);">รหัสวิชา:</strong> <span style="color:#93c5fd;font-weight:700;">${slot.subject_id}</span> — ${subj.subject_name}</div>
+          <div><strong style="color:var(--text-primary);">วัน/เวลา:</strong> ${slot.day} · คาบ ${slot.period_start} - ${slot.period_end} (${dur} คาบ)</div>
+          <div><strong style="color:var(--text-primary);">ห้องเรียน:</strong> ${room.room_name || slot.room_id} (${slot.room_id})</div>
+          <div><strong style="color:var(--text-primary);">ครูผู้สอน:</strong> ${teacher.teacher_name || slot.teacher_id} (${slot.teacher_id})</div>
+          <div><strong style="color:var(--text-primary);">กลุ่มเรียน:</strong> ${formatGroupLabel(group)}</div>
           ${splitUi}
+          ${mergeUi}
         </div>
       `;
     }
@@ -3053,6 +3520,11 @@ const SCHED = (() => {
 
   async function deleteActiveSlot() {
     if (!_activeSlotDetail) return;
+    const isStudent = (window.AUTH && window.AUTH.getUser && window.AUTH.getUser().role === 'student');
+    if (isStudent) {
+      showToast('warning', 'ไม่มีสิทธิ์ดำเนินการ', 'นักเรียนสามารถดูตารางเรียนได้แบบอ่านอย่างเดียว');
+      return;
+    }
     const id = _activeSlotDetail.id;
 
     const { error } = await db.from(TABLES.SCHEDULES).delete().eq('id', id);
@@ -4823,7 +5295,11 @@ const SCHED = (() => {
     togglePitchTimer,
     resetPitchTimer,
     prevPitchSlide,
-    nextPitchSlide
+    nextPitchSlide,
+    mergeAdjacentSlots,
+    mergeSlotsIntoCurrent,
+    closeMergeModal,
+    proceedMergeFromDrop
   };
 })();
 

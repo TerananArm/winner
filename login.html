@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>เข้าสู่ระบบ – EduSched AI</title>
+  <meta name="description" content="ระบบเข้าสู่ระบบสำหรับ Admin, ครูผู้สอน, และนักเรียน EduSched AI" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    .login-container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      position: relative;
+      z-index: 10;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 480px;
+      background: rgba(13, 20, 36, 0.88);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      border: 1px solid var(--border-light);
+      border-radius: var(--r-xl);
+      padding: 36px 32px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.55);
+      animation: scaleIn 0.3s var(--ease);
+    }
+
+    [data-theme="light"] .login-card {
+      background: rgba(255, 255, 255, 0.94);
+      border-color: rgba(0, 0, 0, 0.1);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
+    }
+
+    .login-brand {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    .login-logo-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(34, 211, 238, 0.2));
+      border: 1px solid rgba(99, 102, 241, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+      box-shadow: 0 8px 24px rgba(99, 102, 241, 0.25);
+    }
+
+    .role-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 24px;
+      background: rgba(0, 0, 0, 0.18);
+      padding: 5px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+    }
+
+    [data-theme="light"] .role-tabs {
+      background: #f1f5f9;
+      border-color: rgba(0, 0, 0, 0.06);
+    }
+
+    .role-tab-btn {
+      padding: 10px 6px;
+      border-radius: 10px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      transition: all var(--t) var(--ease);
+    }
+
+    .role-tab-btn:hover {
+      color: var(--text-primary);
+    }
+
+    .role-tab-btn.active {
+      background: var(--bg-secondary);
+      color: var(--primary-light);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    [data-theme="light"] .role-tab-btn.active {
+      background: #ffffff;
+      color: var(--primary);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .quick-eval-box {
+      margin-top: 20px;
+      padding: 14px;
+      border-radius: 12px;
+      background: rgba(99, 102, 241, 0.06);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+    }
+
+    [data-theme="light"] .quick-eval-box {
+      background: #f8fafc;
+      border-color: rgba(99, 102, 241, 0.15);
+    }
+
+    .top-login-bar {
+      position: absolute;
+      top: 20px;
+      right: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 20;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Background Glow Orbs -->
+  <div class="bg-orbs">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- Top bar with theme toggle & back link -->
+  <div class="top-login-bar">
+    <button class="theme-toggle-btn" id="themeToggleBtn" onclick="THEME.toggleTheme()" title="สลับโหมดสว่าง/มืด (Light/Dark Mode)">
+      <i class="fas fa-sun"></i>
+    </button>
+    <a href="schedule.html" class="btn btn-ghost" style="font-size:12.5px;padding:8px 14px;border-radius:10px;">
+      <i class="fas fa-calendar-days" style="margin-right:6px;"></i> เข้าสู่ระบบตารางสอนทันที
+    </a>
+  </div>
+
+  <div class="login-container">
+    <div class="login-card">
+      <!-- Brand Logo -->
+      <div class="login-brand">
+        <div class="login-logo-icon">
+          <img src="assets/icons/logo.svg" alt="EduSched AI" style="width:34px;height:34px;">
+        </div>
+        <h1 style="font-size:22px;font-weight:800;color:var(--text-primary);letter-spacing:-0.5px;">EduSched AI</h1>
+        <p style="font-size:13px;color:var(--text-muted);margin-top:2px;">ระบบเข้าสู่ระบบเพื่อจัดการและดูตารางเรียน/ตารางสอน</p>
+      </div>
+
+      <!-- Role Tabs -->
+      <div class="role-tabs">
+        <button type="button" class="role-tab-btn active" id="tab-admin" onclick="switchLoginRole('admin')">
+          <span style="font-size:16px;">👑</span>
+          <span>ผู้ดูแลระบบ</span>
+        </button>
+        <button type="button" class="role-tab-btn" id="tab-teacher" onclick="switchLoginRole('teacher')">
+          <span style="font-size:16px;">👨‍🏫</span>
+          <span>ครูผู้สอน</span>
+        </button>
+        <button type="button" class="role-tab-btn" id="tab-student" onclick="switchLoginRole('student')">
+          <span style="font-size:16px;">🎓</span>
+          <span>นักเรียน</span>
+        </button>
+      </div>
+
+      <!-- Login Form -->
+      <form id="loginForm" onsubmit="handleLoginSubmit(event)" style="display:flex;flex-direction:column;gap:14px;">
+        <div>
+          <label class="form-label" id="lblUsername" style="font-size:12.5px;font-weight:600;">ชื่อผู้ดูแลระบบ (Username)</label>
+          <div style="position:relative;">
+            <input type="text" class="form-input" id="inputUsername" placeholder="admin" value="admin" required
+              style="padding-left:38px;" />
+            <i class="fas fa-user" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:13px;"></i>
+          </div>
+        </div>
+
+        <div>
+          <label class="form-label" style="font-size:12.5px;font-weight:600;">รหัสผ่าน (Password)</label>
+          <div style="position:relative;">
+            <input type="password" class="form-input" id="inputPassword" placeholder="••••••••" value="admin123" required
+              style="padding-left:38px;" />
+            <i class="fas fa-lock" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:13px;"></i>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text-muted);">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+            <input type="checkbox" checked style="accent-color:var(--primary);" /> จดจำการเข้าสู่ระบบ
+          </label>
+          <span id="roleHintBadge" class="badge-admin" style="font-size:11px;padding:3px 8px;border-radius:6px;font-weight:600;">
+            สิทธิ์: Administrator
+          </span>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="loginSubmitBtn"
+          style="padding:12px;font-weight:700;font-size:14px;border-radius:10px;margin-top:6px;box-shadow:0 4px 16px rgba(99,102,241,0.35);">
+          <i class="fas fa-right-to-bracket" style="margin-right:6px;"></i> เข้าสู่ระบบ
+        </button>
+      </form>
+
+      <!-- Quick 1-Click Login Box (For competition judges & tests) -->
+      <div class="quick-eval-box">
+        <div style="font-size:11.5px;font-weight:700;color:var(--primary-light);margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+          <i class="fas fa-bolt"></i> เข้าสู่ระบบด่วน 1-Click (สำหรับกรรมการ / ทดสอบ):
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+          <button type="button" class="btn btn-xs btn-ghost" onclick="quickLogin('admin')"
+            style="font-size:11.5px;padding:8px 4px;font-weight:600;border-color:rgba(239,68,68,0.3);color:#f87171;">
+            👑 Admin
+          </button>
+          <button type="button" class="btn btn-xs btn-ghost" onclick="quickLogin('teacher')"
+            style="font-size:11.5px;padding:8px 4px;font-weight:600;border-color:rgba(59,130,246,0.3);color:#60a5fa;">
+            👨‍🏫 ครูสมชาย
+          </button>
+          <button type="button" class="btn btn-xs btn-ghost" onclick="quickLogin('student')"
+            style="font-size:11.5px;padding:8px 4px;font-weight:600;border-color:rgba(16,185,129,0.3);color:#34d399;">
+            🎓 นักเรียน 2 ทส 2
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Scripts -->
+  <script src="js/supabase-config.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    let currentRole = 'admin';
+
+    function switchLoginRole(role) {
+      currentRole = role;
+      document.querySelectorAll('.role-tab-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = document.getElementById(`tab-${role}`);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      const lbl = document.getElementById('lblUsername');
+      const inputU = document.getElementById('inputUsername');
+      const inputP = document.getElementById('inputPassword');
+      const hint = document.getElementById('roleHintBadge');
+
+      if (role === 'admin') {
+        lbl.textContent = 'ชื่อผู้ดูแลระบบ (Username)';
+        inputU.value = 'admin';
+        inputU.placeholder = 'admin';
+        inputP.value = 'admin123';
+        hint.className = 'badge-admin';
+        hint.textContent = 'สิทธิ์: Administrator';
+      } else if (role === 'teacher') {
+        lbl.textContent = 'รหัสประจำตัวครู (Teacher ID)';
+        inputU.value = 'T01';
+        inputU.placeholder = 'T01, T02, ...';
+        inputP.value = 'teacher123';
+        hint.className = 'badge-teacher';
+        hint.textContent = 'สิทธิ์: ครูผู้สอน (Teacher)';
+      } else if (role === 'student') {
+        lbl.textContent = 'รหัสกลุ่มเรียน / รหัสนักศึกษา (Group / Student ID)';
+        inputU.value = '672190102';
+        inputU.placeholder = '672190102';
+        inputP.value = 'student123';
+        hint.className = 'badge-student';
+        hint.textContent = 'สิทธิ์: นักเรียน (Student)';
+      }
+    }
+
+    function quickLogin(role) {
+      if (window.AUTH) {
+        window.AUTH.quickSwitch(role);
+        showToast('success', 'เข้าสู่ระบบสำเร็จ', `เข้าใช้งานในฐานะ ${role.toUpperCase()}`);
+        setTimeout(() => {
+          window.location.href = 'schedule.html';
+        }, 300);
+      }
+    }
+
+    function handleLoginSubmit(e) {
+      e.preventDefault();
+      const u = document.getElementById('inputUsername')?.value;
+      const p = document.getElementById('inputPassword')?.value;
+      if (window.AUTH) {
+        const ok = window.AUTH.login(u, p, currentRole);
+        if (ok) {
+          setTimeout(() => {
+            window.location.href = 'schedule.html';
+          }, 300);
+        }
+      }
+    }
+
+    // Auto-update theme icon on load
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.THEME) {
+        window.THEME.updateToggleIcon(window.THEME.getTheme());
+      }
+    });
+  </script>
+</body>
+
+</html>

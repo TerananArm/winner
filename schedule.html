@@ -140,18 +140,18 @@
           <!-- Right: Clean & Organized Action Buttons -->
           <div class="sched-right-actions">
             <!-- จัดตารางอัตโนมัติ (AI) - พระเอกหลัก -->
-            <button class="sched-action-btn btn-sched-ai" id="btn-auto-sched"
+            <button class="sched-action-btn btn-sched-ai admin-only" id="btn-auto-sched"
               onclick="SCHED.startAiScheduleWithProgress()" title="ประมวลผลจัดตารางสอนอัตโนมัติตามข้อมูลจริง">
               <i class="fas fa-wand-magic-sparkles"></i> จัดตารางอัตโนมัติ (AI)
             </button>
 
             <!-- + เพิ่มรายวิชา -->
-            <button class="sched-action-btn btn-sched-add" onclick="SCHED.openAddModal()" title="เพิ่มรายวิชาในตาราง">
+            <button class="sched-action-btn btn-sched-add admin-only" onclick="SCHED.openAddModal()" title="เพิ่มรายวิชาในตาราง">
               <i class="fas fa-plus"></i> เพิ่มรายวิชา
             </button>
 
             <!-- Seed สุ่ม -->
-            <div class="sched-seed-wrapper" title="Seed สุ่มรูปแบบการจัดตาราง">
+            <div class="sched-seed-wrapper admin-only" title="Seed สุ่มรูปแบบการจัดตาราง">
               <span class="seed-title">Seed</span>
               <input type="number" id="sched-seed" value="1" min="1" max="99999" class="seed-num-input"
                 oninput="SCHED.onSeedChange()" onchange="SCHED.onSeedChange()" />
@@ -175,13 +175,13 @@
             </button>
 
             <!-- นำเข้า Excel -->
-            <button class="sched-action-btn btn-sched-import" onclick="SCHED.openImportModal()"
+            <button class="sched-action-btn btn-sched-import admin-only" onclick="SCHED.openImportModal()"
               title="นำเข้าข้อมูลจาก Excel">
               <i class="fas fa-file-import"></i> นำเข้า
             </button>
 
             <!-- ล้างตาราง -->
-            <button class="sched-action-btn btn-sched-clear" onclick="SCHED.openClearModal()" title="ล้างตารางสอน">
+            <button class="sched-action-btn btn-sched-clear admin-only" onclick="SCHED.openClearModal()" title="ล้างตารางสอน">
               <i class="fas fa-trash-can"></i> ล้างตาราง
             </button>
 
@@ -861,6 +861,38 @@
 
       <div class="modal-footer" style="border-top: 1px solid rgba(255,255,255,0.06); padding-top: 14px;">
         <button class="btn btn-ghost" onclick="SCHED.closeMoveOrSplitModal()" style="font-weight: 600;">ยกเลิก</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Merge Adjacent Slots Prompt (รวมคาบเรียนที่วางติดกัน) -->
+  <div class="modal-overlay hidden" id="mergeAdjacentModal">
+    <div class="modal"
+      style="max-width: 480px; text-align: left; border: 1px solid rgba(16, 185, 129, 0.35); box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
+      <div class="modal-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 14px;">
+        <div class="modal-title"
+          style="color: #34d399; display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 700;">
+          <i class="fas fa-link" style="font-size: 18px;"></i>
+          <span>รวมคาบเรียนที่อยู่ติดกัน</span>
+        </div>
+        <button class="modal-close" onclick="SCHED.closeMergeModal()"><i class="fas fa-xmark"></i></button>
+      </div>
+
+      <div style="margin: 16px 0;">
+        <div id="mergeAdjacentInfo"
+          style="padding: 12px 14px; background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 8px; font-size: 13px; line-height: 1.6; margin-bottom: 16px;">
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <button type="button" class="btn btn-primary" onclick="SCHED.proceedMergeFromDrop(true)"
+            style="background: #10b981; border-color: #10b981; padding: 12px 16px; font-weight: 700; font-size: 13.5px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <i class="fas fa-compress-arrows-alt"></i> รวมเป็นบล็อกเดียวต่อเนื่องทันที
+          </button>
+          <button type="button" class="btn btn-ghost" onclick="SCHED.proceedMergeFromDrop(false)"
+            style="padding: 10px 16px; font-size: 13px; border: 1px solid rgba(255,255,255,0.12); color: var(--text-secondary);">
+            <i class="fas fa-grip-lines"></i> วางแยกเป็น 2 บล็อกอิสระตามเดิม
+          </button>
+        </div>
       </div>
     </div>
   </div>
