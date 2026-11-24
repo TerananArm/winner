@@ -3765,17 +3765,369 @@ const SCHED = (() => {
     }
   }
 
+  // ── Official Print Generation (ตรงตามแบบตัวอย่างราชการและรูปภาพผู้ใช้) ──
+  function generateOfficialPrintHtml() {
+    if (!_targetId) return '<div style="padding:40px;text-align:center;color:#64748b;">กรุณาเลือกกลุ่มเรียน หรืออาจารย์ หรือห้องเรียน เพื่อพิมพ์ตาราง</div>';
+
+    // 1. Get schedules for current target
+    const targetSchedules = _schedules.filter(s => {
+      if (_viewType === 'student' || _viewType === 'student_lookup') return s.group_id === _targetId;
+      if (_viewType === 'teacher') return s.teacher_id === _targetId;
+      if (_viewType === 'room') return s.room_id === _targetId;
+      if (_viewType === 'subject') return s.subject_id === _targetId;
+      return false;
+    });
+
+    // Target label info
+    let targetTitle = '';
+    let targetSub = '';
+    if (_viewType === 'student' || _viewType === 'student_lookup') {
+      const g = _groups.find(x => x.group_id === _targetId);
+      targetTitle = `ตารางเรียน กลุ่มเรียน ${g ? g.group_name + ' (' + g.group_id + ')' : _targetId}`;
+      targetSub = g && g.advisor ? `ครูที่ปรึกษา: ${g.advisor}` : '';
+    } else if (_viewType === 'teacher') {
+      const t = _teachers.find(x => x.teacher_id === _targetId);
+      targetTitle = `ตารางสอน อาจารย์ ${t ? t.teacher_name + ' (รหัส ' + t.teacher_id + ')' : _targetId}`;
+      targetSub = t && t.role ? `ตำแหน่ง: ${t.role}` : '';
+    } else if (_viewType === 'room') {
+      const r = _rooms.find(x => x.room_id === _targetId);
+      targetTitle = `ตารางการใช้ห้องเรียน ${r ? r.room_name + ' (' + r.room_id + ')' : _targetId}`;
+      targetSub = r && r.room_type ? `ประเภทห้อง: ${r.room_type}` : '';
+    } else {
+      const s = _subjects.find(x => x.subject_id === _targetId);
+      targetTitle = `ตารางรายวิชา ${s ? s.subject_name + ' (' + s.subject_id + ')' : _targetId}`;
+      targetSub = '';
+    }
+
+    // 2. Extract unique subjects for the Subject Summary Table
+    const uniqueSubjIds = [...new Set(targetSchedules.map(s => s.subject_id).filter(id => id && id !== 'HOMEROOM'))];
+    
+    // If no subjects in schedule yet, look up registered subjects for student
+    if (uniqueSubjIds.length === 0 && (_viewType === 'student' || _viewType === 'student_lookup')) {
+      const regSubjs = _registrations.filter(r => r.group_id === _targetId).map(r => r.subject_id);
+      uniqueSubjIds.push(...new Set(regSubjs));
+    }
+
+    const subjectList = uniqueSubjIds.map(sId => {
+      const subj = _subjects.find(sb => sb.subject_id === sId) || {
+        subject_id: sId,
+        subject_name: sId,
+        theory: 0,
+        practice: 0,
+        credit: 0
+      };
+      const th = Number(subj.theory) || 0;
+      const pr = Number(subj.practice) || 0;
+      const cr = Number(subj.credit) || 0;
+      const hr = th + pr;
+      return {
+        id: subj.subject_id,
+        name: subj.subject_name,
+        th,
+        pr,
+        cr,
+        hr
+      };
+    });
+
+    const totalTh = subjectList.reduce((sum, item) => sum + item.th, 0);
+    const totalPr = subjectList.reduce((sum, item) => sum + item.pr, 0);
+    const totalCr = subjectList.reduce((sum, item) => sum + item.cr, 0);
+    const totalHr = subjectList.reduce((sum, item) => sum + item.hr, 0);
+
+    // Number of rows in Subject Table (sample image has 7-8 rows)
+    const numRows = Math.max(7, Math.ceil(subjectList.length / 2), Math.min(subjectList.length, 10));
+    
+    // Split into Left Column and Right Column
+    let subjRowsHtml = '';
+    for (let r = 0; r < numRows; r++) {
+      const leftSubj = subjectList[r];
+      const rightSubj = subjectList[r + numRows];
+
+      subjRowsHtml += `<tr>`;
+      if (leftSubj) {
+        subjRowsHtml += `
+          <td class="cell-center font-code">${escapeHtml(leftSubj.id)}</td>
+          <td class="cell-left font-subj">${escapeHtml(leftSubj.name)}</td>
+          <td class="cell-center">${leftSubj.th}</td>
+          <td class="cell-center">${leftSubj.pr}</td>
+          <td class="cell-center">${leftSubj.cr}</td>
+          <td class="cell-center">${leftSubj.hr}</td>
+        `;
+      } else {
+        subjRowsHtml += `
+          <td class="cell-center">&nbsp;</td>
+          <td class="cell-left">&nbsp;</td>
+          <td class="cell-center">&nbsp;</td>
+          <td class="cell-center">&nbsp;</td>
+          <td class="cell-center">&nbsp;</td>
+          <td class="cell-center">&nbsp;</td>
+        `;
+      }
+
+      if (rightSubj) {
+        subjRowsHtml += `
+          <td class="cell-center font-code">${escapeHtml(rightSubj.id)}</td>
+          <td class="cell-left font-subj">${escapeHtml(rightSubj.name)}</td>
+          <td class="cell-center">${rightSubj.th}</td>
+          <td class="cell-center">${rightSubj.pr}</td>
+          <td class="cell-center">${rightSubj.cr}</td>
+          <td class="cell-center">${rightSubj.hr}</td>
+        `;
+      } else {
+        subjRowsHtml += `
+          <td class="cell-center">&nbsp;</td>
+          <td class="cell-left">&nbsp;</td>
+          <td class="cell-center">&nbsp;</td>
+          <td class="cell-center">&nbsp;</td>
+          <td class="cell-center">&nbsp;</td>
+          <td class="cell-center">&nbsp;</td>
+        `;
+      }
+      subjRowsHtml += `</tr>`;
+    }
+
+    // "รวม" (Total) row at bottom of left table
+    subjRowsHtml += `
+      <tr class="row-total">
+        <td colspan="2" class="cell-center font-bold">รวม</td>
+        <td class="cell-center font-bold">${totalTh}</td>
+        <td class="cell-center font-bold">${totalPr}</td>
+        <td class="cell-center font-bold">${totalCr}</td>
+        <td class="cell-center font-bold">${totalHr}</td>
+        <td class="cell-center">&nbsp;</td>
+        <td class="cell-left">&nbsp;</td>
+        <td class="cell-center">&nbsp;</td>
+        <td class="cell-center">&nbsp;</td>
+        <td class="cell-center">&nbsp;</td>
+        <td class="cell-center">&nbsp;</td>
+      </tr>
+    `;
+
+    // 3. Weekly Timetable Grid (7 Days, 15 columns)
+    const allDays = ['วันจันทร์', 'วันอังคาร', 'วันพุธ', 'วันพฤหัสบดี', 'วันศุกร์', 'วันเสาร์', 'วันอาทิตย์'];
+    let gridRowsHtml = '';
+
+    allDays.forEach((day, dayIndex) => {
+      const isWeekday = dayIndex < 5; // Mon-Fri
+      const dayShort = day.replace('วัน', '');
+
+      gridRowsHtml += `<tr>`;
+      gridRowsHtml += `<td class="day-name-cell font-bold">${day}</td>`;
+
+      // Column 2: 07:45 - 08:00 (Assembly / หน้าเสาธง)
+      if (dayIndex === 0) {
+        gridRowsHtml += `
+          <td rowspan="5" class="vertical-activity-cell">
+            <div class="v-text-wrapper">กิจกรรมหน้าเสาธง</div>
+          </td>
+        `;
+      } else if (!isWeekday) {
+        gridRowsHtml += `<td class="empty-cell">&nbsp;</td>`;
+      }
+
+      // Periods 1-4 (Morning 08:00 - 12:00)
+      let p = 1;
+      while (p <= 4) {
+        const slot = targetSchedules.find(s => (s.day === day || s.day === dayShort) && s.period_start === p);
+        if (slot) {
+          const span = Math.min((slot.period_end - slot.period_start + 1), (5 - p));
+          gridRowsHtml += renderOfficialSlotCell(slot, span);
+          p += span;
+        } else {
+          const covered = targetSchedules.find(s => (s.day === day || s.day === dayShort) && s.period_start < p && s.period_end >= p);
+          if (!covered) {
+            gridRowsHtml += `<td class="empty-cell">&nbsp;</td>`;
+          }
+          p++;
+        }
+      }
+
+      // Column 7: 12:00 - 13:00 (Lunch / พักกลางวัน)
+      if (dayIndex === 0) {
+        gridRowsHtml += `
+          <td rowspan="5" class="vertical-lunch-cell">
+            <div class="v-text-wrapper">พักกลางวัน</div>
+          </td>
+        `;
+      } else if (!isWeekday) {
+        gridRowsHtml += `<td class="empty-cell">&nbsp;</td>`;
+      }
+
+      // Periods 5-12 (Afternoon & Evening 13:00 - 21:00)
+      p = 5;
+      while (p <= 12) {
+        const slot = targetSchedules.find(s => (s.day === day || s.day === dayShort) && s.period_start === p);
+        if (slot) {
+          const span = Math.min((slot.period_end - slot.period_start + 1), (13 - p));
+          gridRowsHtml += renderOfficialSlotCell(slot, span);
+          p += span;
+        } else {
+          const covered = targetSchedules.find(s => (s.day === day || s.day === dayShort) && s.period_start < p && s.period_end >= p);
+          if (!covered) {
+            gridRowsHtml += `<td class="empty-cell">&nbsp;</td>`;
+          }
+          p++;
+        }
+      }
+
+      gridRowsHtml += `</tr>`;
+    });
+
+    return `
+      <div class="official-print-wrapper">
+        <!-- Target Header (Clean & Minimal, without the crossed-out profile) -->
+        <div class="official-print-title-row">
+          <div class="opt-left">
+            <span class="opt-main font-bold">${escapeHtml(targetTitle)}</span>
+            ${targetSub ? `<span class="opt-sub">(${escapeHtml(targetSub)})</span>` : ''}
+          </div>
+          <div class="opt-right">
+            <span>ภาคเรียนที่ 1 ปีการศึกษา 2568</span>
+          </div>
+        </div>
+
+        <!-- Section 1: Subject Summary Table (12 columns) -->
+        <table class="official-subj-table">
+          <thead>
+            <tr>
+              <th style="width:11%;">รหัสวิชา</th>
+              <th style="width:23%;">ชื่อรายวิชา</th>
+              <th style="width:4%;">ท.</th>
+              <th style="width:4%;">ป.</th>
+              <th style="width:4%;">น.</th>
+              <th style="width:4%;">ช.</th>
+              <th style="width:11%;">รหัสวิชา</th>
+              <th style="width:23%;">ชื่อรายวิชา</th>
+              <th style="width:4%;">ท.</th>
+              <th style="width:4%;">ป.</th>
+              <th style="width:4%;">น.</th>
+              <th style="width:4%;">ช.</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${subjRowsHtml}
+          </tbody>
+        </table>
+
+        <!-- Section 2: Timetable Grid (15 columns) -->
+        <table class="official-grid-table">
+          <thead>
+            <tr class="grid-time-header">
+              <th style="width:7%;">เวลา</th>
+              <th style="width:3.5%;font-size:9px;">07:45 - 08:00</th>
+              <th style="width:7%;">08:00 - 09:00</th>
+              <th style="width:7%;">09:00 - 10:00</th>
+              <th style="width:7%;">10:00 - 11:00</th>
+              <th style="width:7%;">11:00 - 12:00</th>
+              <th style="width:3.5%;font-size:9px;">12:00 - 13:00</th>
+              <th style="width:7%;">13:00 - 14:00</th>
+              <th style="width:7%;">14:00 - 15:00</th>
+              <th style="width:7%;">15:00 - 16:00</th>
+              <th style="width:7%;">16:00 - 17:00</th>
+              <th style="width:7%;">17:00 - 18:00</th>
+              <th style="width:7%;">18:00 - 19:00</th>
+              <th style="width:7%;">19:00 - 20:00</th>
+              <th style="width:7%;">20:00 - 21:00</th>
+            </tr>
+            <tr class="grid-period-header">
+              <th>วัน/คาบ</th>
+              <th></th>
+              <th>1</th>
+              <th>2</th>
+              <th>3</th>
+              <th>4</th>
+              <th></th>
+              <th>5</th>
+              <th>6</th>
+              <th>7</th>
+              <th>8</th>
+              <th>9</th>
+              <th>10</th>
+              <th>11</th>
+              <th>12</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${gridRowsHtml}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  function renderOfficialSlotCell(slot, colspan = 1) {
+    const sObj = _subjects.find(sb => sb.subject_id === slot.subject_id);
+    const rObj = _rooms.find(rm => rm.room_id === slot.room_id);
+    const tObj = _teachers.find(tc => tc.teacher_id === slot.teacher_id);
+    const gObj = _groups.find(gp => gp.group_id === slot.group_id);
+
+    const line1 = slot.subject_id;
+    // Line 2: Room name or subject name if room is empty
+    const line2 = rObj ? (rObj.room_name || rObj.room_id) : (slot.room_id || (sObj ? sObj.subject_name : '-'));
+    // Line 3: Teacher name (if viewing student) or Group name (if viewing teacher)
+    const line3 = (_viewType === 'teacher')
+      ? (gObj ? gObj.group_name : slot.group_id || '')
+      : (tObj ? tObj.teacher_name : slot.teacher_id || '');
+
+    return `
+      <td colspan="${colspan}" class="official-slot-cell">
+        <div class="osc-code font-bold">${escapeHtml(line1)}</div>
+        <div class="osc-room">${escapeHtml(line2)}</div>
+        <div class="osc-person">${escapeHtml(line3)}</div>
+      </td>
+    `;
+  }
+
   function printSchedule() {
     if (!_targetId) {
-      showToast('warning', 'กรุณาเลือกข้อมูล', 'กรุณาเลือกกลุ่มเรียน หรืออาจารย์ หรือห้องเรียน ก่อนสั่งพิมพ์ตาราง');
-      return;
+      if (_viewType === 'student' && _groups.length > 0) {
+        _targetId = _groups[0].group_id;
+        render();
+      } else if (_viewType === 'teacher' && _teachers.length > 0) {
+        _targetId = _teachers[0].teacher_id;
+        render();
+      } else {
+        showToast('warning', 'กรุณาเลือกข้อมูล', 'กรุณาเลือกกลุ่มเรียน หรืออาจารย์ หรือห้องเรียน ก่อนสั่งพิมพ์ตาราง');
+        return;
+      }
     }
     // ปิดหน้าต่าง AI Copilot อัตโนมัติ เพื่อไม่ให้บังตารางในหน้าพิมพ์
     if (typeof AI_COPILOT !== 'undefined' && typeof AI_COPILOT.close === 'function') {
       AI_COPILOT.close();
     }
     updatePrintHeader();
+
+    const html = generateOfficialPrintHtml();
+
+    // เติม HTML ลงใน Official Print Container สำหรับ @media print
+    const printDocEl = document.getElementById('officialPrintDoc');
+    if (printDocEl) printDocEl.innerHTML = html;
+
+    // เติม HTML ลงในพรีวิวของ Modal
+    const paperSheetEl = document.getElementById('printPaperSheet');
+    if (paperSheetEl) paperSheetEl.innerHTML = html;
+
+    // เปิดหน้าต่าง Modal ตัวอย่างก่อนพิมพ์
+    const modalEl = document.getElementById('officialPrintModal');
+    if (modalEl) {
+      modalEl.classList.remove('hidden');
+    } else {
+      window.print();
+    }
+  }
+
+  function executePrintNow() {
+    const printDocEl = document.getElementById('officialPrintDoc');
+    if (printDocEl && (!printDocEl.innerHTML || printDocEl.innerHTML.trim() === '')) {
+      printDocEl.innerHTML = generateOfficialPrintHtml();
+    }
     window.print();
+  }
+
+  function closePrintModal() {
+    const modalEl = document.getElementById('officialPrintModal');
+    if (modalEl) modalEl.classList.add('hidden');
   }
 
   // ── Multi-Format Exports: Excel (.xlsx) สวยงามแบบเป็นทางการ (Scoring Criterion 3.5.3 C) ──
@@ -5331,6 +5683,9 @@ const SCHED = (() => {
     closeClearModal,
     confirmClearSchedule,
     printSchedule,
+    generateOfficialPrintHtml,
+    executePrintNow,
+    closePrintModal,
     exportExcel,
     exportCSV,
     exportICS,

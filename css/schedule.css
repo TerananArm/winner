@@ -1587,6 +1587,10 @@
   .sched-kpi-grid,
   .conflict-summary-card,
   .student-profile-banner,
+  .timetable-main-card,
+  .sched-page-container,
+  .app-wrapper,
+  .main-content,
   #ai-copilot-container,
   #aiCopilotTrigger,
   #aiCopilotPanel,
@@ -1597,17 +1601,18 @@
     opacity: 0 !important;
   }
 
-
-  .app-wrapper,
-  .main-content,
-  .sched-page-container {
+  /* Exclusively display official print document on paper */
+  #officialPrintDoc {
     display: block !important;
+    visibility: visible !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    min-height: 0 !important;
-    border: none !important;
+    background: #ffffff !important;
+    color: #000000 !important;
   }
 
   /* ── Official Print Header (ซ่อน: พิมพ์เฉพาะตาราง) ── */
@@ -2912,4 +2917,266 @@
 [data-theme="light"] .conflict-item-card .c-detail {
   color: #4c0519 !important;
   font-weight: 600 !important;
+}
+
+/* ============================================================
+   OFFICIAL PRINT FORMAT & MODAL PREVIEW (ตรงตามแบบตัวอย่างราชการ)
+   ============================================================ */
+
+/* Root element for printing */
+#officialPrintDoc {
+  display: none;
+}
+
+/* Print Preview Modal */
+.print-preview-modal-dialog {
+  max-width: 1200px !important;
+  width: 96vw !important;
+  max-height: 94vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  background: var(--bg-card, #111c2f) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6) !important;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.1)) !important;
+  overflow: hidden !important;
+}
+
+.print-preview-modal-header {
+  padding: 14px 20px !important;
+  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.1)) !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  background: var(--bg-card, #0f172a) !important;
+  flex-shrink: 0 !important;
+}
+
+.print-preview-modal-body {
+  padding: 18px !important;
+  overflow-y: auto !important;
+  background: #1e293b !important;
+  flex-grow: 1 !important;
+}
+
+[data-theme="light"] .print-preview-modal-body {
+  background: #cbd5e1 !important;
+}
+
+.print-paper-sheet-container {
+  display: flex !important;
+  justify-content: center !important;
+  width: 100% !important;
+}
+
+/* A4 Sheet Simulation */
+.official-print-sheet {
+  width: 100% !important;
+  max-width: 1120px !important;
+  background: #ffffff !important;
+  color: #000000 !important;
+  padding: 20px 24px !important;
+  border-radius: 4px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35) !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Sarabun", "TH Sarabun New", "Segoe UI", sans-serif !important;
+}
+
+/* Header line */
+.official-print-title-row {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: flex-end !important;
+  margin-bottom: 8px !important;
+  border-bottom: 2px solid #000000 !important;
+  padding-bottom: 4px !important;
+}
+
+.official-print-title-row .opt-left {
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 8px !important;
+}
+
+.official-print-title-row .opt-main {
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  color: #000000 !important;
+}
+
+.official-print-title-row .opt-sub {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: #334155 !important;
+}
+
+.official-print-title-row .opt-right {
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  color: #000000 !important;
+}
+
+/* 1. Subject Summary Table (12 columns) */
+.official-subj-table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  margin-bottom: 10px !important;
+  font-size: 10.5px !important;
+  table-layout: fixed !important;
+  background: #ffffff !important;
+}
+
+.official-subj-table th,
+.official-subj-table td {
+  border: 1px solid #000000 !important;
+  padding: 3px 4px !important;
+  color: #000000 !important;
+  line-height: 1.25 !important;
+}
+
+.official-subj-table th {
+  background: #f1f5f9 !important;
+  font-weight: 800 !important;
+  text-align: center !important;
+  font-size: 10.5px !important;
+}
+
+.official-subj-table td.cell-center {
+  text-align: center !important;
+}
+
+.official-subj-table td.cell-left {
+  text-align: left !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.official-subj-table .font-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-size: 10px !important;
+  letter-spacing: 0.3px !important;
+}
+
+.official-subj-table .row-total td {
+  background: #f8fafc !important;
+  font-weight: 800 !important;
+}
+
+/* 2. Weekly Timetable Grid (15 columns) */
+.official-grid-table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  font-size: 10px !important;
+  table-layout: fixed !important;
+  background: #ffffff !important;
+}
+
+.official-grid-table th,
+.official-grid-table td {
+  border: 1px solid #000000 !important;
+  padding: 2px 3px !important;
+  color: #000000 !important;
+  vertical-align: middle !important;
+  line-height: 1.2 !important;
+}
+
+.official-grid-table tr.grid-time-header th {
+  background: #f1f5f9 !important;
+  font-weight: 800 !important;
+  text-align: center !important;
+  font-size: 9.5px !important;
+}
+
+.official-grid-table tr.grid-period-header th {
+  background: #f8fafc !important;
+  font-weight: 800 !important;
+  text-align: center !important;
+  font-size: 10px !important;
+}
+
+.official-grid-table td.day-name-cell {
+  text-align: center !important;
+  font-weight: 800 !important;
+  font-size: 11px !important;
+  background: #ffffff !important;
+}
+
+.official-grid-table td.vertical-activity-cell,
+.official-grid-table td.vertical-lunch-cell {
+  text-align: center !important;
+  vertical-align: middle !important;
+  padding: 4px 1px !important;
+  background: #ffffff !important;
+}
+
+.official-grid-table .v-text-wrapper {
+  writing-mode: vertical-rl !important;
+  letter-spacing: 2.5px !important;
+  font-weight: 700 !important;
+  font-size: 10.5px !important;
+  margin: auto !important;
+  display: inline-block !important;
+  white-space: nowrap !important;
+  line-height: 1 !important;
+  color: #000000 !important;
+}
+
+.official-grid-table td.official-slot-cell {
+  text-align: center !important;
+  background: #ffffff !important;
+  padding: 3px 2px !important;
+  line-height: 1.25 !important;
+}
+
+.official-grid-table .osc-code {
+  font-weight: 800 !important;
+  font-size: 10.5px !important;
+  color: #000000 !important;
+}
+
+.official-grid-table .osc-room {
+  font-size: 9.5px !important;
+  color: #0f172a !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.official-grid-table .osc-person {
+  font-size: 9.5px !important;
+  color: #1e293b !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.official-grid-table td.empty-cell {
+  background: #ffffff !important;
+}
+
+/* Print Specific Rules for Paper output */
+@media print {
+  #officialPrintDoc {
+    display: block !important;
+    visibility: visible !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 281mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  #officialPrintDoc .official-print-wrapper {
+    width: 100% !important;
+  }
+
+  #officialPrintDoc .official-subj-table th,
+  #officialPrintDoc .official-subj-table td,
+  #officialPrintDoc .official-grid-table th,
+  #officialPrintDoc .official-grid-table td {
+    border: 1px solid #000000 !important;
+  }
 }

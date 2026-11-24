@@ -572,9 +572,19 @@ const AUTH = {
           'T07': { teacher_id: 'T07', teacher_name: 'ครูอนุวัฒน์ พัฒนา', role: 'ครูผู้สอน', max_hours: 22 },
           'T08': { teacher_id: 'T08', teacher_name: 'ครูพรรณิภา ทองดี', role: 'ครูผู้สอน', max_hours: 18 },
           'T09': { teacher_id: 'T09', teacher_name: 'ครูวรชัย เกียรติสูง', role: 'ครูหัวหน้าแผนก', max_hours: 16 },
-          'T10': { teacher_id: 'T10', teacher_name: 'ครูนิรันดร์ คงเดช', role: 'ครูผู้สอน', max_hours: 20 }
+          'T10': { teacher_id: 'T10', teacher_name: 'ครูนิรันดร์ คงเดช', role: 'ครูผู้สอน', max_hours: 20 },
+          'T11': { teacher_id: 'T11', teacher_name: 'ครูสุภาพร อ่อนโยน', role: 'ครูผู้สอน', max_hours: 20 },
+          'T12': { teacher_id: 'T12', teacher_name: 'ครูกิตติศักดิ์ แก้วมงคล', role: 'ครูผู้สอน', max_hours: 22 },
+          'T13': { teacher_id: 'T13', teacher_name: 'ครูเบญจมาศ ฝันดี', role: 'ครูผู้สอน', max_hours: 18 },
+          'T14': { teacher_id: 'T14', teacher_name: 'ครูฉัตรชัย ยิ่งยง', role: 'ครูผู้สอน', max_hours: 20 },
+          'T15': { teacher_id: 'T15', teacher_name: 'ครูมณีรัตน์ สว่างจิต', role: 'ครูผู้สอน', max_hours: 20 },
+          'T16': { teacher_id: 'T16', teacher_name: 'ครูวีระ ปรีชาชาญ', role: 'ครูผู้สอน', max_hours: 20 },
+          'T17': { teacher_id: 'T17', teacher_name: 'ครูสายสุนีย์ เพชรรัตน์', role: 'ครูผู้สอน', max_hours: 18 },
+          'T18': { teacher_id: 'T18', teacher_name: 'ครูทวีป ก้าวหน้า', role: 'ครูผู้สอน', max_hours: 22 },
+          'T19': { teacher_id: 'T19', teacher_name: 'ครูลัดดา เจริญสุข', role: 'ครูผู้สอน', max_hours: 20 },
+          'T20': { teacher_id: 'T20', teacher_name: 'ครูภาณุ พลังแรง', role: 'ครูหัวหน้าแผนก', max_hours: 16 }
         };
-        const upperU = u.toUpperCase();
+        const upperU = u.toUpperCase().trim();
         if (fallbackTeachers[upperU]) {
           teacher = fallbackTeachers[upperU];
         }

@@ -913,6 +913,41 @@
     </div>
   </div>
 
+  <!-- ── MODAL: Official Print Preview (ตรงตามแบบตัวอย่างราชการ) ── -->
+  <div class="modal-overlay hidden" id="officialPrintModal">
+    <div class="modal print-preview-modal-dialog">
+      <div class="modal-header print-preview-modal-header">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,rgba(99,102,241,0.2),rgba(168,85,247,0.2));display:flex;align-items:center;justify-content:center;color:#818cf8;font-size:17px;">
+            <i class="fas fa-print"></i>
+          </div>
+          <div>
+            <div style="font-size:16px;font-weight:700;color:var(--text-primary);">ตัวอย่างก่อนพิมพ์ตารางสอน (Print Preview)</div>
+            <div style="font-size:12px;color:var(--text-secondary);">รูปแบบตารางรายวิชาและตารางสอนรายสัปดาห์ตามมาตรฐาน</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <button type="button" class="btn btn-primary" onclick="SCHED.executePrintNow()" style="background:#2563eb;border-color:#2563eb;padding:8px 18px;font-weight:700;">
+            <i class="fas fa-print" style="margin-right:6px;"></i> สั่งพิมพ์ / บันทึก PDF
+          </button>
+          <button type="button" class="btn btn-ghost" onclick="SCHED.closePrintModal()" style="border:1px solid rgba(255,255,255,0.12);">
+            <i class="fas fa-times" style="margin-right:4px;"></i> ปิด
+          </button>
+        </div>
+      </div>
+      <div class="modal-body print-preview-modal-body">
+        <div class="print-paper-sheet-container">
+          <div id="printPaperSheet" class="official-print-sheet">
+            <!-- Official HTML Injected dynamically by SCHED.generateOfficialPrintHtml() -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Dedicated Root Element for Browser @media print ── -->
+  <div id="officialPrintDoc" class="official-print-doc"></div>
+
   <!-- Toast Container -->
   <div class="toast-container" id="toastContainer"></div>
 
