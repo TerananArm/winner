@@ -1775,10 +1775,10 @@
     padding: 0 !important;
   }
 
-  /* The 11 Period Columns: (100% - 7.2% - 3.5% - 3.5%) / 11 = 85.8% / 11 = 7.8% */
+  /* The 10 Period Columns: (100% - 7.2% - 3.5% - 3.5%) / 10 = 85.8% / 10 = 8.58% */
   .timetable-grid th.col-period {
-    width: 7.8% !important;
-    max-width: 7.8% !important;
+    width: 8.58% !important;
+    max-width: 8.58% !important;
   }
 
   /* All headers */

@@ -758,12 +758,12 @@ const SCHED = (() => {
         `;
       }
 
-      // Periods 5 to 11 (Afternoon: 13:00 - 20:00)
+      // Periods 5 to 10 (Afternoon: 13:00 - 19:00)
       p = 5;
-      while (p <= 11) {
+      while (p <= 10) {
         const slot = schedules.find(s => (s.day === day || s.day === dayShort) && s.period_start === p);
         if (slot) {
-          const span = Math.min((slot.period_end - slot.period_start + 1), (12 - p));
+          const span = Math.min((slot.period_end - slot.period_start + 1), (11 - p));
           html += renderSlotCell(slot, span);
           p += span;
         } else {
@@ -1381,7 +1381,7 @@ const SCHED = (() => {
     groupSpecialFlags.forEach((flags, gid) => {
       const blocked = new Set();
       if (flags.dual) {
-        for (let p = 1; p <= 11; p++) blocked.add(`วันศุกร์_${p}`);
+        for (let p = 1; p <= 10; p++) blocked.add(`วันศุกร์_${p}`);
       }
       if (flags.rttc) {
         [5, 6, 7].forEach(p => blocked.add(`วันพุธ_${p}`));
@@ -2606,8 +2606,8 @@ const SCHED = (() => {
       showToast('warning', 'ไม่สามารถย้ายคาบได้', 'ไม่สามารถวางคาบเรียนข้ามช่วงพักกลางวัน (คาบ 5) ได้');
       return;
     }
-    if (newPeriodEnd > 11) {
-      showToast('warning', 'ไม่สามารถย้ายคาบได้', `คาบเรียนเกินช่วงเวลาทำการ (สิ้นสุดคาบที่ ${newPeriodEnd} เกินคาบ 11)`);
+    if (newPeriodEnd > 10) {
+      showToast('warning', 'ไม่สามารถย้ายคาบได้', `คาบเรียนเกินช่วงเวลาทำการ (สิ้นสุดคาบที่ ${newPeriodEnd} เกินคาบ 10 / 19:00 น.)`);
       return;
     }
 
@@ -2948,8 +2948,8 @@ const SCHED = (() => {
       showToast('warning', 'ไม่สามารถย้ายคาบได้', 'ไม่สามารถวางคาบเรียนข้ามช่วงพักกลางวัน (คาบ 5) ได้');
       return;
     }
-    if (newPeriodEnd > 11) {
-      showToast('warning', 'ไม่สามารถย้ายคาบได้', `คาบเรียนเกินช่วงเวลาทำการ (สิ้นสุดคาบที่ ${newPeriodEnd} เกินคาบ 11)`);
+    if (newPeriodEnd > 10) {
+      showToast('warning', 'ไม่สามารถย้ายคาบได้', `คาบเรียนเกินช่วงเวลาทำการ (สิ้นสุดคาบที่ ${newPeriodEnd} เกินคาบ 10 / 19:00 น.)`);
       return;
     }
 
@@ -3904,12 +3904,11 @@ const SCHED = (() => {
       </tr>
     `;
 
-    // 3. Weekly Timetable Grid (7 Days, 15 columns)
-    const allDays = ['วันจันทร์', 'วันอังคาร', 'วันพุธ', 'วันพฤหัสบดี', 'วันศุกร์', 'วันเสาร์', 'วันอาทิตย์'];
+    // 3. Weekly Timetable Grid (5 Days Mon-Fri, 13 columns, periods 1-10 ending at 19:00)
+    const allDays = ['วันจันทร์', 'วันอังคาร', 'วันพุธ', 'วันพฤหัสบดี', 'วันศุกร์'];
     let gridRowsHtml = '';
 
     allDays.forEach((day, dayIndex) => {
-      const isWeekday = dayIndex < 5; // Mon-Fri
       const dayShort = day.replace('วัน', '');
 
       gridRowsHtml += `<tr>`;
@@ -3922,8 +3921,6 @@ const SCHED = (() => {
             <div class="v-text-wrapper">กิจกรรมหน้าเสาธง</div>
           </td>
         `;
-      } else if (!isWeekday) {
-        gridRowsHtml += `<td class="empty-cell">&nbsp;</td>`;
       }
 
       // Periods 1-4 (Morning 08:00 - 12:00)
@@ -3950,16 +3947,14 @@ const SCHED = (() => {
             <div class="v-text-wrapper">พักกลางวัน</div>
           </td>
         `;
-      } else if (!isWeekday) {
-        gridRowsHtml += `<td class="empty-cell">&nbsp;</td>`;
       }
 
-      // Periods 5-12 (Afternoon & Evening 13:00 - 21:00)
+      // Periods 5-10 (Afternoon & Evening 13:00 - 19:00)
       p = 5;
-      while (p <= 12) {
+      while (p <= 10) {
         const slot = targetSchedules.find(s => (s.day === day || s.day === dayShort) && s.period_start === p);
         if (slot) {
-          const span = Math.min((slot.period_end - slot.period_start + 1), (13 - p));
+          const span = Math.min((slot.period_end - slot.period_start + 1), (11 - p));
           gridRowsHtml += renderOfficialSlotCell(slot, span);
           p += span;
         } else {
@@ -4010,25 +4005,23 @@ const SCHED = (() => {
           </tbody>
         </table>
 
-        <!-- Section 2: Timetable Grid (15 columns) -->
+        <!-- Section 2: Timetable Grid (13 columns, periods 1-10) -->
         <table class="official-grid-table">
           <thead>
             <tr class="grid-time-header">
-              <th style="width:7%;">เวลา</th>
-              <th style="width:3.5%;font-size:9px;">07:45 - 08:00</th>
-              <th style="width:7%;">08:00 - 09:00</th>
-              <th style="width:7%;">09:00 - 10:00</th>
-              <th style="width:7%;">10:00 - 11:00</th>
-              <th style="width:7%;">11:00 - 12:00</th>
-              <th style="width:3.5%;font-size:9px;">12:00 - 13:00</th>
-              <th style="width:7%;">13:00 - 14:00</th>
-              <th style="width:7%;">14:00 - 15:00</th>
-              <th style="width:7%;">15:00 - 16:00</th>
-              <th style="width:7%;">16:00 - 17:00</th>
-              <th style="width:7%;">17:00 - 18:00</th>
-              <th style="width:7%;">18:00 - 19:00</th>
-              <th style="width:7%;">19:00 - 20:00</th>
-              <th style="width:7%;">20:00 - 21:00</th>
+              <th style="width:8%;">เวลา</th>
+              <th style="width:4%;font-size:9px;">07:45 - 08:00</th>
+              <th style="width:8.4%;">08:00 - 09:00</th>
+              <th style="width:8.4%;">09:00 - 10:00</th>
+              <th style="width:8.4%;">10:00 - 11:00</th>
+              <th style="width:8.4%;">11:00 - 12:00</th>
+              <th style="width:4%;font-size:9px;">12:00 - 13:00</th>
+              <th style="width:8.4%;">13:00 - 14:00</th>
+              <th style="width:8.4%;">14:00 - 15:00</th>
+              <th style="width:8.4%;">15:00 - 16:00</th>
+              <th style="width:8.4%;">16:00 - 17:00</th>
+              <th style="width:8.4%;">17:00 - 18:00</th>
+              <th style="width:8.4%;">18:00 - 19:00</th>
             </tr>
             <tr class="grid-period-header">
               <th>วัน/คาบ</th>
@@ -4044,8 +4037,6 @@ const SCHED = (() => {
               <th>8</th>
               <th>9</th>
               <th>10</th>
-              <th>11</th>
-              <th>12</th>
             </tr>
           </thead>
           <tbody>
@@ -4197,15 +4188,15 @@ const SCHED = (() => {
       // แถว 3: เว้นวรรค
       [],
       // แถว 4: หัวตารางชื่อคาบ
-      ['วัน / เวลา', 'กิจกรรม', 'คาบ 1', 'คาบ 2', 'คาบ 3', 'คาบ 4', 'พักกลางวัน', 'คาบ 5', 'คาบ 6', 'คาบ 7', 'คาบ 8', 'คาบ 9', 'คาบ 10', 'คาบ 11'],
+      ['วัน / เวลา', 'กิจกรรม', 'คาบ 1', 'คาบ 2', 'คาบ 3', 'คาบ 4', 'พักกลางวัน', 'คาบ 5', 'คาบ 6', 'คาบ 7', 'คาบ 8', 'คาบ 9', 'คาบ 10'],
       // แถว 5: หัวตารางช่วงเวลา
-      ['', '07:45-08:00', '08:00-09:00', '09:00-10:00', '10:00-11:00', '11:00-12:00', '12:00-13:00', '13:00-14:00', '14:00-15:00', '15:00-16:00', '16:00-17:00', '17:00-18:00', '18:00-19:00', '19:00-20:00']
+      ['', '07:45-08:00', '08:00-09:00', '09:00-10:00', '10:00-11:00', '11:00-12:00', '12:00-13:00', '13:00-14:00', '14:00-15:00', '15:00-16:00', '16:00-17:00', '17:00-18:00', '18:00-19:00']
     ];
 
     const merges = [
-      { s: { r: 0, c: 0 }, e: { r: 0, c: 13 } }, // แถว 0 รวม 14 คอลัมน์
-      { s: { r: 1, c: 0 }, e: { r: 1, c: 13 } }, // แถว 1 รวม 14 คอลัมน์
-      { s: { r: 2, c: 0 }, e: { r: 2, c: 13 } }, // แถว 2 รวม 14 คอลัมน์
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 12 } }, // แถว 0 รวม 13 คอลัมน์
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 12 } }, // แถว 1 รวม 13 คอลัมน์
+      { s: { r: 2, c: 0 }, e: { r: 2, c: 12 } }, // แถว 2 รวม 13 คอลัมน์
       { s: { r: 4, c: 0 }, e: { r: 5, c: 0 } }   // วัน/เวลา รวมแถว 4-5
     ];
 
@@ -4214,7 +4205,7 @@ const SCHED = (() => {
     DAYS.forEach((day, dIdx) => {
       const curRowIdx = startRowIdx + dIdx;
       const dayShort = day.replace('วัน', '');
-      const row = [day, 'เข้าแถวหน้าเสาธง', '', '', '', '', 'พักกลางวัน', '', '', '', '', '', '', ''];
+      const row = [day, 'เข้าแถวหน้าเสาธง', '', '', '', '', 'พักกลางวัน', '', '', '', '', '', ''];
 
       const dayScheds = currentTargetSchedules.filter(s => s.day === day || s.day === dayShort);
 
@@ -4227,9 +4218,9 @@ const SCHED = (() => {
         const cellText = `${s.subject_id} ${subName}\nห้อง: ${rm ? rm.room_id : (s.room_id || '-')} | ครู: ${tch ? tch.teacher_name : (s.teacher_id || '-')}`;
 
         const pStart = Math.max(1, s.period_start);
-        const pEnd = Math.min(11, s.period_end);
+        const pEnd = Math.min(10, s.period_end);
 
-        // คำนวณคอลัมน์ใน Excel (คาบ 1-4 คือ col 2-5, พักเที่ยงคือ col 6, คาบ 5-11 คือ col 7-13)
+        // คำนวณคอลัมน์ใน Excel (คาบ 1-4 คือ col 2-5, พักเที่ยงคือ col 6, คาบ 5-10 คือ col 7-12)
         const getColIdx = (p) => (p <= 4 ? p + 1 : p + 2);
 
         const startCol = getColIdx(pStart);
@@ -4259,7 +4250,7 @@ const SCHED = (() => {
     rows.push([`ระบบบริหารจัดการตารางเรียนตารางสอน EduSched AI  |  Zero-Collision Verification: PASS  |  Audit Fingerprint: ${_lastAuditHash || 'VERIFIED'}`]);
 
     const lastRowIdx = rows.length - 1;
-    merges.push({ s: { r: lastRowIdx, c: 0 }, e: { r: lastRowIdx, c: 13 } });
+    merges.push({ s: { r: lastRowIdx, c: 0 }, e: { r: lastRowIdx, c: 12 } });
     merges.push({ s: { r: lastRowIdx - 4, c: 0 }, e: { r: lastRowIdx - 4, c: 3 } });
     merges.push({ s: { r: lastRowIdx - 4, c: 4 }, e: { r: lastRowIdx - 4, c: 7 } });
     merges.push({ s: { r: lastRowIdx - 4, c: 8 }, e: { r: lastRowIdx - 4, c: 12 } });
@@ -4383,8 +4374,7 @@ const SCHED = (() => {
       7: '15:00 - 16:00',
       8: '16:00 - 17:00',
       9: '17:00 - 18:00',
-      10: '18:00 - 19:00',
-      11: '19:00 - 20:00'
+      10: '18:00 - 19:00'
     };
 
     DAYS.forEach(day => {
