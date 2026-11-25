@@ -4061,8 +4061,10 @@ const SCHED = (() => {
       ? (gObj ? gObj.group_name : slot.group_id || '')
       : (tObj ? tObj.teacher_name : slot.teacher_id || '');
 
+    const fullTooltip = `${line1} | ${line2} | ${line3}`;
+
     return `
-      <td colspan="${colspan}" class="official-slot-cell">
+      <td colspan="${colspan}" class="official-slot-cell" title="${escapeHtml(fullTooltip)}">
         <div class="osc-code font-bold">${escapeHtml(line1)}</div>
         <div class="osc-room">${escapeHtml(line2)}</div>
         <div class="osc-person">${escapeHtml(line3)}</div>

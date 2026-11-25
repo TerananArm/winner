@@ -825,6 +825,9 @@
   color: #94a3b8;
   font-weight: 500;
   line-height: 1.2;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .slot-teacher-code {
@@ -832,6 +835,9 @@
   color: #64748b;
   font-weight: 500;
   line-height: 1.2;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 /* Homeroom special text */
@@ -1850,11 +1856,12 @@
 
   .slot-room-code,
   .slot-teacher-code {
-    font-size: 10px !important;
+    font-size: 9.5px !important;
     font-weight: 600 !important;
     color: #334155 !important;
-    line-height: 1.1 !important;
-    white-space: nowrap !important;
+    line-height: 1.15 !important;
+    white-space: normal !important;
+    word-break: break-word !important;
   }
 
   .slot-homeroom-text {
@@ -3046,9 +3053,9 @@
 
 .official-subj-table td.cell-left {
   text-align: left !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  white-space: nowrap !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
 }
 
 .official-subj-table .font-code {
@@ -3125,29 +3132,36 @@
   text-align: center !important;
   background: #ffffff !important;
   padding: 3px 2px !important;
-  line-height: 1.25 !important;
+  line-height: 1.15 !important;
+  vertical-align: middle !important;
 }
 
 .official-grid-table .osc-code {
   font-weight: 800 !important;
-  font-size: 10.5px !important;
+  font-size: 10px !important;
   color: #000000 !important;
+  line-height: 1.15 !important;
+  white-space: nowrap !important;
 }
 
 .official-grid-table .osc-room {
-  font-size: 9.5px !important;
+  font-size: 8.5px !important;
   color: #0f172a !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  white-space: nowrap !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+  line-height: 1.15 !important;
+  margin-top: 1px !important;
 }
 
 .official-grid-table .osc-person {
-  font-size: 9.5px !important;
+  font-size: 8.5px !important;
   color: #1e293b !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  white-space: nowrap !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+  line-height: 1.15 !important;
+  margin-top: 1px !important;
 }
 
 .official-grid-table td.empty-cell {
