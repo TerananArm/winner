@@ -351,6 +351,24 @@
       box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18);
     }
 
+    select.form-input-auth {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      padding: 10px 36px 10px 40px !important;
+      cursor: pointer;
+    }
+
+    .select-chevron-right {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 12px;
+      pointer-events: none;
+    }
+
     [data-theme="light"] .form-input-auth {
       background: #f8fafc;
       border-color: #cbd5e1;
@@ -691,10 +709,11 @@
               กลุ่มเรียน (ดึงจากฐานข้อมูล Supabase)
             </label>
             <div class="input-wrap">
-              <select class="form-input-auth" id="regGroupId" style="padding-left:40px;" required>
+              <select class="form-input-auth" id="regGroupId" required>
                 <option value="">กำลังโหลดข้อมูลกลุ่มเรียน...</option>
               </select>
               <i class="fas fa-users input-icon-left"></i>
+              <i class="fas fa-chevron-down select-chevron-right"></i>
             </div>
           </div>
 
