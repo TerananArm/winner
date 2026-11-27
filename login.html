@@ -115,55 +115,6 @@
       color: #0f172a;
     }
 
-    /* Role Tabs */
-    .role-tabs {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 6px;
-      margin-bottom: 18px;
-      background: rgba(0, 0, 0, 0.3);
-      padding: 4px;
-      border-radius: 14px;
-      border: 1px solid var(--border);
-    }
-
-    [data-theme="light"] .role-tabs {
-      background: #f1f5f9;
-      border-color: #e2e8f0;
-    }
-
-    .role-tab-btn {
-      padding: 9px 4px;
-      border-radius: 10px;
-      border: none;
-      background: transparent;
-      color: var(--text-secondary);
-      font-size: 12.5px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      transition: all var(--t) var(--ease);
-    }
-
-    .role-tab-btn:hover {
-      color: var(--text-primary);
-    }
-
-    .role-tab-btn.active {
-      background: var(--bg-secondary);
-      color: var(--primary-light);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    }
-
-    [data-theme="light"] .role-tab-btn.active {
-      background: #ffffff;
-      color: var(--primary);
-      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
-      font-weight: 700;
-    }
 
     /* Quick Preset Login Chips */
     .quick-fill-section {
@@ -504,45 +455,28 @@
         </div>
       </div>
 
-      <!-- Role Tabs -->
-      <div class="role-tabs">
-        <button type="button" class="role-tab-btn active" id="tab-admin" onclick="switchLoginRole('admin')">
-          <span style="font-size:16px;">👑</span>
-          <span>ผู้ดูแลระบบ</span>
-        </button>
-        <button type="button" class="role-tab-btn" id="tab-teacher" onclick="switchLoginRole('teacher')">
-          <span style="font-size:16px;">👨‍🏫</span>
-          <span>ครูผู้สอน</span>
-        </button>
-        <button type="button" class="role-tab-btn" id="tab-student" onclick="switchLoginRole('student')">
-          <span style="font-size:16px;">🎓</span>
-          <span>นักเรียน</span>
-        </button>
-      </div>
-
       <!-- Live Quick-Fill Preset Section (คลิกเดียวเพื่อกรอกอัตโนมัติ) -->
       <div class="quick-fill-section" id="quickFillSection">
         <div class="quick-fill-header">
-          <span><i class="fas fa-bolt" style="color:var(--warning);margin-right:4px;"></i> คลิกเพื่อกรอกบัญชีทดสอบอัตโนมัติ:</span>
-          <span id="quickRoleLabel" style="font-weight:700;color:var(--primary-light);">Admin</span>
+          <span><i class="fas fa-bolt" style="color:var(--warning);margin-right:4px;"></i> ตัวอย่างบัญชีทดสอบ (คลิกเพื่อกรอกอัตโนมัติ):</span>
         </div>
         <div class="quick-chips-wrap" id="quickChipsWrap">
-          <!-- Injected dynamically by switchLoginRole -->
+          <!-- Rendered dynamically -->
         </div>
       </div>
 
       <!-- Live Error / Success Alert Box -->
       <div id="loginAlert" class="login-alert-box hidden"></div>
 
-      <!-- Production Login Form -->
+      <!-- Production Unified Login Form -->
       <form id="loginForm" onsubmit="handleLoginSubmit(event)" style="display:flex;flex-direction:column;gap:14px;">
         <div>
           <label class="form-label" id="lblUsername" style="font-size:12.5px;font-weight:600;margin-bottom:6px;display:block;">
-            ชื่อผู้ดูแลระบบ (Username)
+            ชื่อผู้ใช้ หรือ รหัสประจำตัว (Username or ID)
           </label>
           <div class="input-wrap">
-            <input type="text" class="form-input-auth" id="inputUsername" placeholder="กรอกชื่อผู้ใช้ admin" required autocomplete="username" />
-            <i class="fas fa-user-shield input-icon-left" id="userIcon"></i>
+            <input type="text" class="form-input-auth" id="inputUsername" placeholder="กรอกชื่อผู้ใช้ admin, รหัสครู (เช่น T01) หรือรหัส นศ." required autocomplete="username" />
+            <i class="fas fa-id-card input-icon-left" id="userIcon"></i>
           </div>
         </div>
 
@@ -563,8 +497,8 @@
           <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
             <input type="checkbox" id="chkRemember" checked style="accent-color:var(--primary);cursor:pointer;" /> จดจำการเข้าสู่ระบบ
           </label>
-          <span id="roleHintBadge" class="badge-admin" style="font-size:11px;padding:3px 8px;border-radius:6px;font-weight:700;">
-            สิทธิ์: Administrator
+          <span style="font-size:11.5px;color:var(--text-secondary);display:inline-flex;align-items:center;gap:4px;">
+            <i class="fas fa-shield-halved" style="color:var(--primary-light);"></i> ตรวจสอบสิทธิ์อัตโนมัติ
           </span>
         </div>
 
@@ -646,53 +580,28 @@
   <script src="js/supabase-config.js"></script>
   <script src="js/main.js"></script>
   <script>
-    let currentRole = 'admin';
-
     // Preset Demo Accounts for Quick Fill
-    const ROLE_PRESETS = {
-      admin: [
-        { label: '👑 ผู้ดูแลระบบ (admin)', u: 'admin', p: 'admin123' }
-      ],
-      teacher: [
-        { label: '👨‍🏫 T01: ครูสมชาย ใจดี', u: 'T01', p: 'teacher123' },
-        { label: '👨‍🏫 T02: ครูนภัสสร เรียนดี', u: 'T02', p: 'teacher123' },
-        { label: '👨‍🏫 T03: ครูประสิทธิ์ ศักดานันท์', u: 'T03', p: 'teacher123' },
-        { label: '👨‍🏫 T04: ครูวิไล มั่นคง', u: 'T04', p: 'teacher123' }
-      ],
-      student: [
-        { label: '🎓 67204010101: นายกิตติกร มั่นคง', u: '67204010101', p: 'student123' },
-        { label: '🎓 67204010102: นางสาวจิราภรณ์ วงศ์สว่าง', u: '67204010102', p: 'student123' },
-        { label: '🎓 672040101: กลุ่ม ปวช.1 คอม 1', u: '672040101', p: 'student123' },
-        { label: '🎓 672190101: กลุ่ม ปวช.1 ช่างยนต์ 1', u: '672190101', p: 'student123' }
-      ]
-    };
+    const DEMO_PRESETS = [
+      { label: '👑 Admin (ผู้ดูแลระบบ)', u: 'admin', p: 'admin123' },
+      { label: '👨‍🏫 T01: ครูสมชาย', u: 'T01', p: 'teacher123' },
+      { label: '👨‍🏫 T02: ครูนภัสสร', u: 'T02', p: 'teacher123' },
+      { label: '🎓 นศ. กิตติกร', u: '67204010101', p: 'student123' },
+      { label: '🎓 ปวช.1 คอม 1', u: '672040101', p: 'student123' }
+    ];
 
-    function renderQuickChips(role) {
+    function renderQuickChips() {
       const container = document.getElementById('quickChipsWrap');
-      const label = document.getElementById('quickRoleLabel');
       if (!container) return;
 
-      const presets = ROLE_PRESETS[role] || [];
-      const roleTitles = {
-        admin: 'ผู้ดูแลระบบ',
-        teacher: 'ครูผู้สอน',
-        student: 'นักเรียน/กลุ่มเรียน'
-      };
-
-      if (label) label.textContent = roleTitles[role] || role;
-
-      container.innerHTML = presets.map(item => `
-        <button type="button" class="quick-chip" onclick="quickFill('${item.u}', '${item.p}', '${role}')" title="คลิกเพื่อกรอกอัตโนมัติ">
+      container.innerHTML = DEMO_PRESETS.map(item => `
+        <button type="button" class="quick-chip" onclick="quickFill('${item.u}', '${item.p}')" title="คลิกเพื่อกรอกอัตโนมัติ">
           <span>${item.label}</span>
           <span style="opacity:0.6;font-size:10px;">(รหัส: ${item.p})</span>
         </button>
       `).join('');
     }
 
-    function quickFill(username, password, role) {
-      if (role && role !== currentRole) {
-        switchLoginRole(role);
-      }
+    function quickFill(username, password) {
       const inputU = document.getElementById('inputUsername');
       const inputP = document.getElementById('inputPassword');
 
@@ -710,48 +619,6 @@
 
         inputU.focus();
       }
-    }
-
-    function switchLoginRole(role) {
-      currentRole = role;
-      document.querySelectorAll('.role-tab-btn').forEach(btn => btn.classList.remove('active'));
-      const activeBtn = document.getElementById(`tab-${role}`);
-      if (activeBtn) activeBtn.classList.add('active');
-
-      const lbl = document.getElementById('lblUsername');
-      const inputU = document.getElementById('inputUsername');
-      const inputP = document.getElementById('inputPassword');
-      const hint = document.getElementById('roleHintBadge');
-      const userIcon = document.getElementById('userIcon');
-
-      hideAlert();
-
-      // Clear values when switching role
-      inputU.value = '';
-      inputP.value = '';
-
-      if (role === 'admin') {
-        lbl.textContent = 'ชื่อผู้ดูแลระบบ (Username)';
-        inputU.placeholder = 'กรอกชื่อผู้ใช้ admin';
-        hint.className = 'badge-admin';
-        hint.textContent = 'สิทธิ์: Administrator';
-        if (userIcon) userIcon.className = 'fas fa-user-shield input-icon-left';
-      } else if (role === 'teacher') {
-        lbl.textContent = 'รหัสประจำตัวครู (เช่น T01, T02)';
-        inputU.placeholder = 'เช่น T01, T02, T03...';
-        hint.className = 'badge-teacher';
-        hint.textContent = 'สิทธิ์: ครูผู้สอน (Teacher)';
-        if (userIcon) userIcon.className = 'fas fa-chalkboard-user input-icon-left';
-      } else if (role === 'student') {
-        lbl.textContent = 'รหัสนักศึกษา 11 หลัก หรือ รหัสกลุ่มเรียน';
-        inputU.placeholder = 'เช่น 67204010101 หรือ 672040101';
-        hint.className = 'badge-student';
-        hint.textContent = 'สิทธิ์: นักเรียน (Student)';
-        if (userIcon) userIcon.className = 'fas fa-user-graduate input-icon-left';
-      }
-
-      renderQuickChips(role);
-      inputU.focus();
     }
 
     function togglePasswordVisibility() {
@@ -802,7 +669,7 @@
       const btn = document.getElementById('loginSubmitBtn');
 
       if (!u || !p) {
-        showAlert('error', 'กรุณากรอกชื่อผู้ใช้และรหัสผ่านให้ครบถ้วน');
+        showAlert('error', 'กรุณากรอกชื่อผู้ใช้หรือรหัสประจำตัว และรหัสผ่านให้ครบถ้วน');
         return;
       }
 
@@ -814,7 +681,7 @@
 
       try {
         if (window.AUTH && typeof window.AUTH.login === 'function') {
-          const res = await window.AUTH.login(u, p, currentRole);
+          const res = await window.AUTH.login(u, p);
 
           if (res && res.success) {
             showAlert('success', `${res.message || 'เข้าสู่ระบบสำเร็จ'} กำลังนำท่านเข้าสู่ระบบ...`);
@@ -933,7 +800,7 @@ CREATE POLICY "Allow all" ON users FOR ALL USING (true) WITH CHECK (true);`;
         window.THEME.updateToggleIcon(window.THEME.getTheme());
       }
 
-      renderQuickChips(currentRole);
+      renderQuickChips();
       checkSupabaseStatus();
 
       if (window.AUTH) {

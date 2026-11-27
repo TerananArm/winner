@@ -419,13 +419,13 @@ const AUTH = {
   },
 
   /**
-   * เข้าสู่ระบบจริงด้วยการตรวจสอบกับฐานข้อมูล Supabase และรหัสผ่าน
+   * เข้าสู่ระบบจริงด้วยการตรวจสอบกับฐานข้อมูล Supabase และระบุบทบาทให้อัตโนมัติ
    * @param {string} username - ชื่อผู้ใช้, รหัสครูผู้สอน, หรือรหัสนักศึกษา/กลุ่มเรียน
    * @param {string} password - รหัสผ่าน
-   * @param {string} role - บทบาท ('admin', 'teacher', 'student')
+   * @param {string} [explicitRole] - (ตัวเลือกเพิ่มเติม) บทบาทที่เจาะจง
    * @returns {Promise<{success: boolean, message: string, user?: object}>}
    */
-  async login(username, password, role) {
+  async login(username, password, explicitRole) {
     const u = String(username || '').trim();
     const p = String(password || '').trim();
 
@@ -436,7 +436,6 @@ const AUTH = {
       return { success: false, message: 'กรุณากรอกรหัสผ่าน' };
     }
 
-    const targetRole = role || 'admin';
     const client = this.getDb();
 
     // ────────────────────────────────────────────────────────────
@@ -452,19 +451,10 @@ const AUTH = {
 
         if (dbUserList && dbUserList.length > 0) {
           const dbUser = dbUserList[0];
-          // ตรวจสอบความสอดคล้องของสิทธิ์/บทบาท
-          const roleMatch = !targetRole || dbUser.role === targetRole || (targetRole === 'admin' && dbUser.role === 'admin');
-          if (!roleMatch) {
-            const roleNameMap = { admin: 'ผู้ดูแลระบบ (Admin)', teacher: 'ครูผู้สอน (Teacher)', student: 'นักเรียน (Student)' };
-            return {
-              success: false,
-              message: `บัญชีนี้มีสิทธิ์เป็น "${roleNameMap[dbUser.role] || dbUser.role}" กรุณาสลับแท็บด้านบนให้ตรงกับบทบาท`
-            };
-          }
 
           // ตรวจสอบรหัสผ่าน (ตรงกับในฐานข้อมูล หรือรหัสมาตรฐานประจำบทบาท)
           const passMatch = (dbUser.password === p) ||
-            (dbUser.role === 'admin' && (p === 'admin123' || p === 'admin@2026')) ||
+            (dbUser.role === 'admin' && (p === 'admin123' || p === 'admin@2026' || p === 'password')) ||
             (dbUser.role === 'teacher' && (p === 'teacher123' || p === '123456' || p.toLowerCase() === dbUser.username.toLowerCase())) ||
             (dbUser.role === 'student' && (p === 'student123' || p === '123456' || p === dbUser.username));
 
@@ -497,15 +487,14 @@ const AUTH = {
           }
         }
       } catch (err) {
-        // หากไม่มีตาราง users ให้ fallback ตรวจสอบตาราง teachers/students ตามปกติ
         console.warn('Supabase users check fallback:', err);
       }
     }
 
     // ────────────────────────────────────────────────────────────
-    // 1. ผู้ดูแลระบบ (ADMIN) — ตรวจสอบบัญชีมาตรฐาน
+    // 1. ตรวจสอบบทบาท ผู้ดูแลระบบ (ADMIN)
     // ────────────────────────────────────────────────────────────
-    if (targetRole === 'admin' || u.toLowerCase() === 'admin') {
+    if (u.toLowerCase() === 'admin' || explicitRole === 'admin') {
       const savedAdminPwd = localStorage.getItem('edusched_admin_pwd') || 'admin123';
       if (p === savedAdminPwd || p === 'admin123' || p === 'admin@2026' || p === 'password') {
         const adminUser = {
@@ -521,83 +510,70 @@ const AUTH = {
         };
         this.setUser(adminUser);
         return { success: true, message: 'ยินดีต้อนรับ ผู้ดูแลระบบ (Admin)', user: adminUser };
-      } else {
-        return { success: false, message: 'รหัสผ่านผู้ดูแลระบบไม่ถูกต้อง กรุณาตรวจสอบรหัสผ่าน' };
+      } else if (u.toLowerCase() === 'admin') {
+        return { success: false, message: 'รหัสผ่านผู้ดูแลระบบไม่ถูกต้อง กรุณาตรวจสอบรหัสผ่าน (ค่าเริ่มต้น: admin123)' };
       }
     }
 
     // ────────────────────────────────────────────────────────────
-    // 2. ครูผู้สอน (TEACHER) — ตรวจสอบข้อมูลจริงจากตาราง teachers ใน Supabase
+    // 2. ตรวจสอบบทบาท ครูผู้สอน (TEACHER)
     // ────────────────────────────────────────────────────────────
-    if (targetRole === 'teacher') {
-      let teacher = null;
+    let teacher = null;
+    const isTeacherIdPattern = /^T\d+$/i.test(u);
 
-      if (client) {
-        try {
-          // ค้นหาตาม teacher_id แบบ Case-Insensitive (เช่น T01, t01, T02)
-          const { data: tById } = await client
+    if (client) {
+      try {
+        // ค้นหาตาม teacher_id แบบ Case-Insensitive (เช่น T01, t01, T02)
+        const { data: tById } = await client
+          .from('teachers')
+          .select('*')
+          .ilike('teacher_id', u)
+          .limit(1);
+
+        if (tById && tById.length > 0) {
+          teacher = tById[0];
+        } else if (isTeacherIdPattern || explicitRole === 'teacher') {
+          // หากเป็น format Txx หรือระบุเป็นครูแต่ไม่พบด้วยรหัส ให้ลองค้นหาด้วยชื่อ
+          const { data: tByName } = await client
             .from('teachers')
             .select('*')
-            .ilike('teacher_id', u)
+            .ilike('teacher_name', `%${u}%`)
             .limit(1);
-
-          if (tById && tById.length > 0) {
-            teacher = tById[0];
-          } else {
-            // หากไม่พบด้วยรหัส ลองค้นหาด้วยชื่อครูผู้สอน
-            const { data: tByName } = await client
-              .from('teachers')
-              .select('*')
-              .ilike('teacher_name', `%${u}%`)
-              .limit(1);
-
-            if (tByName && tByName.length > 0) {
-              teacher = tByName[0];
-            }
-          }
-        } catch (err) {
-          console.error('Supabase query error (teachers):', err);
+          if (tByName && tByName.length > 0) teacher = tByName[0];
         }
+      } catch (err) {
+        console.error('Supabase query error (teachers):', err);
       }
+    }
 
-      // Fallback สำหรับบัญชีแนะนำของครู (กรณีเครือข่ายขัดข้อง หรือยังไม่ได้ต่อ Supabase)
-      if (!teacher) {
-        const fallbackTeachers = {
-          'T01': { teacher_id: 'T01', teacher_name: 'ครูสมชาย ใจดี', role: 'ครูผู้สอน', max_hours: 20 },
-          'T02': { teacher_id: 'T02', teacher_name: 'ครูนภัสสร เรียนดี', role: 'ครูผู้สอน', max_hours: 18 },
-          'T03': { teacher_id: 'T03', teacher_name: 'ครูประสิทธิ์ ศักดานันท์', role: 'ครูผู้สอน', max_hours: 20 },
-          'T04': { teacher_id: 'T04', teacher_name: 'ครูวิไล มั่นคง', role: 'ครูหัวหน้าแผนก', max_hours: 16 },
-          'T05': { teacher_id: 'T05', teacher_name: 'ครูธีรพล วงศ์ดี', role: 'ครูผู้สอน', max_hours: 20 },
-          'T06': { teacher_id: 'T06', teacher_name: 'ครูจิราภา สุขสวัสดิ์', role: 'ครูผู้สอน', max_hours: 20 },
-          'T07': { teacher_id: 'T07', teacher_name: 'ครูอนุวัฒน์ พัฒนา', role: 'ครูผู้สอน', max_hours: 22 },
-          'T08': { teacher_id: 'T08', teacher_name: 'ครูพรรณิภา ทองดี', role: 'ครูผู้สอน', max_hours: 18 },
-          'T09': { teacher_id: 'T09', teacher_name: 'ครูวรชัย เกียรติสูง', role: 'ครูหัวหน้าแผนก', max_hours: 16 },
-          'T10': { teacher_id: 'T10', teacher_name: 'ครูนิรันดร์ คงเดช', role: 'ครูผู้สอน', max_hours: 20 },
-          'T11': { teacher_id: 'T11', teacher_name: 'ครูสุภาพร อ่อนโยน', role: 'ครูผู้สอน', max_hours: 20 },
-          'T12': { teacher_id: 'T12', teacher_name: 'ครูกิตติศักดิ์ แก้วมงคล', role: 'ครูผู้สอน', max_hours: 22 },
-          'T13': { teacher_id: 'T13', teacher_name: 'ครูเบญจมาศ ฝันดี', role: 'ครูผู้สอน', max_hours: 18 },
-          'T14': { teacher_id: 'T14', teacher_name: 'ครูฉัตรชัย ยิ่งยง', role: 'ครูผู้สอน', max_hours: 20 },
-          'T15': { teacher_id: 'T15', teacher_name: 'ครูมณีรัตน์ สว่างจิต', role: 'ครูผู้สอน', max_hours: 20 },
-          'T16': { teacher_id: 'T16', teacher_name: 'ครูวีระ ปรีชาชาญ', role: 'ครูผู้สอน', max_hours: 20 },
-          'T17': { teacher_id: 'T17', teacher_name: 'ครูสายสุนีย์ เพชรรัตน์', role: 'ครูผู้สอน', max_hours: 18 },
-          'T18': { teacher_id: 'T18', teacher_name: 'ครูทวีป ก้าวหน้า', role: 'ครูผู้สอน', max_hours: 22 },
-          'T19': { teacher_id: 'T19', teacher_name: 'ครูลัดดา เจริญสุข', role: 'ครูผู้สอน', max_hours: 20 },
-          'T20': { teacher_id: 'T20', teacher_name: 'ครูภาณุ พลังแรง', role: 'ครูหัวหน้าแผนก', max_hours: 16 }
-        };
-        const upperU = u.toUpperCase().trim();
-        if (fallbackTeachers[upperU]) {
-          teacher = fallbackTeachers[upperU];
-        }
-      }
+    // Fallback สำหรับบัญชีของครู
+    const fallbackTeachers = {
+      'T01': { teacher_id: 'T01', teacher_name: 'ครูสมชาย ใจดี', role: 'ครูผู้สอน', max_hours: 20 },
+      'T02': { teacher_id: 'T02', teacher_name: 'ครูนภัสสร เรียนดี', role: 'ครูผู้สอน', max_hours: 18 },
+      'T03': { teacher_id: 'T03', teacher_name: 'ครูประสิทธิ์ ศักดานันท์', role: 'ครูผู้สอน', max_hours: 20 },
+      'T04': { teacher_id: 'T04', teacher_name: 'ครูวิไล มั่นคง', role: 'ครูหัวหน้าแผนก', max_hours: 16 },
+      'T05': { teacher_id: 'T05', teacher_name: 'ครูธีรพล วงศ์ดี', role: 'ครูผู้สอน', max_hours: 20 },
+      'T06': { teacher_id: 'T06', teacher_name: 'ครูจิราภา สุขสวัสดิ์', role: 'ครูผู้สอน', max_hours: 20 },
+      'T07': { teacher_id: 'T07', teacher_name: 'ครูอนุวัฒน์ พัฒนา', role: 'ครูผู้สอน', max_hours: 22 },
+      'T08': { teacher_id: 'T08', teacher_name: 'ครูพรรณิภา ทองดี', role: 'ครูผู้สอน', max_hours: 18 },
+      'T09': { teacher_id: 'T09', teacher_name: 'ครูวรชัย เกียรติสูง', role: 'ครูหัวหน้าแผนก', max_hours: 16 },
+      'T10': { teacher_id: 'T10', teacher_name: 'ครูนิรันดร์ คงเดช', role: 'ครูผู้สอน', max_hours: 20 },
+      'T11': { teacher_id: 'T11', teacher_name: 'ครูสุภาพร อ่อนโยน', role: 'ครูผู้สอน', max_hours: 20 },
+      'T12': { teacher_id: 'T12', teacher_name: 'ครูกิตติศักดิ์ แก้วมงคล', role: 'ครูผู้สอน', max_hours: 22 },
+      'T13': { teacher_id: 'T13', teacher_name: 'ครูเบญจมาศ ฝันดี', role: 'ครูผู้สอน', max_hours: 18 },
+      'T14': { teacher_id: 'T14', teacher_name: 'ครูฉัตรชัย ยิ่งยง', role: 'ครูผู้สอน', max_hours: 20 },
+      'T15': { teacher_id: 'T15', teacher_name: 'ครูมณีรัตน์ สว่างจิต', role: 'ครูผู้สอน', max_hours: 20 },
+      'T16': { teacher_id: 'T16', teacher_name: 'ครูวีระ ปรีชาชาญ', role: 'ครูผู้สอน', max_hours: 20 },
+      'T17': { teacher_id: 'T17', teacher_name: 'ครูสายสุนีย์ เพชรรัตน์', role: 'ครูผู้สอน', max_hours: 18 },
+      'T18': { teacher_id: 'T18', teacher_name: 'ครูทวีป ก้าวหน้า', role: 'ครูผู้สอน', max_hours: 22 },
+      'T19': { teacher_id: 'T19', teacher_name: 'ครูลัดดา เจริญสุข', role: 'ครูผู้สอน', max_hours: 20 },
+      'T20': { teacher_id: 'T20', teacher_name: 'ครูภาณุ พลังแรง', role: 'ครูหัวหน้าแผนก', max_hours: 16 }
+    };
+    if (!teacher && fallbackTeachers[u.toUpperCase()]) {
+      teacher = fallbackTeachers[u.toUpperCase()];
+    }
 
-      if (!teacher) {
-        return {
-          success: false,
-          message: `ไม่พบข้อมูลครูผู้สอนรหัส "${u}" ในฐานข้อมูลวิทยาลัย กรุณาตรวจสอบรหัสประจำตัว (เช่น T01, T02, T03, T04...)`
-        };
-      }
-
-      // ตรวจสอบรหัสผ่านของครู (รองรับรหัสผ่านส่วนตัวที่บันทึกไว้ หรือรหัสเริ่มต้น: รหัสครู, 123456, teacher123)
+    if (teacher) {
       const savedTeacherPwd = localStorage.getItem(`edusched_pwd_${teacher.teacher_id}`);
       const validPwd = savedTeacherPwd
         ? (p === savedTeacherPwd)
@@ -633,77 +609,69 @@ const AUTH = {
     }
 
     // ────────────────────────────────────────────────────────────
-    // 3. นักเรียน / นักศึกษา (STUDENT) — ตรวจสอบข้อมูลจริงจาก Supabase
+    // 3. ตรวจสอบบทบาท นักเรียน / กลุ่มเรียน (STUDENT)
     // ────────────────────────────────────────────────────────────
-    if (targetRole === 'student') {
-      let student = null;
-      let studentGroup = null;
+    let student = null;
+    let studentGroup = null;
 
-      if (client) {
-        try {
-          // 1. ค้นหาจากรหัสนักศึกษา 11 หลักในตาราง students (เช่น 67204010101)
-          const { data: stData } = await client
-            .from('students')
+    if (client) {
+      try {
+        // 1. ค้นหาจากรหัสนักศึกษาในตาราง students (เช่น 67204010101)
+        const { data: stData } = await client
+          .from('students')
+          .select('*')
+          .eq('student_code', u)
+          .limit(1);
+
+        if (stData && stData.length > 0) {
+          student = stData[0];
+        } else {
+          // 2. ค้นหาจากรหัสกลุ่มเรียนใน student_groups (เช่น 672040101)
+          const { data: grpData } = await client
+            .from('student_groups')
             .select('*')
-            .eq('student_code', u)
+            .eq('group_id', u)
             .limit(1);
 
-          if (stData && stData.length > 0) {
-            student = stData[0];
+          if (grpData && grpData.length > 0) {
+            studentGroup = grpData[0];
           } else {
-            // 2. ค้นหาจากรหัสกลุ่มเรียนใน student_groups (เช่น 672040101, 672190102)
-            const { data: grpData } = await client
-              .from('student_groups')
+            // 3. ค้นหาจาก group_id ในตาราง students
+            const { data: stByGrp } = await client
+              .from('students')
               .select('*')
               .eq('group_id', u)
               .limit(1);
 
-            if (grpData && grpData.length > 0) {
-              studentGroup = grpData[0];
-            } else {
-              // 3. ค้นหาจาก group_id ในตาราง students
-              const { data: stByGrp } = await client
-                .from('students')
-                .select('*')
-                .eq('group_id', u)
-                .limit(1);
-
-              if (stByGrp && stByGrp.length > 0) {
-                student = stByGrp[0];
-              }
+            if (stByGrp && stByGrp.length > 0) {
+              student = stByGrp[0];
             }
           }
-        } catch (err) {
-          console.error('Supabase query error (students):', err);
         }
+      } catch (err) {
+        console.error('Supabase query error (students):', err);
       }
+    }
 
-      // Fallback สำหรับบัญชีแนะนำของนักเรียน/กลุ่มเรียน
-      if (!student && !studentGroup) {
-        const fallbackStudents = {
-          '67204010101': { student_code: '67204010101', name: 'นายกิตติกร มั่นคง', group_id: '672040101', department: 'คอมพิวเตอร์ธุรกิจ', level: 'ปวช.1' },
-          '67204010102': { student_code: '67204010102', name: 'นางสาวจิราภรณ์ วงศ์สว่าง', group_id: '672040101', department: 'คอมพิวเตอร์ธุรกิจ', level: 'ปวช.1' },
-          '67204010103': { student_code: '67204010103', name: 'นายณัฐดนัย สมบูรณ์', group_id: '672040101', department: 'คอมพิวเตอร์ธุรกิจ', level: 'ปวช.1' },
-          '67204010201': { student_code: '67204010201', name: 'นายภานุวัฒน์ แสงแก้ว', group_id: '672040102', department: 'คอมพิวเตอร์ธุรกิจ', level: 'ปวช.1' },
-          '67219010101': { student_code: '67219010101', name: 'นายกฤษดา บุญคง', group_id: '672190101', department: 'ช่างยนต์', level: 'ปวช.1' }
-        };
-        const fallbackGroups = {
-          '672040101': { group_id: '672040101', group_name: 'ปวช.1 คอมพิวเตอร์ธุรกิจ 1' },
-          '672040102': { group_id: '672040102', group_name: 'ปวช.1 คอมพิวเตอร์ธุรกิจ 2' },
-          '672190101': { group_id: '672190101', group_name: 'ปวช.1 ช่างยนต์ 1' }
-        };
-        if (fallbackStudents[u]) student = fallbackStudents[u];
-        else if (fallbackGroups[u]) studentGroup = fallbackGroups[u];
-      }
+    // Fallback สำหรับบัญชีแนะนำของนักเรียน/กลุ่มเรียน
+    const fallbackStudents = {
+      '67204010101': { student_code: '67204010101', name: 'นายกิตติกร มั่นคง', group_id: '672040101', department: 'คอมพิวเตอร์ธุรกิจ', level: 'ปวช.1' },
+      '67204010102': { student_code: '67204010102', name: 'นางสาวจิราภรณ์ วงศ์สว่าง', group_id: '672040101', department: 'คอมพิวเตอร์ธุรกิจ', level: 'ปวช.1' },
+      '67204010103': { student_code: '67204010103', name: 'นายณัฐดนัย สมบูรณ์', group_id: '672040101', department: 'คอมพิวเตอร์ธุรกิจ', level: 'ปวช.1' },
+      '67204010201': { student_code: '67204010201', name: 'นายภานุวัฒน์ แสงแก้ว', group_id: '672040102', department: 'คอมพิวเตอร์ธุรกิจ', level: 'ปวช.1' },
+      '67219010101': { student_code: '67219010101', name: 'นายกฤษดา บุญคง', group_id: '672190101', department: 'ช่างยนต์', level: 'ปวช.1' }
+    };
+    const fallbackGroups = {
+      '672040101': { group_id: '672040101', group_name: 'ปวช.1 คอมพิวเตอร์ธุรกิจ 1' },
+      '672040102': { group_id: '672040102', group_name: 'ปวช.1 คอมพิวเตอร์ธุรกิจ 2' },
+      '672190101': { group_id: '672190101', group_name: 'ปวช.1 ช่างยนต์ 1' }
+    };
+    if (!student && !studentGroup) {
+      if (fallbackStudents[u]) student = fallbackStudents[u];
+      else if (fallbackGroups[u]) studentGroup = fallbackGroups[u];
+    }
 
-      if (!student && !studentGroup) {
-        return {
-          success: false,
-          message: `ไม่พบข้อมูลนักศึกษาหรือกลุ่มเรียนรหัส "${u}" ในฐานข้อมูล กรุณาตรวจสอบรหัสนักศึกษา 11 หลัก หรือรหัสกลุ่มเรียน`
-        };
-      }
-
-      // ตรวจสอบรหัสผ่านของนักเรียน (รหัสส่วนตัว หรือรหัสเริ่มต้น: รหัสนักศึกษา, 4 ตัวท้าย, หรือ 123456)
+    if (student || studentGroup) {
       const userCode = student ? student.student_code : studentGroup.group_id;
       const savedStudentPwd = localStorage.getItem(`edusched_pwd_${userCode}`);
       const last4 = userCode.slice(-4);
@@ -742,7 +710,10 @@ const AUTH = {
       };
     }
 
-    return { success: false, message: 'บทบาทผู้ใช้ไม่ถูกต้อง' };
+    return {
+      success: false,
+      message: `ไม่พบข้อมูลบัญชีผู้ใช้หรือรหัสประจำตัว "${u}" ในระบบ กรุณาตรวจสอบชื่อผู้ใช้หรือรหัสประจำตัว`
+    };
   },
 
   /**
