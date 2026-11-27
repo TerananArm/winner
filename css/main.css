@@ -35,12 +35,13 @@
   --info:          #3b82f6;
 
   /* Card accent colors (dashboard) */
-  --card-teal:    linear-gradient(135deg, #0d9488, #14b8a6);
-  --card-green:   linear-gradient(135deg, #059669, #10b981);
-  --card-gold:    linear-gradient(135deg, #d97706, #f59e0b);
-  --card-orange:  linear-gradient(135deg, #ea580c, #f97316);
-  --card-blue:    linear-gradient(135deg, #2563eb, #3b82f6);
-  --card-emerald: linear-gradient(135deg, #047857, #059669);
+  --card-teal:    linear-gradient(135deg, #0f766e 0%, #0d9488 50%, #2dd4bf 100%);
+  --card-green:   linear-gradient(135deg, #047857 0%, #10b981 55%, #34d399 100%);
+  --card-gold:    linear-gradient(135deg, #b45309 0%, #d97706 50%, #fbbf24 100%);
+  --card-orange:  linear-gradient(135deg, #c2410c 0%, #ea580c 50%, #fb923c 100%);
+  --card-blue:    linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #60a5fa 100%);
+  --card-emerald: linear-gradient(135deg, #065f46 0%, #059669 55%, #10b981 100%);
+  --card-purple:  linear-gradient(135deg, #4f46e5 0%, #7c3aed 55%, #a855f7 100%);
 
   /* Text */
   --text-primary:   #f1f5f9;
@@ -466,15 +467,32 @@ body.sidebar-collapsed .sidebar-nav .nav-item .nav-icon {
   position: relative; overflow: hidden;
   color: #fff;
   cursor: pointer;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.22);
-  transition: var(--t-slow) var(--ease);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  transition: transform 0.35s var(--ease), box-shadow 0.35s var(--ease);
 }
-.stat-card:hover { transform: translateY(-4px) scale(1.01); box-shadow: var(--shadow-lg); }
+.stat-card:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 20px 42px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -120%;
+  width: 60%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.22), transparent);
+  transform: skewX(-22deg);
+  transition: left 0.65s ease;
+  pointer-events: none;
+}
+.stat-card:hover::before {
+  left: 160%;
+}
 .stat-card::after {
   content: '';
   position: absolute; inset: 0;
-  background: rgba(255,255,255,0.06);
-  opacity: 0; transition: var(--t) var(--ease);
+  background: radial-gradient(circle at top right, rgba(255,255,255,0.16), transparent 60%);
+  opacity: 0.6; transition: var(--t) var(--ease);
+  pointer-events: none;
 }
 .stat-card:hover::after { opacity: 1; }
 
@@ -831,12 +849,19 @@ body.sidebar-collapsed .sidebar-nav .nav-item .nav-icon {
 
 /* ── Welcome Banner ──────────────────────────────────────── */
 .welcome-banner {
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 25%, #7c3aed 50%, #22d3ee 100%);
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 35%, #2563eb 70%, #06b6d4 100%);
+  background-size: 200% 200%;
+  animation: bannerGradientFlow 10s ease infinite;
   border-radius: var(--r-xl);
   padding: 32px 36px;
   display: flex; align-items: center; justify-content: space-between;
   margin-bottom: 24px; overflow: hidden; position: relative;
-  min-height: 140px;
+  min-height: 148px;
+  box-shadow: 0 18px 45px rgba(79, 70, 229, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+@keyframes bannerGradientFlow {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 .welcome-banner::before {
   content: '';
