@@ -3,7 +3,7 @@
    Premium Dark Theme with Glassmorphism
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+Thai:wght@300;400;500;600;700;800&display=swap');
 
 /* ── Root Variables ─────────────────────────────────────── */
 :root {
@@ -80,12 +80,16 @@
 html { scroll-behavior: smooth; }
 
 body {
-  font-family: 'Inter', sans-serif;
-  background: var(--bg-primary);
+  font-family: 'Inter', 'Noto Sans Thai', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: radial-gradient(ellipse at top left, rgba(99, 102, 241, 0.08), transparent 50%),
+              radial-gradient(ellipse at bottom right, rgba(34, 211, 238, 0.06), transparent 50%),
+              var(--bg-primary);
   color: var(--text-primary);
   line-height: 1.6;
   min-height: 100vh;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Scrollbar */
@@ -218,9 +222,10 @@ body {
   color: var(--text-primary);
 }
 .nav-item.active {
-  background: var(--primary-subtle);
+  background: linear-gradient(90deg, rgba(99, 102, 241, 0.16), rgba(99, 102, 241, 0.05));
   color: var(--primary-light);
   font-weight: 600;
+  box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.22);
 }
 .nav-item.active::before {
   content: '';
@@ -418,11 +423,12 @@ body.sidebar-collapsed .sidebar-nav .nav-item .nav-icon {
 /* ── Cards ───────────────────────────────────────────────── */
 .card {
   background: var(--bg-glass);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   padding: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   transition: var(--t) var(--ease);
 }
 .card:hover { border-color: var(--border-light); }
@@ -434,6 +440,7 @@ body.sidebar-collapsed .sidebar-nav .nav-item .nav-icon {
   position: relative; overflow: hidden;
   color: #fff;
   cursor: pointer;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.22);
   transition: var(--t-slow) var(--ease);
 }
 .stat-card:hover { transform: translateY(-4px) scale(1.01); box-shadow: var(--shadow-lg); }
@@ -1053,11 +1060,11 @@ body.sidebar-locked {
    ============================================================ */
 [data-theme="light"] {
   /* Backgrounds */
-  --bg-primary:   #f8fafc;
+  --bg-primary:   #f1f5f9;
   --bg-secondary: #ffffff;
-  --bg-tertiary:  #f1f5f9;
-  --bg-glass:     rgba(0, 0, 0, 0.035);
-  --bg-glass-hover: rgba(0, 0, 0, 0.065);
+  --bg-tertiary:  #e2e8f0;
+  --bg-glass:     rgba(255, 255, 255, 0.85);
+  --bg-glass-hover: rgba(15, 23, 42, 0.045);
 
   /* Brand / Primary */
   --primary:        #4f46e5;
@@ -1096,8 +1103,14 @@ body.sidebar-locked {
 }
 
 [data-theme="light"] body {
-  background: var(--bg-primary);
+  background: radial-gradient(ellipse at top left, rgba(99, 102, 241, 0.06), transparent 55%),
+              radial-gradient(ellipse at bottom right, rgba(14, 165, 233, 0.05), transparent 55%),
+              var(--bg-primary);
   color: var(--text-primary);
+}
+
+[data-theme="light"] .orb {
+  opacity: 0.14;
 }
 
 [data-theme="light"] .sidebar {
@@ -1130,8 +1143,28 @@ body.sidebar-locked {
 [data-theme="light"] .card,
 [data-theme="light"] .form-card {
   background: #ffffff !important;
-  border: 1px solid rgba(0, 0, 0, 0.08) !important;
-  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.04) !important;
+  border: 1px solid rgba(15, 23, 42, 0.08) !important;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.03) !important;
+}
+
+[data-theme="light"] .stat-card {
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+}
+
+[data-theme="light"] .nav-item {
+  color: #475569;
+}
+
+[data-theme="light"] .nav-item:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+[data-theme="light"] .nav-item.active {
+  background: linear-gradient(90deg, rgba(79, 70, 229, 0.12), rgba(79, 70, 229, 0.04));
+  color: #4338ca;
+  font-weight: 700;
+  box-shadow: inset 0 0 0 1px rgba(79, 70, 229, 0.16);
 }
 
 [data-theme="light"] .modal {
