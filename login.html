@@ -28,21 +28,39 @@
     .login-card {
       width: 100%;
       max-width: 460px;
-      background: rgba(13, 20, 36, 0.88);
-      backdrop-filter: blur(28px);
-      -webkit-backdrop-filter: blur(28px);
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(13, 20, 36, 0.85);
+      backdrop-filter: blur(32px);
+      -webkit-backdrop-filter: blur(32px);
+      border: 1px solid rgba(255, 255, 255, 0.14);
       border-radius: var(--r-xl);
       padding: 34px 30px;
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-      animation: scaleIn 0.3s var(--ease);
+      box-shadow: 0 28px 70px rgba(0, 0, 0, 0.6), 0 0 50px rgba(99, 102, 241, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+      animation: scaleIn 0.35s var(--ease);
       transition: all 0.25s ease;
+      position: relative;
+    }
+
+    .login-card::before {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: calc(var(--r-xl) + 1px);
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(34, 211, 238, 0.25), rgba(139, 92, 246, 0.4));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
     }
 
     [data-theme="light"] .login-card {
-      background: rgba(255, 255, 255, 0.96);
-      border-color: rgba(15, 23, 42, 0.09);
-      box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.04);
+      background: rgba(255, 255, 255, 0.94);
+      border-color: rgba(15, 23, 42, 0.08);
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.1), 0 0 40px rgba(79, 70, 229, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    }
+
+    [data-theme="light"] .login-card::before {
+      background: linear-gradient(135deg, rgba(79, 70, 229, 0.28), rgba(14, 165, 233, 0.18), rgba(139, 92, 246, 0.22));
     }
 
     .login-brand {
@@ -578,7 +596,7 @@
         <div class="login-logo-icon">
           <img src="assets/icons/logo.svg" alt="EduSched AI" style="width:34px;height:34px;">
         </div>
-        <h1 style="font-size:22px;font-weight:800;color:var(--text-primary);letter-spacing:-0.5px;">EduSched AI</h1>
+        <h1 style="font-size:24px;font-weight:900;letter-spacing:-0.5px;background:linear-gradient(135deg,#818cf8 0%,#22d3ee 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">EduSched AI</h1>
         <p style="font-size:12.5px;color:var(--text-muted);margin-top:2px;">
           ระบบเข้าสู่ระบบงานตารางสอนและบริการข้อมูลการศึกษา</p>
       </div>
