@@ -116,7 +116,113 @@
     }
 
 
-    /* Quick Preset Login Chips */
+    /* Auth Mode Tabs (Sign In / Sign Up) */
+    .auth-mode-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-bottom: 18px;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 4px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    [data-theme="light"] .auth-mode-tabs {
+      background: #f1f5f9;
+      border-color: #e2e8f0;
+    }
+
+    .auth-mode-btn {
+      padding: 9px 12px;
+      border-radius: 9px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all var(--t) var(--ease);
+    }
+
+    .auth-mode-btn:hover {
+      color: var(--text-primary);
+    }
+
+    .auth-mode-btn.active {
+      background: var(--primary);
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+
+    .reg-role-pills {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .reg-role-pill {
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-secondary);
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    [data-theme="light"] .reg-role-pill {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+      color: #475569;
+    }
+
+    .reg-role-pill.active {
+      background: rgba(99, 102, 241, 0.16);
+      border-color: var(--primary);
+      color: var(--primary-light);
+    }
+
+    [data-theme="light"] .reg-role-pill.active {
+      background: #eef2ff;
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .auth-footer-switch {
+      text-align: center;
+      margin-top: 14px;
+      font-size: 12.5px;
+      color: var(--text-muted);
+    }
+
+    .auth-footer-switch a,
+    .auth-footer-switch button {
+      color: var(--primary-light);
+      font-weight: 700;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      font-size: 12.5px;
+      text-decoration: underline;
+    }
+
+    [data-theme="light"] .auth-footer-switch a,
+    [data-theme="light"] .auth-footer-switch button {
+      color: var(--primary);
+    }
+
     .quick-fill-section {
       background: rgba(99, 102, 241, 0.06);
       border: 1px solid rgba(99, 102, 241, 0.18);
@@ -455,98 +561,153 @@
         </div>
       </div>
 
-      <!-- Live Quick-Fill Preset Section (คลิกเดียวเพื่อกรอกอัตโนมัติ) -->
-      <div class="quick-fill-section" id="quickFillSection">
-        <div class="quick-fill-header">
-          <span><i class="fas fa-bolt" style="color:var(--warning);margin-right:4px;"></i> ตัวอย่างบัญชีทดสอบ (คลิกเพื่อกรอกอัตโนมัติ):</span>
-        </div>
-        <div class="quick-chips-wrap" id="quickChipsWrap">
-          <!-- Rendered dynamically -->
-        </div>
+      <!-- Auth Mode Switcher (เข้าสู่ระบบ / สมัครสมาชิก) -->
+      <div class="auth-mode-tabs">
+        <button type="button" class="auth-mode-btn active" id="modeBtnLogin" onclick="switchAuthMode('login')">
+          <i class="fas fa-right-to-bracket"></i> เข้าสู่ระบบ
+        </button>
+        <button type="button" class="auth-mode-btn" id="modeBtnRegister" onclick="switchAuthMode('register')">
+          <i class="fas fa-user-plus"></i> สมัครสมาชิก
+        </button>
       </div>
 
       <!-- Live Error / Success Alert Box -->
       <div id="loginAlert" class="login-alert-box hidden"></div>
 
-      <!-- Production Unified Login Form -->
-      <form id="loginForm" onsubmit="handleLoginSubmit(event)" style="display:flex;flex-direction:column;gap:14px;">
-        <div>
-          <label class="form-label" id="lblUsername" style="font-size:12.5px;font-weight:600;margin-bottom:6px;display:block;">
-            ชื่อผู้ใช้ หรือ รหัสประจำตัว (Username or ID)
-          </label>
-          <div class="input-wrap">
-            <input type="text" class="form-input-auth" id="inputUsername" placeholder="กรอกชื่อผู้ใช้ admin, รหัสครู (เช่น T01) หรือรหัส นศ." required autocomplete="username" />
-            <i class="fas fa-id-card input-icon-left" id="userIcon"></i>
+      <!-- Panel 1: Production Unified Login Form -->
+      <div id="loginPanel">
+        <form id="loginForm" onsubmit="handleLoginSubmit(event)" style="display:flex;flex-direction:column;gap:14px;">
+          <div>
+            <label class="form-label" id="lblUsername" style="font-size:12.5px;font-weight:600;margin-bottom:6px;display:block;">
+              ชื่อผู้ใช้ หรือ รหัสประจำตัว (Username or ID)
+            </label>
+            <div class="input-wrap">
+              <input type="text" class="form-input-auth" id="inputUsername" placeholder="กรอกชื่อผู้ใช้ admin, รหัสครู (เช่น T01) หรือรหัส นศ." required autocomplete="username" />
+              <i class="fas fa-id-card input-icon-left" id="userIcon"></i>
+            </div>
           </div>
-        </div>
 
-        <div>
-          <label class="form-label" style="font-size:12.5px;font-weight:600;margin-bottom:6px;display:block;">
-            รหัสผ่าน (Password)
-          </label>
-          <div class="input-wrap">
-            <input type="password" class="form-input-auth" id="inputPassword" placeholder="กรอกรหัสผ่านของคุณ" required autocomplete="current-password" />
-            <i class="fas fa-lock input-icon-left"></i>
-            <button type="button" class="pwd-toggle-btn" id="pwdToggleBtn" onclick="togglePasswordVisibility()" title="แสดง/ซ่อนรหัสผ่าน">
-              <i class="fas fa-eye" id="pwdToggleIcon"></i>
-            </button>
+          <div>
+            <label class="form-label" style="font-size:12.5px;font-weight:600;margin-bottom:6px;display:block;">
+              รหัสผ่าน (Password)
+            </label>
+            <div class="input-wrap">
+              <input type="password" class="form-input-auth" id="inputPassword" placeholder="กรอกรหัสผ่านของคุณ" required autocomplete="current-password" />
+              <i class="fas fa-lock input-icon-left"></i>
+              <button type="button" class="pwd-toggle-btn" id="pwdToggleBtn" onclick="togglePasswordVisibility('inputPassword', 'pwdToggleIcon')" title="แสดง/ซ่อนรหัสผ่าน">
+                <i class="fas fa-eye" id="pwdToggleIcon"></i>
+              </button>
+            </div>
           </div>
-        </div>
 
-        <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text-muted);margin-top:2px;">
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
-            <input type="checkbox" id="chkRemember" checked style="accent-color:var(--primary);cursor:pointer;" /> จดจำการเข้าสู่ระบบ
-          </label>
-          <span style="font-size:11.5px;color:var(--text-secondary);display:inline-flex;align-items:center;gap:4px;">
-            <i class="fas fa-shield-halved" style="color:var(--primary-light);"></i> ตรวจสอบสิทธิ์อัตโนมัติ
-          </span>
-        </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text-muted);margin-top:2px;">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+              <input type="checkbox" id="chkRemember" checked style="accent-color:var(--primary);cursor:pointer;" /> จดจำการเข้าสู่ระบบ
+            </label>
+            <span style="font-size:11.5px;color:var(--text-secondary);display:inline-flex;align-items:center;gap:4px;">
+              <i class="fas fa-database" style="color:var(--primary-light);"></i> ตรวจสอบสิทธิ์จากฐานข้อมูลจริง
+            </span>
+          </div>
 
-        <button type="submit" class="btn btn-primary" id="loginSubmitBtn"
-          style="padding:12px;font-weight:700;font-size:14px;border-radius:10px;margin-top:4px;box-shadow:0 4px 16px rgba(99,102,241,0.35);">
-          <i class="fas fa-right-to-bracket" style="margin-right:6px;"></i> เข้าสู่ระบบ
-        </button>
-      </form>
-
-      <!-- System Credentials Table & Guide -->
-      <div class="login-guide-card">
-        <div class="guide-title">
-          <span><i class="fas fa-key" style="margin-right:5px;"></i> รหัสผ่านและชื่อผู้ใช้แต่ละบทบาท (เชื่อมต่อ Supabase)</span>
-          <button type="button" class="btn btn-xs btn-ghost" onclick="toggleSqlModal()" style="font-size:11px;padding:2px 8px;">
-            <i class="fas fa-database" style="margin-right:4px;"></i> สคริปต์ SQL
+          <button type="submit" class="btn btn-primary" id="loginSubmitBtn"
+            style="padding:12px;font-weight:700;font-size:14px;border-radius:10px;margin-top:4px;box-shadow:0 4px 16px rgba(99,102,241,0.35);">
+            <i class="fas fa-right-to-bracket" style="margin-right:6px;"></i> เข้าสู่ระบบ
           </button>
-        </div>
+        </form>
 
-        <table class="guide-table">
-          <thead>
-            <tr>
-              <th>บทบาท</th>
-              <th>ชื่อผู้ใช้ (Username)</th>
-              <th>รหัสผ่าน (Password)</th>
-              <th>การเชื่อมต่อ</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><span style="font-weight:700;">👑 ผู้ดูแลระบบ</span></td>
-              <td><span class="guide-code">admin</span></td>
-              <td><span class="guide-code">admin123</span></td>
-              <td>สิทธิ์เต็มทุกโมดูล</td>
-            </tr>
-            <tr>
-              <td><span style="font-weight:700;">👨‍🏫 ครูผู้สอน</span></td>
-              <td><span class="guide-code">T01</span> ถึง <span class="guide-code">T20</span></td>
-              <td><span class="guide-code">teacher123</span> หรือรหัสครู</td>
-              <td>ตาราง teachers ใน Supabase</td>
-            </tr>
-            <tr>
-              <td><span style="font-weight:700;">🎓 นักเรียน</span></td>
-              <td><span class="guide-code">67204010101</span> / <span class="guide-code">672040101</span></td>
-              <td><span class="guide-code">student123</span> หรือรหัส นศ.</td>
-              <td>ตาราง students & groups</td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="auth-footer-switch">
+          ยังไม่มีบัญชีในระบบ? <button type="button" onclick="switchAuthMode('register')">สมัครสมาชิกใหม่</button>
+        </div>
+      </div>
+
+      <!-- Panel 2: Registration Form (บันทึกลงฐานข้อมูล Supabase) -->
+      <div id="registerPanel" class="hidden">
+        <form id="registerForm" onsubmit="handleRegisterSubmit(event)" style="display:flex;flex-direction:column;gap:12px;">
+          <div>
+            <label class="form-label" style="font-size:12.5px;font-weight:600;margin-bottom:6px;display:block;">
+              ประเภทผู้ใช้งาน
+            </label>
+            <div class="reg-role-pills">
+              <button type="button" class="reg-role-pill active" id="regRoleStudent" onclick="setRegRole('student')">
+                <span>🎓</span> นักเรียน / นักศึกษา
+              </button>
+              <button type="button" class="reg-role-pill" id="regRoleTeacher" onclick="setRegRole('teacher')">
+                <span>👨‍🏫</span> ครูผู้สอน
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label" id="lblRegUsername" style="font-size:12.5px;font-weight:600;margin-bottom:6px;display:block;">
+              รหัสนักศึกษา (ใช้สำหรับเข้าสู่ระบบ)
+            </label>
+            <div class="input-wrap">
+              <input type="text" class="form-input-auth" id="regUsername" placeholder="เช่น 67204010105" required />
+              <i class="fas fa-id-badge input-icon-left" id="regUserIcon"></i>
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label" style="font-size:12.5px;font-weight:600;margin-bottom:6px;display:block;">
+              ชื่อ - นามสกุล
+            </label>
+            <div class="input-wrap">
+              <input type="text" class="form-input-auth" id="regName" placeholder="เช่น นายสมชาย รักเรียน" required />
+              <i class="fas fa-user input-icon-left"></i>
+            </div>
+          </div>
+
+          <div id="regGroupContainer">
+            <label class="form-label" style="font-size:12.5px;font-weight:600;margin-bottom:6px;display:block;">
+              กลุ่มเรียน (ดึงจากฐานข้อมูล Supabase)
+            </label>
+            <div class="input-wrap">
+              <select class="form-input-auth" id="regGroupId" style="padding-left:40px;" required>
+                <option value="">กำลังโหลดข้อมูลกลุ่มเรียน...</option>
+              </select>
+              <i class="fas fa-users input-icon-left"></i>
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label" style="font-size:12.5px;font-weight:600;margin-bottom:6px;display:block;">
+              ตั้งรหัสผ่าน (อย่างน้อย 4 ตัวอักษร)
+            </label>
+            <div class="input-wrap">
+              <input type="password" class="form-input-auth" id="regPassword" placeholder="ตั้งรหัสผ่านของคุณ" required minlength="4" />
+              <i class="fas fa-lock input-icon-left"></i>
+              <button type="button" class="pwd-toggle-btn" onclick="togglePasswordVisibility('regPassword', 'regPwdIcon')" title="แสดง/ซ่อนรหัสผ่าน">
+                <i class="fas fa-eye" id="regPwdIcon"></i>
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label" style="font-size:12.5px;font-weight:600;margin-bottom:6px;display:block;">
+              ยืนยันรหัสผ่าน
+            </label>
+            <div class="input-wrap">
+              <input type="password" class="form-input-auth" id="regPasswordConfirm" placeholder="กรอกรหัสผ่านอีกครั้ง" required minlength="4" />
+              <i class="fas fa-check-double input-icon-left"></i>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" id="regSubmitBtn"
+            style="padding:12px;font-weight:700;font-size:14px;border-radius:10px;margin-top:4px;box-shadow:0 4px 16px rgba(99,102,241,0.35);">
+            <i class="fas fa-user-plus" style="margin-right:6px;"></i> สมัครสมาชิกและเข้าสู่ระบบ
+          </button>
+        </form>
+
+        <div class="auth-footer-switch">
+          มีบัญชีอยู่แล้ว? <button type="button" onclick="switchAuthMode('login')">กลับไปเข้าสู่ระบบ</button>
+        </div>
+      </div>
+
+      <div style="margin-top:18px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--text-muted);">
+        <span><i class="fas fa-circle-info" style="margin-right:4px;"></i> ใช้รหัสผ่านที่ลงทะเบียนไว้ หรือรหัสจากฐานข้อมูล</span>
+        <button type="button" class="btn btn-xs btn-ghost" onclick="toggleSqlModal()" style="font-size:11px;padding:2px 8px;">
+          <i class="fas fa-database" style="margin-right:4px;"></i> SQL
+        </button>
       </div>
     </div>
   </div>
@@ -580,50 +741,87 @@
   <script src="js/supabase-config.js"></script>
   <script src="js/main.js"></script>
   <script>
-    // Preset Demo Accounts for Quick Fill
-    const DEMO_PRESETS = [
-      { label: '👑 Admin (ผู้ดูแลระบบ)', u: 'admin', p: 'admin123' },
-      { label: '👨‍🏫 T01: ครูสมชาย', u: 'T01', p: 'teacher123' },
-      { label: '👨‍🏫 T02: ครูนภัสสร', u: 'T02', p: 'teacher123' },
-      { label: '🎓 นศ. กิตติกร', u: '67204010101', p: 'student123' },
-      { label: '🎓 ปวช.1 คอม 1', u: '672040101', p: 'student123' }
-    ];
+    let currentRegRole = 'student';
 
-    function renderQuickChips() {
-      const container = document.getElementById('quickChipsWrap');
-      if (!container) return;
+    function switchAuthMode(mode) {
+      hideAlert();
+      const loginPanel = document.getElementById('loginPanel');
+      const regPanel = document.getElementById('registerPanel');
+      const btnLogin = document.getElementById('modeBtnLogin');
+      const btnReg = document.getElementById('modeBtnRegister');
 
-      container.innerHTML = DEMO_PRESETS.map(item => `
-        <button type="button" class="quick-chip" onclick="quickFill('${item.u}', '${item.p}')" title="คลิกเพื่อกรอกอัตโนมัติ">
-          <span>${item.label}</span>
-          <span style="opacity:0.6;font-size:10px;">(รหัส: ${item.p})</span>
-        </button>
-      `).join('');
-    }
-
-    function quickFill(username, password) {
-      const inputU = document.getElementById('inputUsername');
-      const inputP = document.getElementById('inputPassword');
-
-      if (inputU && inputP) {
-        inputU.value = username;
-        inputP.value = password;
-        hideAlert();
-
-        // Add subtle flash animation
-        inputU.classList.remove('input-flash');
-        inputP.classList.remove('input-flash');
-        void inputU.offsetWidth;
-        inputU.classList.add('input-flash');
-        inputP.classList.add('input-flash');
-
-        inputU.focus();
+      if (mode === 'register') {
+        if (loginPanel) loginPanel.classList.add('hidden');
+        if (regPanel) regPanel.classList.remove('hidden');
+        if (btnLogin) btnLogin.classList.remove('active');
+        if (btnReg) btnReg.classList.add('active');
+        loadStudentGroups();
+      } else {
+        if (regPanel) regPanel.classList.add('hidden');
+        if (loginPanel) loginPanel.classList.remove('hidden');
+        if (btnReg) btnReg.classList.remove('active');
+        if (btnLogin) btnLogin.classList.add('active');
       }
     }
 
-    function togglePasswordVisibility() {
-      const pwdInput = document.getElementById('inputPassword');
-      const icon = document.getElementById('pwdToggleIcon');
+    function setRegRole(role) {
+      currentRegRole = role;
+      const btnS = document.getElementById('regRoleStudent');
+      const btnT = document.getElementById('regRoleTeacher');
+      const lblU = document.getElementById('lblRegUsername');
+      const inpU = document.getElementById('regUsername');
+      const inpN = document.getElementById('regName');
+      const grpBox = document.getElementById('regGroupContainer');
+      const grpSelect = document.getElementById('regGroupId');
+
+      if (role === 'teacher') {
+        if (btnT) btnT.classList.add('active');
+        if (btnS) btnS.classList.remove('active');
+        if (lblU) lblU.textContent = 'รหัสประจำตัวครู (เช่น T21)';
+        if (inpU) inpU.placeholder = 'เช่น T21, T22';
+        if (inpN) inpN.placeholder = 'เช่น ครูสมศักดิ์ ใจดี';
+        if (grpBox) grpBox.classList.add('hidden');
+        if (grpSelect) grpSelect.required = false;
+      } else {
+        if (btnS) btnS.classList.add('active');
+        if (btnT) btnT.classList.remove('active');
+        if (lblU) lblU.textContent = 'รหัสนักศึกษา (ใช้สำหรับเข้าสู่ระบบ)';
+        if (inpU) inpU.placeholder = 'เช่น 67204010105';
+        if (inpN) inpN.placeholder = 'เช่น นายสมชาย รักเรียน';
+        if (grpBox) grpBox.classList.remove('hidden');
+        if (grpSelect) grpSelect.required = true;
+      }
+    }
+
+    async function loadStudentGroups() {
+      const sel = document.getElementById('regGroupId');
+      if (!sel || sel.dataset.loaded === '1') return;
+      const client = (window.AUTH && window.AUTH.getDb) ? window.AUTH.getDb() : (window.db || (typeof db !== 'undefined' ? db : null));
+      if (!client) {
+        sel.innerHTML = '<option value="672040101">672040101 - ปวช.1 คอมพิวเตอร์ธุรกิจ 1</option>';
+        return;
+      }
+      try {
+        const { data, error } = await client
+          .from('student_groups')
+          .select('group_id, group_name')
+          .order('group_id', { ascending: true });
+        if (!error && data && data.length > 0) {
+          sel.innerHTML = '<option value="">-- เลือกกลุ่มเรียน --</option>' +
+            data.map(g => `<option value="${g.group_id}">${g.group_id} - ${g.group_name}</option>`).join('');
+          sel.dataset.loaded = '1';
+        } else {
+          sel.innerHTML = '<option value="">ไม่พบข้อมูลกลุ่มเรียนในฐานข้อมูล</option>';
+        }
+      } catch (err) {
+        console.warn('Error loading student groups:', err);
+        sel.innerHTML = '<option value="">ไม่สามารถโหลดกลุ่มเรียนได้</option>';
+      }
+    }
+
+    function togglePasswordVisibility(inputId = 'inputPassword', iconId = 'pwdToggleIcon') {
+      const pwdInput = document.getElementById(inputId);
+      const icon = document.getElementById(iconId);
       if (!pwdInput) return;
 
       if (pwdInput.type === 'password') {
@@ -632,6 +830,68 @@
       } else {
         pwdInput.type = 'password';
         if (icon) icon.className = 'fas fa-eye';
+      }
+    }
+
+    async function handleRegisterSubmit(e) {
+      e.preventDefault();
+      hideAlert();
+
+      const username = document.getElementById('regUsername')?.value;
+      const name = document.getElementById('regName')?.value;
+      const groupId = document.getElementById('regGroupId')?.value;
+      const password = document.getElementById('regPassword')?.value;
+      const confirmPwd = document.getElementById('regPasswordConfirm')?.value;
+      const btn = document.getElementById('regSubmitBtn');
+
+      if (!username || !name || !password || !confirmPwd) {
+        showAlert('error', 'กรุณากรอกข้อมูลให้ครบถ้วน');
+        return;
+      }
+      if (password !== confirmPwd) {
+        showAlert('error', 'รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน');
+        return;
+      }
+      if (currentRegRole === 'student' && !groupId) {
+        showAlert('error', 'กรุณาเลือกกลุ่มเรียน');
+        return;
+      }
+
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fas fa-circle-notch fa-spin" style="margin-right:6px;"></i> กำลังบันทึกข้อมูลลงฐานข้อมูล...`;
+      }
+
+      try {
+        if (window.AUTH && typeof window.AUTH.register === 'function') {
+          const res = await window.AUTH.register({
+            role: currentRegRole,
+            username,
+            name,
+            password,
+            group_id: currentRegRole === 'student' ? groupId : null
+          });
+
+          if (res && res.success) {
+            showAlert('success', `สมัครสมาชิกสำเร็จ! ยินดีต้อนรับ ${res.user?.name || name} กำลังเข้าสู่ระบบ...`);
+            setTimeout(() => {
+              window.location.href = 'schedule.html';
+            }, 700);
+            return;
+          } else {
+            showAlert('error', res?.message || 'สมัครสมาชิกไม่สำเร็จ');
+          }
+        } else {
+          showAlert('error', 'ระบบสมัครสมาชิกยังไม่พร้อมใช้งาน');
+        }
+      } catch (err) {
+        console.error('Register error:', err);
+        showAlert('error', 'เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = `<i class="fas fa-user-plus" style="margin-right:6px;"></i> สมัครสมาชิกและเข้าสู่ระบบ`;
+        }
       }
     }
 
@@ -800,8 +1060,8 @@ CREATE POLICY "Allow all" ON users FOR ALL USING (true) WITH CHECK (true);`;
         window.THEME.updateToggleIcon(window.THEME.getTheme());
       }
 
-      renderQuickChips();
       checkSupabaseStatus();
+      loadStudentGroups();
 
       if (window.AUTH) {
         const currentUser = window.AUTH.getUser();
