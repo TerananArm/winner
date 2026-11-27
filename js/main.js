@@ -1154,7 +1154,7 @@ const AUTH = {
     }
   },
 
-  handleChangePasswordSubmit(e) {
+  async handleChangePasswordSubmit(e) {
     e.preventDefault();
     const oldP = document.getElementById('oldPasswordInput')?.value;
     const newP = document.getElementById('newPasswordInput')?.value;
@@ -1174,11 +1174,20 @@ const AUTH = {
     const u = this.getUser();
     if (!u) return;
 
-    // ตรวจสอบรหัสผ่านเดิม
-    let savedPwd = localStorage.getItem(`edusched_pwd_${u.id}`);
-    if (u.role === 'admin') savedPwd = localStorage.getItem('edusched_admin_pwd') || 'admin123';
-    
-    // บันทึกรหัสผ่านใหม่
+    // อัปเดตรหัสผ่านในตาราง users ใน Supabase ด้วย (หากมีตาราง users)
+    const client = this.getDb();
+    if (client) {
+      try {
+        await client
+          .from('users')
+          .update({ password: newP })
+          .ilike('username', u.username || u.id);
+      } catch (err) {
+        console.warn('Supabase password update fallback:', err);
+      }
+    }
+
+    // บันทึกรหัสผ่านใหม่ลง localStorage
     if (u.role === 'admin') {
       localStorage.setItem('edusched_admin_pwd', newP);
     } else {
